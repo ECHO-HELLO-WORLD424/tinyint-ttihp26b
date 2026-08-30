@@ -1,9 +1,10 @@
 ![](../../workflows/gds/badge.svg) ![](../../workflows/docs/badge.svg) ![](../../workflows/test/badge.svg) ![](../../workflows/fpga/badge.svg)
 
-# TTIHP26B Reservation Placeholder
+# TinyInt
 
-Minimal 1x1 Tiny Tapeout project used to reserve a slot on the TTIHP26B
-shuttle. The placeholder circuit will be replaced before final submission.
+Work-in-progress 1x1 Tiny Tapeout integer design targeting the TTIHP26B
+shuttle. The current implementation is a small 8-bit adder and will evolve as
+the final design is developed.
 
 - [Read the documentation for project](docs/info.md)
 

@@ -1,7 +1,8 @@
 ## How it works
 
-This placeholder adds the two 8-bit input buses. It exists to reserve a 1x1
-slot on TTIHP26B and will be replaced with the final design before submission.
+TinyInt is a work-in-progress integer design for the TTIHP26B shuttle. The
+initial implementation adds two 8-bit input buses; it will evolve as the final
+design is developed.
 
 ## How to test
 
