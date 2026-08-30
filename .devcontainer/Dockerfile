@@ -17,7 +17,11 @@ COPY test/requirements.txt /ttsetup/test_requirements.txt
 COPY .devcontainer/copy_tt_support_tools.sh /ttsetup
 
 RUN python -m venv /ttsetup/venv
-RUN /ttsetup/venv/bin/pip install -r /ttsetup/test_requirements.txt -r /ttsetup/tt-support-tools/requirements.txt
+RUN /ttsetup/venv/bin/python -m pip install --upgrade pip setuptools wheel && \
+    /ttsetup/venv/bin/python -m pip install \
+        --only-binary=klayout \
+        -r /ttsetup/test_requirements.txt \
+        -r /ttsetup/tt-support-tools/requirements.txt
 
 # Install verible (for formatting)
 RUN umask 022 && \
