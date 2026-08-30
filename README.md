@@ -1,6 +1,9 @@
 ![](../../workflows/gds/badge.svg) ![](../../workflows/docs/badge.svg) ![](../../workflows/test/badge.svg) ![](../../workflows/fpga/badge.svg)
 
-# Tiny Tapeout Verilog Project Template
+# TTIHP26B Reservation Placeholder
+
+Minimal 1x1 Tiny Tapeout project used to reserve a slot on the TTIHP26B
+shuttle. The placeholder circuit will be replaced before final submission.
 
 - [Read the documentation for project](docs/info.md)
 

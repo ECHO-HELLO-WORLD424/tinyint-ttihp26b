@@ -1,20 +1,13 @@
-<!---
-
-This file is used to generate your project datasheet. Please fill in the information below and delete any unused
-sections.
-
-You can also include images in this folder and reference them in the markdown. Each image must be less than
-512 kb in size, and the combined size of all images must be less than 1 MB.
--->
-
 ## How it works
 
-Explain how your project works
+This placeholder adds the two 8-bit input buses. It exists to reserve a 1x1
+slot on TTIHP26B and will be replaced with the final design before submission.
 
 ## How to test
 
-Explain how to use your project
+Apply operands to `ui_in` and `uio_in`; the low 8 bits of their sum appear on
+`uo_out`.
 
 ## External hardware
 
-List external hardware used in your project (e.g. PMOD, LED display, etc), if any
+None.
