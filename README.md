@@ -2,6 +2,8 @@
 
 # TinyInt
 
+![Arch](./chip-architecture.svg)
+
 TinyInt currently implements the multiplier baseline for a streaming INT4
 dot-product peripheral. Its original combinational 4-bit by 4-bit multiplier
 supports unsigned multiplication and signed two's-complement multiplication
