@@ -11,14 +11,12 @@ def signed_int4(value):
 
 
 async def check_all_operands(dut, signed_mode):
-    dut.ena.value = 1
-    dut.clk.value = 0
-    dut.rst_n.value = 1
-    dut.uio_in.value = signed_mode << 4
+    dut.multiplier_signed_mode.value = signed_mode
 
     for multiplier in range(16):
         for multiplicand in range(16):
-            dut.ui_in.value = (multiplier << 4) | multiplicand
+            dut.multiplier_multiplier.value = multiplier
+            dut.multiplier_multiplicand.value = multiplicand
             await Timer(1, unit="ns")
 
             if signed_mode:
@@ -28,15 +26,12 @@ async def check_all_operands(dut, signed_mode):
             else:
                 expected = multiplier * multiplicand
 
-            actual = int(dut.uo_out.value)
+            actual = int(dut.multiplier_product.value)
             assert actual == expected, (
                 f"mode={'signed' if signed_mode else 'unsigned'}, "
                 f"multiplier=0x{multiplier:x}, multiplicand=0x{multiplicand:x}: "
                 f"expected 0x{expected:02x}, got 0x{actual:02x}"
             )
-
-            assert int(dut.uio_out.value) == 0
-            assert int(dut.uio_oe.value) == 0
 
 
 @cocotb.test()

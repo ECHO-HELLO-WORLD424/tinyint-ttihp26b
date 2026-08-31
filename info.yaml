@@ -17,7 +17,10 @@ project:
   # Source files must be in ./src and you must list each source file separately, one per line.
   # Don't forget to also update `PROJECT_SOURCES` in test/Makefile.
   source_files:
-    - "project.v"
+    - "int4_multiplier.v"
+    - "tiny_int_core.v"
+    - "tiny_int_protocol.v"
+    - "tt_um_echo_hello_world424_tinyint.v"
 
 # The pinout of your project. Leave unused pins blank. DO NOT delete or add any pins.
 # This section is for the datasheet/website. Use descriptive names (e.g., RX, TX, MOSI, SCL, SEG_A, etc.).
@@ -43,14 +46,14 @@ pinout:
   uo[7]: "product[7]"
 
   # Bidirectional pins
-  uio[0]: ""
-  uio[1]: ""
-  uio[2]: ""
-  uio[3]: ""
+  uio[0]: "cmd_valid"
+  uio[1]: "command[0]"
+  uio[2]: "command[1]"
+  uio[3]: "command[2]"
   uio[4]: "signed_mode"
-  uio[5]: ""
-  uio[6]: ""
-  uio[7]: ""
+  uio[5]: "ready"
+  uio[6]: "response_valid"
+  uio[7]: "busy"
 
 # Do not change!
 yaml_version: 6

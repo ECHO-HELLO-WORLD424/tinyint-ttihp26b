@@ -23,6 +23,12 @@ module tb ();
   wire [7:0] uio_out;
   wire [7:0] uio_oe;
 
+  // Independent multiplier-leaf interface for exhaustive arithmetic tests.
+  reg  [3:0] multiplier_multiplicand;
+  reg  [3:0] multiplier_multiplier;
+  reg        multiplier_signed_mode;
+  wire [7:0] multiplier_product;
+
   tt_um_echo_hello_world424_tinyint user_project (
       .ui_in  (ui_in),    // Dedicated inputs
       .uo_out (uo_out),   // Dedicated outputs
@@ -32,6 +38,13 @@ module tb ();
       .ena    (ena),      // enable - goes high when design is selected
       .clk    (clk),      // clock
       .rst_n  (rst_n)     // not reset
+  );
+
+  int4_multiplier multiplier_dut (
+      .multiplicand(multiplier_multiplicand),
+      .multiplier  (multiplier_multiplier),
+      .signed_mode (multiplier_signed_mode),
+      .product     (multiplier_product)
   );
 
 endmodule
