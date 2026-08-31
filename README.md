@@ -4,11 +4,14 @@
 
 ![Arch](./chip-architecture.svg)
 
-TinyInt currently implements the multiplier and product-extension baseline for
-a streaming INT4 dot-product peripheral. Its original combinational 4-bit by
-4-bit multiplier supports unsigned multiplication and signed two's-complement
-multiplication using a shared Baugh-Wooley partial-product array. The raw 8-bit
-product is then sign- or zero-extended to the future accumulator's 20-bit input.
+TinyInt currently implements the multiplier, product-extension, and accumulator
+datapath baseline for a streaming INT4 dot-product peripheral. Its original
+combinational 4-bit by 4-bit multiplier supports unsigned multiplication and
+signed two's-complement multiplication using a shared Baugh-Wooley
+partial-product array. The raw 8-bit product is sign- or zero-extended before a
+20-bit modulo accumulator with mode-dependent sticky overflow detection.
+Command validation and result readback remain staged for the next implementation
+steps.
 
 - `ui_in[3:0]`: weight/multiplicand
 - `ui_in[7:4]`: activation/multiplier

@@ -39,6 +39,21 @@ module tb ();
   // Observe the integrated multiplier-to-extension path without consuming
   // Tiny Tapeout output pins reserved for the final response interface.
   wire [19:0] integrated_extended_product;
+  wire [19:0] integrated_accumulator_addition_result;
+  wire [19:0] integrated_accumulator_value;
+
+  // Independent accumulator-leaf interface for state and arithmetic tests.
+  reg         accumulator_clear;
+  reg         accumulator_load;
+  reg         accumulator_accumulate;
+  reg         accumulator_signed_mode;
+  reg  [19:0] accumulator_load_value;
+  reg  [19:0] accumulator_addend;
+  wire [19:0] accumulator_value;
+  wire [19:0] accumulator_addition_result;
+  wire        accumulator_addition_carry;
+  wire        accumulator_addition_overflow;
+  wire        accumulator_overflow;
 `endif
 
   tt_um_echo_hello_world424_tinyint user_project (
@@ -54,6 +69,9 @@ module tb ();
 
 `ifndef GL_TEST
   assign integrated_extended_product = user_project.extended_product;
+  assign integrated_accumulator_addition_result =
+      user_project.core.accumulator_addition_result;
+  assign integrated_accumulator_value = user_project.accumulator_value;
 
   int4_multiplier multiplier_dut (
       .multiplicand(multiplier_multiplicand),
@@ -66,6 +84,22 @@ module tb ();
       .product         (extender_product),
       .signed_mode     (extender_signed_mode),
       .extended_product(extender_extended_product)
+  );
+
+  tiny_int_accumulator accumulator_dut (
+      .clk              (clk),
+      .rst_n            (rst_n),
+      .clear            (accumulator_clear),
+      .load             (accumulator_load),
+      .accumulate       (accumulator_accumulate),
+      .signed_mode      (accumulator_signed_mode),
+      .load_value       (accumulator_load_value),
+      .addend           (accumulator_addend),
+      .accumulator_value(accumulator_value),
+      .addition_result  (accumulator_addition_result),
+      .addition_carry   (accumulator_addition_carry),
+      .addition_overflow(accumulator_addition_overflow),
+      .accumulator_overflow(accumulator_overflow)
   );
 `endif
 

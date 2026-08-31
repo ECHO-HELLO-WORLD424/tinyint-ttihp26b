@@ -6,7 +6,7 @@
 `timescale 1ns / 1ps
 `default_nettype none
 
-// Multiplier-baseline core with the request boundary used by the later MAC and
+// Datapath-baseline core with the request boundary used by the later MAC and
 // BIST implementation. Architectural state belongs in this module.
 module tiny_int_core (
     input  wire       clk,
@@ -21,6 +21,7 @@ module tiny_int_core (
 
     output wire [7:0] multiplier_product,
     output wire [19:0] extended_product,
+    output wire [19:0] accumulator_value,
     output wire       latched_signed_mode
 );
 
@@ -57,13 +58,47 @@ module tiny_int_core (
       .product     (multiplier_product)
   );
 
-  // This is the input boundary for the future accumulator adder. It uses the
-  // same active mode as the multiplier, including per-vector BIST requests.
+  // This is the accumulator-adder input boundary. It uses the same active mode
+  // as the multiplier, including per-vector BIST requests.
   product_extender product_extension (
       .product         (multiplier_product),
       .signed_mode     (active_signed_mode),
       .extended_product(extended_product)
   );
+
+  // Reserved control boundary for the later validated command controller.
+  // Keeping these controls inactive avoids introducing partial CLEAR/MAC/bias
+  // semantics before their protocol, done, and error-handling rules exist.
+  wire accumulator_clear      = 1'b0;
+  wire accumulator_load       = 1'b0;
+  wire accumulator_accumulate = 1'b0;
+  wire [19:0] accumulator_load_value = 20'b0;
+  wire [19:0] accumulator_addition_result;
+  wire accumulator_addition_carry;
+  wire accumulator_addition_overflow;
+  wire accumulator_overflow;
+
+  tiny_int_accumulator accumulator (
+      .clk              (clk),
+      .rst_n            (rst_n),
+      .clear            (accumulator_clear),
+      .load             (accumulator_load),
+      .accumulate       (accumulator_accumulate),
+      .signed_mode      (active_signed_mode),
+      .load_value       (accumulator_load_value),
+      .addend           (extended_product),
+      .accumulator_value(accumulator_value),
+      .addition_result  (accumulator_addition_result),
+      .addition_carry   (accumulator_addition_carry),
+      .addition_overflow(accumulator_addition_overflow),
+      .accumulator_overflow(accumulator_overflow)
+  );
+
+  // These status signals feed the future status register and controller.
+  wire _unused_accumulator_status = &{accumulator_addition_result,
+                                      accumulator_addition_carry,
+                                      accumulator_addition_overflow,
+                                      accumulator_overflow, 1'b0};
 
 endmodule
 
