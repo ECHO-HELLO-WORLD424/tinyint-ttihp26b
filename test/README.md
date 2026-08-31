@@ -10,10 +10,19 @@ See below to get started or for more information, check the [website](https://ti
 
 ## How to run
 
-To run the RTL simulation:
+Test files follow the `test_<module>.py` naming convention and are discovered
+automatically by the Makefile. From the repository root, run every module test
+with:
 
 ```sh
-make -B
+make test=ALL
+```
+
+To run one module's test file, omit the `test_` prefix and `.py` suffix. For
+example, this runs `test_int4_multiplier.py`:
+
+```sh
+make test=int4_multiplier
 ```
 
 To run gatelevel simulation, first harden your project and copy `../runs/wokwi/results/final/verilog/gl/{your_module_name}.v` to `gate_level_netlist.v`.
@@ -21,16 +30,23 @@ To run gatelevel simulation, first harden your project and copy `../runs/wokwi/r
 Then run:
 
 ```sh
-make -B GATES=yes
+make test=ALL GATES=yes
 ```
 
 If you wish to save the waveform in VCD format instead of FST format, edit tb.v to use `$dumpfile("tb.vcd");` and then run:
 
 ```sh
-make -B FST=
+make test=ALL FST=
 ```
 
 This will generate `tb.vcd` instead of `tb.fst`.
+
+To remove simulator builds, result files, waveforms, and Python test caches,
+run this from the repository root:
+
+```sh
+make clean
+```
 
 ## How to view the waveform file
 

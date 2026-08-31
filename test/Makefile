@@ -8,6 +8,32 @@ TOPLEVEL_LANG ?= verilog
 SRC_DIR = $(PWD)/../src
 PROJECT_SOURCES = project.v
 
+# Test selection:
+#   make test=ALL              Run every test_<module>.py file.
+#   make test=int4_multiplier  Run test_int4_multiplier.py only.
+test ?= ALL
+TEST_FILES := $(sort $(wildcard test_*.py))
+TEST_MODULES := $(basename $(notdir $(TEST_FILES)))
+AVAILABLE_TESTS := $(patsubst test_%,%,$(TEST_MODULES))
+
+ifeq ($(test),ALL)
+SELECTED_TEST_MODULES := $(TEST_MODULES)
+else
+SELECTED_TEST_MODULES := $(filter test_$(test),$(TEST_MODULES))
+ifeq ($(SELECTED_TEST_MODULES),)
+$(error Unknown test module '$(test)'. Available modules: $(AVAILABLE_TESTS), or ALL)
+endif
+endif
+
+empty :=
+space := $(empty) $(empty)
+comma := ,
+COCOTB_TEST_MODULES := $(subst $(space),$(comma),$(strip $(SELECTED_TEST_MODULES)))
+
+.DEFAULT_GOAL := test-suite
+.PHONY: test-suite
+test-suite: sim
+
 ifneq ($(GATES),yes)
 
 # RTL simulation:
@@ -36,8 +62,11 @@ COMPILE_ARGS 		+= -I$(SRC_DIR)
 VERILOG_SOURCES += $(PWD)/tb.v
 TOPLEVEL = tb
 
-# List test modules to run, separated by commas and without the .py suffix:
-COCOTB_TEST_MODULES = test
+# Extend Cocotb's clean target to cover every artifact created by the local
+# test workflow, independent of the selected simulator or RTL/gate-level mode.
+clean::
+	$(RM) -rf sim_build __pycache__ .pytest_cache
+	$(RM) -f results.xml *.fst *.fst.hier *.vcd
 
 # include cocotb's make rules to take care of the simulator setup
 include $(shell cocotb-config --makefiles)/Makefile.sim

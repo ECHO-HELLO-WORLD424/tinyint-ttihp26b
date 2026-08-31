@@ -2,9 +2,18 @@
 
 # TinyInt
 
-Work-in-progress 1x1 Tiny Tapeout integer design targeting the TTIHP26B
-shuttle. The current implementation is a small 8-bit adder and will evolve as
-the final design is developed.
+TinyInt currently implements a combinational 4-bit by 4-bit multiplier. It
+supports both unsigned multiplication and signed two's-complement multiplication
+using a Baugh-Wooley partial-product array.
+
+- `ui_in[3:0]`: multiplicand
+- `ui_in[7:4]`: multiplier
+- `uio_in[4]`: mode (`0` unsigned, `1` signed)
+- `uo_out[7:0]`: 8-bit product
+
+Run every Cocotb module test from the repository root with `make test=ALL`, or
+run only the multiplier tests with `make test=int4_multiplier`. Use `make clean`
+to remove all generated test artifacts.
 
 - [Read the documentation for project](docs/info.md)
 
