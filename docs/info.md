@@ -1,9 +1,10 @@
 ## How it works
 
 TinyInt is a streaming INT4 dot-product design built around an original shared
-unsigned/Baugh-Wooley signed multiplier. The current multiplier-baseline core
-owns a latched operating mode; normal multiplication never reads the live mode
-pin directly.
+unsigned/Baugh-Wooley signed multiplier. The current core owns a latched
+operating mode; normal multiplication never reads the live mode pin directly.
+It sign- or zero-extends the raw product to the future accumulator's 20-bit
+input.
 
 ## How to test
 

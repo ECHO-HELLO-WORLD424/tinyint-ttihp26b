@@ -23,6 +23,7 @@ module tt_um_echo_hello_world424_tinyint (
   wire [7:0] external_request_data;
   wire       external_request_signed_mode;
   wire       latched_signed_mode;
+  wire [19:0] extended_product;
 
   // These response/BIST signals are connected now so their physical pin
   // behavior is fixed before the accumulator and BIST modules are added.
@@ -53,12 +54,16 @@ module tt_um_echo_hello_world424_tinyint (
       .request_signed_mode (external_request_signed_mode),
       .request_from_bist   (1'b0),
       .multiplier_product  (uo_out),
+      .extended_product    (extended_product),
       .latched_signed_mode (latched_signed_mode)
   );
 
-  // Prevent warnings for inputs/state reserved for the next implementation
-  // step. The mode state is intentionally owned by tiny_int_core.
-  wire _unused = &{ena, uio_in[7:5], latched_signed_mode, 1'b0};
+  // Prevent warnings for inputs/state reserved for later implementation
+  // steps. extended_product is intentionally available for the future 20-bit
+  // accumulator while the current top-level baseline still exposes the raw
+  // multiplier result.
+  wire _unused = &{ena, uio_in[7:5], latched_signed_mode,
+                   extended_product, 1'b0};
 
 endmodule
 

@@ -18,6 +18,7 @@ project:
   # Don't forget to also update `PROJECT_SOURCES` in test/Makefile.
   source_files:
     - "int4_multiplier.v"
+    - "product_extender.v"
     - "tiny_int_core.v"
     - "tiny_int_protocol.v"
     - "tt_um_echo_hello_world424_tinyint.v"

@@ -20,6 +20,7 @@ module tiny_int_core (
     input  wire       request_from_bist,
 
     output wire [7:0] multiplier_product,
+    output wire [19:0] extended_product,
     output wire       latched_signed_mode
 );
 
@@ -54,6 +55,14 @@ module tiny_int_core (
       .multiplier  (request_data[7:4]),
       .signed_mode (active_signed_mode),
       .product     (multiplier_product)
+  );
+
+  // This is the input boundary for the future accumulator adder. It uses the
+  // same active mode as the multiplier, including per-vector BIST requests.
+  product_extender product_extension (
+      .product         (multiplier_product),
+      .signed_mode     (active_signed_mode),
+      .extended_product(extended_product)
   );
 
 endmodule
