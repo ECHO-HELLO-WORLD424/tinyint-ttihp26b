@@ -45,7 +45,7 @@ else
 # Leaf-module tests cannot run against the flattened gate-level netlist.
 # Keep exhaustive multiplier coverage in RTL and exercise the physical top-level
 # interface in gate mode.
-COCOTB_TEST_MODULES = test_mode_latching
+COCOTB_TEST_MODULES = test_dot_product_engine,test_mode_latching
 
 # Gate level simulation:
 SIM_BUILD				= sim_build/gl
