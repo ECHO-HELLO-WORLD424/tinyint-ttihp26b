@@ -25,11 +25,16 @@ module tt_um_echo_hello_world424_tinyint (
   wire       latched_signed_mode;
   wire [19:0] extended_product;
   wire [19:0] accumulator_value;
-
-  // These response/BIST signals are connected now so their physical pin
-  // behavior is fixed before the response and BIST controllers are added.
-  wire response_valid = 1'b0;
+  wire [7:0] response_data;
+  wire       response_valid;
   wire busy           = 1'b0;
+  wire [7:0] pair_count;
+  wire       done;
+  wire [7:0] last_product;
+  wire       accumulator_overflow;
+  wire       count_overflow;
+  wire       protocol_error;
+  wire [7:0] multiplier_product;
 
   tiny_int_protocol protocol (
       .ui_in               (ui_in),
@@ -54,17 +59,28 @@ module tt_um_echo_hello_world424_tinyint (
       .request_data        (external_request_data),
       .request_signed_mode (external_request_signed_mode),
       .request_from_bist   (1'b0),
-      .multiplier_product  (uo_out),
+      .multiplier_product  (multiplier_product),
       .extended_product    (extended_product),
       .accumulator_value   (accumulator_value),
-      .latched_signed_mode (latched_signed_mode)
+      .latched_signed_mode (latched_signed_mode),
+      .response_data       (response_data),
+      .response_valid      (response_valid),
+      .pair_count          (pair_count),
+      .done                (done),
+      .last_product        (last_product),
+      .accumulator_overflow(accumulator_overflow),
+      .count_overflow      (count_overflow),
+      .protocol_error      (protocol_error)
   );
 
-  // Prevent warnings for inputs/state reserved for later implementation
-  // steps. The current top-level baseline still exposes the raw multiplier
-  // result until the registered response interface is implemented.
+  assign uo_out = response_data;
+
+  // Prevent warnings for inputs/state that are intentionally not exposed on
+  // dedicated pins. All are available through registered READ selectors.
   wire _unused = &{ena, uio_in[7:5], latched_signed_mode,
-                   extended_product, accumulator_value, 1'b0};
+                   multiplier_product, extended_product, accumulator_value,
+                   pair_count, done, last_product, accumulator_overflow,
+                   count_overflow, protocol_error, 1'b0};
 
 endmodule
 

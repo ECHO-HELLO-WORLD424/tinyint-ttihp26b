@@ -4,27 +4,31 @@
 
 ![Arch](./chip-architecture.svg)
 
-TinyInt currently implements the multiplier, product-extension, and accumulator
-datapath baseline for a streaming INT4 dot-product peripheral. Its original
+TinyInt implements the minimum streaming INT4 dot-product engine. Its original
 combinational 4-bit by 4-bit multiplier supports unsigned multiplication and
 signed two's-complement multiplication using a shared Baugh-Wooley
-partial-product array. The raw 8-bit product is sign- or zero-extended before a
-20-bit modulo accumulator with mode-dependent sticky overflow detection.
-Command validation and result readback remain staged for the next implementation
-steps.
+partial-product array. Accepted `MAC` requests update a 20-bit modulo
+accumulator at one pair per clock, while an 8-bit saturating counter, completion
+state, last-product register, and sticky overflow/error flags track the
+transaction. `READ` returns registered accumulator or diagnostic bytes.
 
 - `ui_in[3:0]`: weight/multiplicand
 - `ui_in[7:4]`: activation/multiplier
 - `uio_in[4]`: requested mode (`0` unsigned, `1` signed)
-- `uio_in[3:1]`: command; `001` is `CLEAR`
+- `uio_in[3:1]`: command (`000` `FINISH`, `001` `CLEAR`, `010` `MAC`,
+  `011` `MAC_LAST`, `100` `READ`)
 - `uio_in[0]`: command valid
-- `uo_out[7:0]`: current baseline multiplier product
+- `uio_out[5]`: request ready
+- `uio_out[6]`: registered response valid
+- `uo_out[7:0]`: registered read response
 
 The operating mode resets to unsigned and is sampled from `uio_in[4]` only
 when a valid `CLEAR` request is accepted. Changing the live mode pin during a
-transaction cannot change multiplier arithmetic. The source is split into a
-standalone multiplier leaf, a state-owning core, and a Tiny Tapeout protocol
-adapter in preparation for the accumulator and BIST stages.
+transaction cannot change multiplier arithmetic. `MAC_LAST` adds the final
+pair and completes on the same edge; `FINISH` completes without adding a pair.
+For `READ`, `ui_in[2:0]` selects accumulator low/middle/high (`000`-`010`),
+pair count (`011`), status (`100`), or last raw product (`101`). The selected
+byte is valid during the cycle immediately after the accepted read edge.
 
 Run every Cocotb module test from the repository root with `make test=ALL`, or
 run only the multiplier tests with `make test=int4_multiplier`. Use `make clean`

@@ -7,6 +7,8 @@ from cocotb.triggers import RisingEdge, Timer
 
 
 COMMAND_CLEAR = 0b001
+COMMAND_MAC_LAST = 0b011
+COMMAND_READ = 0b100
 
 
 def control_value(*, command=0, signed_mode=0, valid=0):
@@ -33,34 +35,53 @@ async def accept_clear(dut, signed_mode):
     await Timer(1, unit="ns")
 
 
+async def accept_mac_last(dut, packed_operands, live_signed_mode):
+    dut.ui_in.value = packed_operands
+    dut.uio_in.value = control_value(
+        command=COMMAND_MAC_LAST, signed_mode=live_signed_mode, valid=1
+    )
+    await RisingEdge(dut.clk)
+    await Timer(1, unit="ns")
+    dut.uio_in.value = control_value(signed_mode=live_signed_mode)
+
+
+async def read_low_byte(dut, live_signed_mode):
+    dut.ui_in.value = 0
+    dut.uio_in.value = control_value(
+        command=COMMAND_READ, signed_mode=live_signed_mode, valid=1
+    )
+    await RisingEdge(dut.clk)
+    await Timer(1, unit="ns")
+    assert (int(dut.uio_out.value) >> 6) & 1
+    result = int(dut.uo_out.value)
+    dut.uio_in.value = control_value(signed_mode=live_signed_mode)
+    await RisingEdge(dut.clk)
+    await Timer(1, unit="ns")
+    assert ((int(dut.uio_out.value) >> 6) & 1) == 0
+    return result
+
+
 @cocotb.test()
 async def test_mode_changes_only_on_accepted_clear(dut):
     """The live mode pin must not alter arithmetic inside a transaction."""
     cocotb.start_soon(Clock(dut.clk, 10, unit="ns").start())
     await reset(dut)
 
-    # Reset establishes unsigned mode. 0xf * 0x2 is 30 unsigned.
-    dut.ui_in.value = 0xF2
-    dut.uio_in.value = control_value(signed_mode=1)
-    await Timer(1, unit="ns")
-    assert int(dut.uo_out.value) == 30
+    # Reset establishes unsigned mode. The live high mode pin must not turn
+    # 0xf * 0x2 into a signed product without an accepted CLEAR.
+    await accept_mac_last(dut, packed_operands=0xF2, live_signed_mode=1)
+    assert await read_low_byte(dut, live_signed_mode=1) == 30
 
-    # An accepted signed CLEAR changes the core-owned mode. 0xf is now -1.
+    # An accepted signed CLEAR changes the core-owned mode. Toggling the live
+    # pin back low before the MAC must not change the latched signed mode.
     await accept_clear(dut, signed_mode=1)
-    dut.ui_in.value = 0xF2
-    await Timer(1, unit="ns")
-    assert int(dut.uo_out.value) == 0xFE
-
-    # Toggling the live pin back low does not change the latched signed mode.
-    dut.uio_in.value = control_value(signed_mode=0)
-    await Timer(1, unit="ns")
-    assert int(dut.uo_out.value) == 0xFE
+    await accept_mac_last(dut, packed_operands=0xF2, live_signed_mode=0)
+    assert await read_low_byte(dut, live_signed_mode=0) == 0xFE
 
     # It changes only after another accepted CLEAR.
     await accept_clear(dut, signed_mode=0)
-    dut.ui_in.value = 0xF2
-    await Timer(1, unit="ns")
-    assert int(dut.uo_out.value) == 30
+    await accept_mac_last(dut, packed_operands=0xF2, live_signed_mode=1)
+    assert await read_low_byte(dut, live_signed_mode=1) == 30
 
     assert int(dut.uio_oe.value) == 0xE0
     assert (int(dut.uio_out.value) & 0x1F) == 0

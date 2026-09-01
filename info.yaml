@@ -38,14 +38,14 @@ pinout:
   ui[7]: "multiplier[3]"
 
   # Outputs
-  uo[0]: "product[0]"
-  uo[1]: "product[1]"
-  uo[2]: "product[2]"
-  uo[3]: "product[3]"
-  uo[4]: "product[4]"
-  uo[5]: "product[5]"
-  uo[6]: "product[6]"
-  uo[7]: "product[7]"
+  uo[0]: "response_data[0]"
+  uo[1]: "response_data[1]"
+  uo[2]: "response_data[2]"
+  uo[3]: "response_data[3]"
+  uo[4]: "response_data[4]"
+  uo[5]: "response_data[5]"
+  uo[6]: "response_data[6]"
+  uo[7]: "response_data[7]"
 
   # Bidirectional pins
   uio[0]: "cmd_valid"

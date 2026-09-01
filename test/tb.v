@@ -41,6 +41,11 @@ module tb ();
   wire [19:0] integrated_extended_product;
   wire [19:0] integrated_accumulator_addition_result;
   wire [19:0] integrated_accumulator_value;
+  wire [7:0]  integrated_multiplier_product;
+  wire [7:0]  integrated_pair_count;
+  wire        integrated_done;
+  wire        integrated_count_overflow;
+  wire        integrated_protocol_error;
 
   // Independent accumulator-leaf interface for state and arithmetic tests.
   reg         accumulator_clear;
@@ -72,6 +77,11 @@ module tb ();
   assign integrated_accumulator_addition_result =
       user_project.core.accumulator_addition_result;
   assign integrated_accumulator_value = user_project.accumulator_value;
+  assign integrated_multiplier_product = user_project.multiplier_product;
+  assign integrated_pair_count = user_project.pair_count;
+  assign integrated_done = user_project.done;
+  assign integrated_count_overflow = user_project.count_overflow;
+  assign integrated_protocol_error = user_project.protocol_error;
 
   int4_multiplier multiplier_dut (
       .multiplicand(multiplier_multiplicand),
