@@ -25,6 +25,21 @@ example, this runs `test_int4_multiplier.py`:
 make test=int4_multiplier
 ```
 
+## Interactive simulation
+
+To manually drive the TinyInt pins, advance the clock one cycle at a time, and
+inspect the outputs without an FPGA, run this from the repository root:
+
+```sh
+make play
+```
+
+The `show`, `set ui`, `set uio`, and `step` commands provide raw pin-level
+control. Convenience commands such as `clear signed`, `mac -3 4`, `last 2 5`,
+and `read acc_lo` exercise the TinyInt protocol. Type `help` in the simulator
+for the complete command list. The session also writes `test/tb.fst`, so the
+same manual interaction can be inspected afterward in GTKWave or Surfer.
+
 To run gatelevel simulation, first harden your project and copy `../runs/wokwi/results/final/verilog/gl/{your_module_name}.v` to `gate_level_netlist.v`.
 
 Then run:

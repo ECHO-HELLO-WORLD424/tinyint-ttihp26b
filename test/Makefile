@@ -31,8 +31,14 @@ comma := ,
 COCOTB_TEST_MODULES := $(subst $(space),$(comma),$(strip $(SELECTED_TEST_MODULES)))
 
 .DEFAULT_GOAL := test-suite
-.PHONY: test-suite
+.PHONY: test-suite interactive
 test-suite: sim
+
+# Keep the interactive cocotb module out of TEST_FILES/test=ALL: unlike the
+# regression tests it deliberately waits for commands on standard input. Pass
+# the module on make's command line so cocotb's recursive make preserves it.
+interactive:
+	$(MAKE) sim COCOTB_TEST_MODULES=interactive COCOTB_RESULTS_FILE=interactive_results.xml
 
 ifneq ($(GATES),yes)
 
@@ -71,7 +77,7 @@ TOPLEVEL = tb
 # test workflow, independent of the selected simulator or RTL/gate-level mode.
 clean::
 	$(RM) -rf sim_build __pycache__ .pytest_cache
-	$(RM) -f results.xml *.fst *.fst.hier *.vcd
+	$(RM) -f results.xml interactive_results.xml *.fst *.fst.hier *.vcd
 
 # include cocotb's make rules to take care of the simulator setup
 include $(shell cocotb-config --makefiles)/Makefile.sim
