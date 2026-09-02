@@ -1,0 +1,7 @@
+read_verilog -sv src/*.v
+hierarchy -check -top tt_um_echo_hello_world424_tinyint
+synth -flatten -top tt_um_echo_hello_world424_tinyint
+check
+stat
+write_json test/sim_build/variants/composite.json
+write_verilog -noattr test/sim_build/variants/composite.v

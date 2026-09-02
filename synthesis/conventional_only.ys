@@ -1,0 +1,14 @@
+read_verilog -sv src/*.v
+hierarchy -check -top tt_um_echo_hello_world424_tinyint
+proc
+flatten
+cd tt_um_echo_hello_world424_tinyint
+connect -nomap -set \core.conventional_selected 1'b1
+cd ..
+opt_expr
+opt_clean
+synth -flatten -top tt_um_echo_hello_world424_tinyint
+check
+stat
+write_json test/sim_build/variants/conventional_only.json
+write_verilog -noattr test/sim_build/variants/conventional_only.v
