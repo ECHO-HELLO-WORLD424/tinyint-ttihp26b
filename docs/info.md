@@ -1,27 +1,45 @@
 ## How it works
 
-TinyInt is a streaming INT4 dot-product design built around an original shared
-unsigned/Baugh-Wooley signed multiplier. The current core owns a latched
-operating mode; normal multiplication never reads the live mode pin directly.
-It sign- or zero-extends each raw product and commits accepted `MAC` or
-`MAC_LAST` requests to a 20-bit modulo accumulator at one pair per clock. An
-8-bit saturating pair counter, completion state, last-product register, and
-sticky overflow/error flags are owned by the same command core.
+TinyInt is an INT4 MAC research tapeout. A shared signed/unsigned 4 x 4
+Baugh-Wooley multiplier feeds either a conventional 20-bit accumulator or a
+bit-exact dynamic accumulator divided into five 4-bit stages. At transaction
+start, software selects a conventional mode or an 8-, 12-, or 16-bit dynamic
+boundary. Cold stages update only when a carry or borrow crosses the selected
+boundary; no accumulator bits are truncated.
+
+The current repository RTL implements the conventional baseline. The dynamic
+path and its new configuration/readback behavior are the frozen next
+implementation milestone described in `project-description.md`.
 
 ## How to test
 
-After reset, unsigned mode is active. Start a transaction with `CLEAR` (`001`),
-placing the desired signed mode on `uio_in[4]`. With `uio_out[5]` (`ready`)
-high, assert `uio_in[0]` across a rising edge to accept a command. Place the
-weight on `ui_in[3:0]` and activation on `ui_in[7:4]`, then stream `MAC` (`010`)
-commands and terminate with `MAC_LAST` (`011`) or `FINISH` (`000`).
+All signals are synchronous to `clk`. Assert `cmd_valid` on `uio_in[0]` while
+`ready` on `uio_out[5]` is high. Commands are carried on `uio_in[3:1]`:
 
-Use `READ` (`100`) with `ui_in[2:0]` set to `000`, `001`, or `010` for the
-low, middle, or high accumulator byte. `uo_out` contains the captured byte and
-`uio_out[6]` (`response_valid`) is high in the cycle immediately following the
-accepted read. Selectors `011`, `100`, and `101` return pair count, status, and
-the last raw multiplier product.
+- `001`: `CLEAR` and latch configuration
+- `010`: `MAC`
+- `011`: `MAC_LAST`
+- `000`: `FINISH`
+- `100`: `READ`
+
+During `CLEAR`, `ui_in[1:0]` selects conventional, dynamic-8, dynamic-12, or
+dynamic-16; `ui_in[2]` enables zero-product skipping; and `uio_in[4]` selects
+unsigned or signed arithmetic. Drive `ui_in[7:3]` low. During a MAC, place
+operand B on `ui_in[3:0]` and operand A on `ui_in[7:4]`.
+
+For `READ`, selectors `000`--`010` return the three accumulator bytes; `011`
+returns pair count; `100` status; `101` last product; `110` latched
+configuration; and `111` design ID. `uo_out` is valid in the cycle marked by
+`uio_out[6]`.
+
+The pre-silicon suite will exhaust the multiplier and boundary transition
+spaces, formally prove conventional/dynamic equivalence for arbitrary streams,
+and run randomized command traces. Those vectors will be reused on silicon.
 
 ## External hardware
 
-None.
+Normal functional testing requires only the Tiny Tapeout demo board. Power
+measurement needs external instrumentation because the demo board has no
+documented current sensor. On the IHP breakout, the removable `R4` 0-ohm link
+between `VCORE_REG` and `VDD_CORE` provides a location for an external shunt
+and differential amplifier or a source-measure unit.

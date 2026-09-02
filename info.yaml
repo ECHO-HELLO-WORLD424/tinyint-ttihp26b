@@ -3,7 +3,7 @@ project:
   title:        "TinyInt"      # Project title
   author:       "ECHO-HELLO-WORLD424"      # Your name
   discord:      "patrick_echo_hello_world"      # Your discord username, for communication and automatically assigning you a Tapeout role (optional)
-  description:  "Single-lane, signed/unsigned INT4 streaming dot-product peripheral with a 20-bit accumulator, bias loading, INT8 saturation"      # One line description of what your project does
+  description:  "INT4 MAC research vehicle comparing conventional and bit-exact software-configurable staged 20-bit accumulators"      # One line description of what your project does
   language:     "Verilog" # other examples include SystemVerilog, Amaranth, VHDL, etc
   clock_hz:     50000000 # Clock frequency in Hz (or 0 if not applicable)
 
@@ -28,14 +28,14 @@ project:
 # This section is for the datasheet/website. Use descriptive names (e.g., RX, TX, MOSI, SCL, SEG_A, etc.).
 pinout:
   # Inputs
-  ui[0]: "multiplicand[0]"
-  ui[1]: "multiplicand[1]"
-  ui[2]: "multiplicand[2]"
-  ui[3]: "multiplicand[3]"
-  ui[4]: "multiplier[0]"
-  ui[5]: "multiplier[1]"
-  ui[6]: "multiplier[2]"
-  ui[7]: "multiplier[3]"
+  ui[0]: "operand_b[0] / acc_mode[0] on CLEAR"
+  ui[1]: "operand_b[1] / acc_mode[1] on CLEAR"
+  ui[2]: "operand_b[2] / zero_skip on CLEAR"
+  ui[3]: "operand_b[3] / reserved on CLEAR"
+  ui[4]: "operand_a[0] / reserved on CLEAR"
+  ui[5]: "operand_a[1] / reserved on CLEAR"
+  ui[6]: "operand_a[2] / reserved on CLEAR"
+  ui[7]: "operand_a[3] / reserved on CLEAR"
 
   # Outputs
   uo[0]: "response_data[0]"
@@ -52,10 +52,10 @@ pinout:
   uio[1]: "command[0]"
   uio[2]: "command[1]"
   uio[3]: "command[2]"
-  uio[4]: "signed_mode"
+  uio[4]: "signed_mode (sampled on CLEAR)"
   uio[5]: "ready"
   uio[6]: "response_valid"
-  uio[7]: "busy"
+  uio[7]: "busy (reserved low)"
 
 # Do not change!
 yaml_version: 6

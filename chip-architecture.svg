@@ -1,170 +1,99 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="760" viewBox="0 0 1200 760" role="img" aria-labelledby="title desc">
-  <title id="title">TinyInt chip architecture</title>
-  <desc id="desc">Architecture of the TinyInt INT4 streaming dot-product peripheral. Solid outlines and connections are implemented; dashed outlines and connections are planned.</desc>
+  <title id="title">TinyInt target research architecture</title>
+  <desc id="desc">A shared INT4 multiplier feeds selectable conventional and dynamic exact 20-bit accumulators. The dynamic accumulator contains five four-bit stages and software-selectable boundaries.</desc>
   <defs>
     <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-      <path d="M 0 0 L 10 5 L 0 10 z" fill="context-stroke"/>
+      <path d="M0 0 L10 5 L0 10 Z" fill="#334155"/>
     </marker>
     <filter id="shadow" x="-10%" y="-10%" width="120%" height="130%">
       <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#0f172a" flood-opacity="0.12"/>
     </filter>
     <style>
-      .canvas { fill:#f8fafc; }
-      .chip { fill:#ffffff; stroke:#334155; stroke-width:2.5; }
-      .implemented { stroke:#334155; stroke-width:2.2; }
-      .planned { stroke:#64748b; stroke-width:2.2; stroke-dasharray:8 6; }
-      .wire { fill:none; stroke:#334155; stroke-width:2.2; marker-end:url(#arrow); }
-      .wire-plan { fill:none; stroke:#64748b; stroke-width:2.2; stroke-dasharray:8 6; marker-end:url(#arrow); }
-      .wire-bidir { fill:none; stroke:#334155; stroke-width:2.2; marker-start:url(#arrow); marker-end:url(#arrow); }
-      .title { font:700 28px system-ui, sans-serif; fill:#0f172a; }
-      .subtitle { font:14px system-ui, sans-serif; fill:#475569; }
-      .module { font:700 16px system-ui, sans-serif; fill:#0f172a; text-anchor:middle; }
-      .detail { font:12px system-ui, sans-serif; fill:#334155; text-anchor:middle; }
-      .pin { font:600 13px ui-monospace, SFMono-Regular, Menlo, monospace; fill:#0f172a; }
-      .bus { font:12px ui-monospace, SFMono-Regular, Menlo, monospace; fill:#475569; }
-      .small { font:11px system-ui, sans-serif; fill:#64748b; }
-      .legend { font:12px system-ui, sans-serif; fill:#334155; }
+      .bg{fill:#f8fafc}.chip{fill:#fff;stroke:#334155;stroke-width:2.5}.box{stroke:#334155;stroke-width:2}.wire{fill:none;stroke:#334155;stroke-width:2.2;marker-end:url(#arrow)}
+      .title{font:700 28px system-ui,sans-serif;fill:#0f172a}.sub{font:14px system-ui,sans-serif;fill:#475569}.head{font:700 16px system-ui,sans-serif;fill:#0f172a;text-anchor:middle}.detail{font:12px system-ui,sans-serif;fill:#334155;text-anchor:middle}.mono{font:12px ui-monospace,SFMono-Regular,Menlo,monospace;fill:#334155}.note{font:13px system-ui,sans-serif;fill:#334155}.small{font:11px system-ui,sans-serif;fill:#64748b}
     </style>
   </defs>
 
-  <rect class="canvas" width="1200" height="760"/>
-  <text class="title" x="50" y="46">TinyInt — INT4 Streaming Dot-Product Architecture</text>
-  <text class="subtitle" x="50" y="70">Single lane • signed / unsigned • 20-bit accumulator • Tiny Tapeout pin interface</text>
+  <rect class="bg" width="1200" height="760"/>
+  <text class="title" x="48" y="45">TinyInt — bit-exact dynamic-accumulator experiment</text>
+  <text class="sub" x="48" y="70">Target revision • one shared signed/unsigned INT4 multiplier • conventional versus staged 20-bit accumulation</text>
 
-  <!-- Chip boundary -->
-  <rect class="chip" x="145" y="94" width="910" height="610" rx="24" filter="url(#shadow)"/>
-  <text class="small" x="165" y="121">tt_um_echo_hello_world424_tinyint</text>
+  <rect class="chip" x="130" y="100" width="950" height="540" rx="24" filter="url(#shadow)"/>
+  <text class="small" x="154" y="128">tt_um_echo_hello_world424_tinyint — 1 x 1 Tiny Tapeout tile</text>
 
-  <!-- External pins -->
-  <text class="pin" x="24" y="177">ui_in[7:0]</text>
-  <text class="bus" x="24" y="196">{activation, weight}</text>
-  <path class="wire" d="M 113 181 H 190"/>
+  <text class="mono" x="20" y="210">ui_in[7:0]</text>
+  <text class="small" x="20" y="229">operands / CLEAR config</text>
+  <path class="wire" d="M112 214 H175"/>
+  <text class="mono" x="20" y="286">uio_in[4:0]</text>
+  <text class="small" x="20" y="305">mode, command, valid</text>
+  <path class="wire" d="M112 290 H175"/>
 
-  <text class="pin" x="24" y="279">uio_in[4:0]</text>
-  <text class="bus" x="24" y="298">valid, cmd, mode</text>
-  <path class="wire" d="M 113 283 H 190"/>
+  <rect class="box" x="175" y="160" width="175" height="190" rx="14" fill="#dbeafe"/>
+  <text class="head" x="262.5" y="194">Protocol + config</text>
+  <text class="detail" x="262.5" y="220">command handshake</text>
+  <text class="detail" x="262.5" y="242">signed / unsigned latch</text>
+  <text class="detail" x="262.5" y="264">accumulator mode latch</text>
+  <text class="detail" x="262.5" y="286">zero-skip control</text>
+  <text class="detail" x="262.5" y="318">CLEAR payload:</text>
+  <text class="detail" x="262.5" y="336">conventional / 8 / 12 / 16</text>
 
-  <text class="pin" x="24" y="612">clk, rst_n</text>
-  <path class="wire" d="M 113 608 H 328"/>
+  <rect class="box" x="405" y="172" width="180" height="126" rx="14" fill="#fef3c7"/>
+  <text class="head" x="495" y="205">Shared INT4 multiplier</text>
+  <text class="detail" x="495" y="231">4 x 4 Baugh-Wooley</text>
+  <text class="detail" x="495" y="253">signed or unsigned</text>
+  <text class="detail" x="495" y="275">8-bit product</text>
+  <path class="wire" d="M350 235 H405"/>
 
-  <text class="pin" x="1076" y="176">uo_out[7:0]</text>
-  <text class="bus" x="1076" y="195">response data</text>
-  <path class="wire-plan" d="M 958 180 H 1069"/>
+  <rect class="box" x="635" y="172" width="160" height="126" rx="14" fill="#ffedd5"/>
+  <text class="head" x="715" y="205">Product extension</text>
+  <text class="detail" x="715" y="231">sign or zero extend</text>
+  <text class="detail" x="715" y="253">8 bits to 20 bits</text>
+  <text class="detail" x="715" y="275">zero detection</text>
+  <path class="wire" d="M585 235 H635"/>
 
-  <text class="pin" x="1076" y="276">uio_out[7:5]</text>
-  <text class="bus" x="1076" y="295">busy, resp_valid, ready</text>
-  <path class="wire-plan" d="M 958 280 H 1069"/>
+  <rect class="box" x="845" y="182" width="165" height="106" rx="14" fill="#f3e8ff"/>
+  <text class="head" x="927.5" y="216">Mode steering</text>
+  <text class="detail" x="927.5" y="241">operand isolation</text>
+  <text class="detail" x="927.5" y="263">one active path</text>
+  <path class="wire" d="M795 235 H845"/>
 
-  <text class="pin" x="1076" y="348">uio_oe[7:0]</text>
-  <text class="bus" x="1076" y="367">8'b1110_0000</text>
-  <path class="wire" d="M 325 348 H 1069"/>
+  <rect class="box" x="405" y="390" width="250" height="116" rx="14" fill="#dcfce7"/>
+  <text class="head" x="530" y="424">Conventional accumulator</text>
+  <text class="detail" x="530" y="451">20-bit adder + register</text>
+  <text class="detail" x="530" y="475">full-width baseline mode 00</text>
+  <text class="detail" x="530" y="494">modulo 2^20</text>
 
-  <!-- Protocol adapter -->
-  <rect x="190" y="142" width="135" height="230" rx="14" fill="#dbeafe" class="implemented"/>
-  <text class="module" x="257.5" y="176">Pin / Protocol</text>
-  <text class="module" x="257.5" y="196">Adapter</text>
-  <text class="detail" x="257.5" y="226">command decode</text>
-  <text class="detail" x="257.5" y="246">request packaging</text>
-  <text class="detail" x="257.5" y="266">fixed UIO enables</text>
-  <text class="detail" x="257.5" y="322">ready / response</text>
-  <text class="detail" x="257.5" y="340">pin mapping</text>
+  <rect class="box" x="705" y="360" width="305" height="176" rx="14" fill="#ecfeff"/>
+  <text class="head" x="857.5" y="391">Dynamic accumulator</text>
+  <text class="detail" x="857.5" y="413">five 4-bit state stages • modes 01 / 10 / 11</text>
+  <rect x="728" y="438" width="48" height="48" rx="8" fill="#bae6fd" stroke="#0369a1" stroke-width="1.5"/>
+  <rect x="783" y="438" width="48" height="48" rx="8" fill="#bae6fd" stroke="#0369a1" stroke-width="1.5"/>
+  <rect x="838" y="438" width="48" height="48" rx="8" fill="#cffafe" stroke="#0891b2" stroke-width="1.5"/>
+  <rect x="893" y="438" width="48" height="48" rx="8" fill="#e0f2fe" stroke="#0284c7" stroke-width="1.5"/>
+  <rect x="948" y="438" width="48" height="48" rx="8" fill="#e0f2fe" stroke="#0284c7" stroke-width="1.5"/>
+  <text class="detail" x="752" y="458">3:0</text><text class="detail" x="752" y="476">S0</text>
+  <text class="detail" x="807" y="458">7:4</text><text class="detail" x="807" y="476">S1</text>
+  <text class="detail" x="862" y="458">11:8</text><text class="detail" x="862" y="476">S2</text>
+  <text class="detail" x="917" y="458">15:12</text><text class="detail" x="917" y="476">S3</text>
+  <text class="detail" x="972" y="458">19:16</text><text class="detail" x="972" y="476">S4</text>
+  <text class="detail" x="857.5" y="516">cold stages wake only on carry / borrow events</text>
 
-  <!-- Arbiter -->
-  <rect x="370" y="164" width="135" height="100" rx="14" fill="#f3e8ff" class="planned"/>
-  <text class="module" x="437.5" y="200">Request Arbiter</text>
-  <text class="detail" x="437.5" y="224">external vs. BIST</text>
-  <text class="detail" x="437.5" y="242">one request / cycle</text>
-  <path class="wire-plan" d="M 325 214 H 370"/>
-  <text class="bus" x="332" y="205">req</text>
+  <path class="wire" d="M927 288 V330 H530 V390"/>
+  <path class="wire" d="M927 288 V330 H858 V360"/>
+  <text class="small" x="548" y="351">mode 00</text>
+  <text class="small" x="873" y="351">modes 01–11</text>
 
-  <!-- Current baseline bypass -->
-  <path class="wire" d="M 325 292 H 343 V 300 H 530"/>
-  <text class="bus" x="343" y="286">current external request path</text>
+  <rect class="box" x="405" y="555" width="605" height="58" rx="14" fill="#fce7f3"/>
+  <text class="head" x="707.5" y="580">Selected 20-bit state • overflow/count/status • registered byte readback</text>
+  <text class="detail" x="707.5" y="601">same arithmetic result in every mode</text>
+  <path class="wire" d="M530 506 V555"/>
+  <path class="wire" d="M858 536 V555"/>
 
-  <!-- BIST -->
-  <rect x="370" y="402" width="135" height="116" rx="14" fill="#fee2e2" class="planned"/>
-  <text class="module" x="437.5" y="438">BIST Engine</text>
-  <text class="detail" x="437.5" y="462">8 test vectors</text>
-  <text class="detail" x="437.5" y="481">checksum = 304</text>
-  <text class="detail" x="437.5" y="500">busy / pass / done</text>
-  <path class="wire-plan" d="M 437 402 V 264"/>
-  <text class="bus" x="445" y="384">internal req</text>
+  <text class="mono" x="1090" y="572">uo_out[7:0]</text>
+  <text class="small" x="1090" y="591">response data</text>
+  <path class="wire" d="M1010 584 H1080"/>
 
-  <!-- Core boundary -->
-  <rect x="530" y="132" width="428" height="500" rx="20" fill="#f8fafc" stroke="#0f766e" stroke-width="2.5"/>
-  <text class="module" x="744" y="160">tiny_int_core — sole architectural-state owner</text>
-
-  <!-- Mode/control -->
-  <rect x="560" y="184" width="156" height="94" rx="12" fill="#ccfbf1" class="implemented"/>
-  <text class="module" x="638" y="216">Mode Latch</text>
-  <text class="detail" x="638" y="239">CLEAR samples mode</text>
-  <text class="detail" x="638" y="258">BIST mode select hook</text>
-  <path class="wire" d="M 530 300 H 545 V 231 H 560"/>
-
-  <!-- Multiplier -->
-  <rect x="560" y="314" width="156" height="132" rx="12" fill="#fef3c7" class="implemented"/>
-  <text class="module" x="638" y="347">4×4 Multiplier</text>
-  <text class="detail" x="638" y="370">Baugh–Wooley</text>
-  <text class="detail" x="638" y="389">16 partial products</text>
-  <text class="detail" x="638" y="408">4 ripple-carry adds</text>
-  <text class="detail" x="638" y="427">8-bit combinational</text>
-  <path class="wire" d="M 530 300 H 538 V 380 H 560"/>
-  <path class="wire" d="M 638 278 V 314"/>
-  <text class="bus" x="646" y="299">mode</text>
-
-  <!-- Extension and accumulator -->
-  <rect x="758" y="184" width="170" height="86" rx="12" fill="#ffedd5" class="planned"/>
-  <text class="module" x="843" y="215">Product Extend</text>
-  <text class="detail" x="843" y="238">sign / zero → 20 bits</text>
-  <text class="detail" x="843" y="256">overflow detect</text>
-
-  <rect x="758" y="314" width="170" height="132" rx="12" fill="#dcfce7" class="planned"/>
-  <text class="module" x="843" y="347">20-bit Accumulator</text>
-  <text class="detail" x="843" y="371">bias + Σ(a × w)</text>
-  <text class="detail" x="843" y="391">modulo 2²⁰</text>
-  <text class="detail" x="843" y="411">sticky overflow</text>
-  <text class="detail" x="843" y="431">bias staging / commit</text>
-
-  <path class="wire-plan" d="M 716 380 H 736 V 227 H 758"/>
-  <text class="bus" x="720" y="370">product[7:0]</text>
-  <path class="wire-plan" d="M 843 270 V 314"/>
-  <text class="bus" x="851" y="297">20-bit term</text>
-
-  <!-- State/status -->
-  <rect x="560" y="486" width="156" height="114" rx="12" fill="#e0e7ff" class="planned"/>
-  <text class="module" x="638" y="518">State &amp; Status</text>
-  <text class="detail" x="638" y="542">pair count / last product</text>
-  <text class="detail" x="638" y="562">done / sticky errors</text>
-  <text class="detail" x="638" y="582">BIST result bits</text>
-  <path class="wire-plan" d="M 758 404 H 738 V 543 H 716"/>
-
-  <!-- Readback -->
-  <rect x="758" y="486" width="170" height="114" rx="12" fill="#fce7f3" class="planned"/>
-  <text class="module" x="843" y="518">Readback &amp; SAT8</text>
-  <text class="detail" x="843" y="542">8-register selector</text>
-  <text class="detail" x="843" y="562">signed / unsigned clamp</text>
-  <text class="detail" x="843" y="582">registered response</text>
-  <path class="wire-plan" d="M 843 446 V 486"/>
-  <path class="wire-plan" d="M 716 568 H 758"/>
-  <path class="wire-plan" d="M 928 543 H 976 V 180 H 958"/>
-
-  <!-- Current implemented output bypass -->
-  <path class="wire" d="M 716 414 H 976 V 661 H 1043"/>
-  <text class="bus" x="779" y="431">current baseline: raw multiplier_product → uo_out</text>
-  <text class="small" x="970" y="681">temporary implemented output</text>
-
-  <!-- Clocks -->
-  <path class="wire" d="M 328 608 H 515 V 616 H 530"/>
-  <text class="bus" x="347" y="600">core sequential state</text>
-
-  <!-- Legend -->
-  <rect x="50" y="718" width="18" height="12" rx="2" fill="#dbeafe" stroke="#334155" stroke-width="2"/>
-  <text class="legend" x="77" y="729">implemented</text>
-  <rect x="175" y="718" width="18" height="12" rx="2" fill="#f1f5f9" stroke="#64748b" stroke-width="2" stroke-dasharray="5 4"/>
-  <text class="legend" x="202" y="729">not yet implemented</text>
-  <line x1="353" y1="724" x2="397" y2="724" stroke="#334155" stroke-width="2.2" marker-end="url(#arrow)"/>
-  <text class="legend" x="407" y="729">implemented connection</text>
-  <line x1="575" y1="724" x2="619" y2="724" stroke="#64748b" stroke-width="2.2" stroke-dasharray="7 5" marker-end="url(#arrow)"/>
-  <text class="legend" x="629" y="729">planned connection</text>
-  <text class="small" x="1180" y="729" text-anchor="end">Status derived from src/*.v</text>
+  <rect x="48" y="674" width="1104" height="56" rx="12" fill="#fff" stroke="#cbd5e1" stroke-width="1.5"/>
+  <text class="note" x="70" y="698">Experimental invariant: dynamic boundaries change switching activity, never precision.</text>
+  <text class="note" x="70" y="719">Power study: same die and workload for A/B modes; standalone builds for uncontaminated area, timing, and leakage.</text>
 </svg>
