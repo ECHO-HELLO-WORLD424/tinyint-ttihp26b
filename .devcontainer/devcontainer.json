@@ -1,0 +1,52 @@
+// For format details, see https://aka.ms/devcontainer.json. For config options, see the README at:
+// https://github.com/microsoft/vscode-dev-containers/tree/v0.183.0/containers/ubuntu
+{
+  "name": "Tiny Tapeout Dev Container",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "context": "..",
+    "options": ["--platform=linux/amd64"]
+  },
+  "runArgs": [
+    "--platform=linux/amd64",
+    "--memory=10GB"
+  ],
+  "containerEnv": {
+    "HTTP_PROXY": "",
+    "HTTPS_PROXY": "",
+    "ALL_PROXY": "",
+    "NO_PROXY": "*",
+    "http_proxy": "",
+    "https_proxy": "",
+    "all_proxy": "",
+    "no_proxy": "*"
+  },
+  "remoteEnv": {
+    "HTTP_PROXY": "",
+    "HTTPS_PROXY": "",
+    "ALL_PROXY": "",
+    "NO_PROXY": "*",
+    "http_proxy": "",
+    "https_proxy": "",
+    "all_proxy": "",
+    "no_proxy": "*"
+  },
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "terminal.integrated.defaultProfile.linux": "bash"
+      },
+      "extensions": ["mshr-h.veriloghdl", "surfer-project.surfer"]
+    }
+  },
+  "features": {
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {
+      "moby": true,
+      "azureDnsAutoDetection": true,
+      "version": "latest",
+      "dockerDashComposeVersion": "none"
+    }
+  },
+  "postCreateCommand": "echo 'source /ttsetup/venv/bin/activate' >> ~/.bashrc",
+  "postStartCommand": "/bin/sh .devcontainer/copy_tt_support_tools.sh"
+}
