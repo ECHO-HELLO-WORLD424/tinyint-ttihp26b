@@ -12,9 +12,17 @@ COMMANDS = {
     "mac": 0b010,
     "mac_last": 0b011,
     "read": 0b100,
-    "load_bias_lo": 0b101,
-    "load_bias_hi": 0b110,
-    "self_test": 0b111,
+}
+
+ACCUMULATOR_MODES = {
+    "conventional": 0b00,
+    "conv": 0b00,
+    "dynamic8": 0b01,
+    "dynamic-8": 0b01,
+    "dynamic12": 0b10,
+    "dynamic-12": 0b10,
+    "dynamic16": 0b11,
+    "dynamic-16": 0b11,
 }
 
 READ_SELECTORS = {
@@ -24,7 +32,7 @@ READ_SELECTORS = {
     "count": 0b011,
     "status": 0b100,
     "product": 0b101,
-    "sat": 0b110,
+    "config": 0b110,
     "id": 0b111,
 }
 
@@ -37,12 +45,14 @@ HELP = """Commands:
   step [COUNT]                 advance COUNT complete clock cycles (default 1)
   reset                        assert reset for two cycles, then release it
   send COMMAND [DATA] [MODE]   accept one protocol command (MODE: 0/1)
-  clear signed|unsigned        clear and latch the selected arithmetic mode
+  clear ACCUM MODE [skip]      clear and latch accumulator/arithmetic modes
+                               ACCUM: conventional/dynamic8/dynamic12/dynamic16
+                               MODE: signed/unsigned; optional skip enables
+                               exact zero-product write suppression
   mac ACTIVATION WEIGHT        accept one operand pair (values may be signed)
   last ACTIVATION WEIGHT       MAC the final pair and set done
   finish                       finish without another MAC
-  read SELECTOR                read acc_lo/acc_mid/acc_hi/count/status/product/sat/id
-  bias VALUE signed|unsigned   load a 16-bit bias and latch the selected mode
+  read SELECTOR                read acc_lo/acc_mid/acc_hi/count/status/product/config/id
   help                         show this help
   quit                         end the simulation
 
@@ -87,7 +97,7 @@ def show(dut, cycle):
         f"  outputs: uo_out=0x{uo:02x} ({uo:08b})  "
         f"uio_out=0x{uio_out:02x} ({uio_out:08b})  uio_oe=0x{uio_oe:02x}\n"
         f"  decoded: valid={uio_in & 1} cmd={(uio_in >> 1) & 7:03b} "
-        f"mode={(uio_in >> 4) & 1} | ready={(uio_out >> 5) & 1} "
+        f"signed={(uio_in >> 4) & 1} | ready={(uio_out >> 5) & 1} "
         f"response_valid={(uio_out >> 6) & 1} busy={(uio_out >> 7) & 1}",
         flush=True,
     )
@@ -184,10 +194,22 @@ async def interactive(dut):
                 mode = mode_value(words[3]) if len(words) == 4 else None
                 cycle = await send_command(dut, cycle, opcode, data, mode)
             elif command == "clear":
-                if len(words) != 2:
-                    raise ValueError("usage: clear signed|unsigned")
+                if len(words) not in {3, 4}:
+                    raise ValueError(
+                        "usage: clear ACCUMULATOR_MODE signed|unsigned [skip]"
+                    )
+                accumulator_mode = named_or_number(words[1], ACCUMULATOR_MODES)
+                skip = 0
+                if len(words) == 4:
+                    if words[3].lower() not in {"skip", "1", "on"}:
+                        raise ValueError("optional fourth argument must be skip, 1, or on")
+                    skip = 1
                 cycle = await send_command(
-                    dut, cycle, COMMANDS["clear"], mode=mode_value(words[1])
+                    dut,
+                    cycle,
+                    COMMANDS["clear"],
+                    data=(accumulator_mode & 0x3) | (skip << 2),
+                    mode=mode_value(words[2]),
                 )
             elif command in {"mac", "last"}:
                 if len(words) != 3:
@@ -205,16 +227,6 @@ async def interactive(dut):
                     raise ValueError("usage: read SELECTOR")
                 selector = named_or_number(words[1], READ_SELECTORS)
                 cycle = await send_command(dut, cycle, COMMANDS["read"], selector)
-            elif command == "bias":
-                if len(words) != 3:
-                    raise ValueError("usage: bias VALUE signed|unsigned")
-                value, mode = number(words[1]) & 0xFFFF, mode_value(words[2])
-                cycle = await send_command(
-                    dut, cycle, COMMANDS["load_bias_lo"], value & 0xFF, mode
-                )
-                cycle = await send_command(
-                    dut, cycle, COMMANDS["load_bias_hi"], value >> 8, mode
-                )
             else:
                 raise ValueError(f"unknown command: {command!r}; type 'help'")
         except EOFError:
