@@ -138,7 +138,14 @@ module tiny_int_core (
   wire dynamic_accumulator_overflow;
   wire [4:0] dynamic_stage_write_enable;
 
+  // The clock-gated dynamic accumulator is a power-study prototype; the tapeout
+  // regression keeps the data-gated leaf by default. Synthesis selects the
+  // clock-gated variant with VERILOG_DEFINES=CLKGATE_ACCUMULATOR.
+`ifdef CLKGATE_ACCUMULATOR
+  tiny_int_dynamic_accumulator_clkgate dynamic_accumulator (
+`else
   tiny_int_dynamic_accumulator dynamic_accumulator (
+`endif
       .clk                 (clk),
       .rst_n               (rst_n),
       .clear               (clear_accepted),
