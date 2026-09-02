@@ -6,7 +6,9 @@ SIM ?= icarus
 FST ?= -fst # Use more efficient FST format
 TOPLEVEL_LANG ?= verilog
 SRC_DIR = $(PWD)/../src
-PROJECT_SOURCES = int4_multiplier.v product_extender.v tiny_int_accumulator.v tiny_int_core.v tiny_int_protocol.v tt_um_echo_hello_world424_tinyint.v
+PROJECT_SOURCES = int4_multiplier.v product_extender.v tiny_int_accumulator.v tiny_int_protocol.v tt_um_echo_hello_world424_tinyint.v
+DYNAMIC_ACCUMULATOR_SOURCE ?= $(SRC_DIR)/tiny_int_dynamic_accumulator.v
+CORE_SOURCE ?= $(SRC_DIR)/tiny_int_core.v
 
 # Test selection:
 #   make test=ALL              Run every test_<module>.py file.
@@ -45,13 +47,15 @@ ifneq ($(GATES),yes)
 # RTL simulation:
 SIM_BUILD				= sim_build/rtl
 VERILOG_SOURCES += $(addprefix $(SRC_DIR)/,$(PROJECT_SOURCES))
+VERILOG_SOURCES += $(DYNAMIC_ACCUMULATOR_SOURCE)
+VERILOG_SOURCES += $(CORE_SOURCE)
 
 else
 
 # Leaf-module tests cannot run against the flattened gate-level netlist.
 # Keep exhaustive multiplier coverage in RTL and exercise the physical top-level
 # interface in gate mode.
-COCOTB_TEST_MODULES = test_dot_product_engine,test_mode_latching
+COCOTB_TEST_MODULES = test_core_multistage_gate,test_dot_product_engine,test_mode_latching
 
 # Gate level simulation:
 SIM_BUILD				= sim_build/gl
@@ -62,7 +66,8 @@ VERILOG_SOURCES += $(PDK_ROOT)/ihp-sg13g2/libs.ref/sg13g2_io/verilog/sg13g2_io.v
 VERILOG_SOURCES += $(PDK_ROOT)/ihp-sg13g2/libs.ref/sg13g2_stdcell/verilog/sg13g2_stdcell.v
 
 # this gets copied in by the GDS action workflow
-VERILOG_SOURCES += $(PWD)/gate_level_netlist.v
+GATE_NETLIST ?= $(PWD)/gate_level_netlist.v
+VERILOG_SOURCES += $(GATE_NETLIST)
 
 endif
 

@@ -1,0 +1,17 @@
+[options]
+mode prove
+depth 20
+
+[engines]
+abc pdr
+
+[script]
+read -formal -sv tiny_int_accumulator.v tiny_int_dynamic_accumulator.v tiny_int_dynamic_accumulator_equivalence.v
+prep -top tiny_int_dynamic_accumulator_equivalence
+async2sync
+dffunmap
+
+[files]
+../src/tiny_int_accumulator.v
+../src/tiny_int_dynamic_accumulator.v
+tiny_int_dynamic_accumulator_equivalence.v

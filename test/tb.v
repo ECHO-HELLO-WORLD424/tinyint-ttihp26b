@@ -46,6 +46,15 @@ module tb ();
   wire        integrated_done;
   wire        integrated_count_overflow;
   wire        integrated_protocol_error;
+  wire [19:0] integrated_conventional_accumulator_value;
+  wire [19:0] integrated_dynamic_accumulator_value;
+  wire [19:0] integrated_conventional_addend;
+  wire [19:0] integrated_dynamic_addend;
+  wire [1:0]  integrated_accumulator_mode;
+  wire        integrated_zero_skip;
+  wire        integrated_conventional_accumulate;
+  wire        integrated_dynamic_accumulate;
+  wire [4:0]  integrated_dynamic_stage_write_enable;
 
   // Independent accumulator-leaf interface for state and arithmetic tests.
   reg         accumulator_clear;
@@ -59,6 +68,22 @@ module tb ();
   wire        accumulator_addition_carry;
   wire        accumulator_addition_overflow;
   wire        accumulator_overflow;
+
+  // Independent dynamic-accumulator interface. Keeping the leaf visible here
+  // permits exhaustive state/event testing before it is integrated in core.
+  reg         dynamic_clear;
+  reg         dynamic_load;
+  reg         dynamic_accumulate;
+  reg         dynamic_signed_mode;
+  reg  [1:0]  dynamic_accumulator_mode;
+  reg  [19:0] dynamic_load_value;
+  reg  [19:0] dynamic_addend;
+  wire [19:0] dynamic_accumulator_value;
+  wire [19:0] dynamic_addition_result;
+  wire        dynamic_addition_carry;
+  wire        dynamic_addition_overflow;
+  wire        dynamic_accumulator_overflow;
+  wire [4:0]  dynamic_stage_write_enable;
 `endif
 
   tt_um_echo_hello_world424_tinyint user_project (
@@ -74,14 +99,42 @@ module tb ();
 
 `ifndef GL_TEST
   assign integrated_extended_product = user_project.extended_product;
-  assign integrated_accumulator_addition_result =
-      user_project.core.accumulator_addition_result;
   assign integrated_accumulator_value = user_project.accumulator_value;
   assign integrated_multiplier_product = user_project.multiplier_product;
   assign integrated_pair_count = user_project.pair_count;
   assign integrated_done = user_project.done;
   assign integrated_count_overflow = user_project.count_overflow;
   assign integrated_protocol_error = user_project.protocol_error;
+`ifndef CORE_GATE_TEST
+  assign integrated_accumulator_addition_result =
+      user_project.core.accumulator_addition_result;
+  assign integrated_conventional_accumulator_value =
+      user_project.core.conventional_accumulator_value;
+  assign integrated_dynamic_accumulator_value =
+      user_project.core.dynamic_accumulator_value;
+  assign integrated_conventional_addend =
+      user_project.core.conventional_addend;
+  assign integrated_dynamic_addend = user_project.core.dynamic_addend;
+  assign integrated_accumulator_mode =
+      user_project.core.accumulator_mode_register;
+  assign integrated_zero_skip = user_project.core.zero_skip_register;
+  assign integrated_conventional_accumulate =
+      user_project.core.conventional_accumulate;
+  assign integrated_dynamic_accumulate = user_project.core.dynamic_accumulate;
+  assign integrated_dynamic_stage_write_enable =
+      user_project.core.dynamic_stage_write_enable;
+`else
+  assign integrated_accumulator_addition_result = 20'b0;
+  assign integrated_conventional_accumulator_value = 20'b0;
+  assign integrated_dynamic_accumulator_value = 20'b0;
+  assign integrated_conventional_addend = 20'b0;
+  assign integrated_dynamic_addend = 20'b0;
+  assign integrated_accumulator_mode = 2'b0;
+  assign integrated_zero_skip = 1'b0;
+  assign integrated_conventional_accumulate = 1'b0;
+  assign integrated_dynamic_accumulate = 1'b0;
+  assign integrated_dynamic_stage_write_enable = 5'b0;
+`endif
 
   int4_multiplier multiplier_dut (
       .multiplicand(multiplier_multiplicand),
@@ -110,6 +163,24 @@ module tb ();
       .addition_carry   (accumulator_addition_carry),
       .addition_overflow(accumulator_addition_overflow),
       .accumulator_overflow(accumulator_overflow)
+  );
+
+  tiny_int_dynamic_accumulator dynamic_accumulator_dut (
+      .clk                 (clk),
+      .rst_n               (rst_n),
+      .clear               (dynamic_clear),
+      .load                (dynamic_load),
+      .accumulate          (dynamic_accumulate),
+      .signed_mode         (dynamic_signed_mode),
+      .accumulator_mode    (dynamic_accumulator_mode),
+      .load_value          (dynamic_load_value),
+      .addend              (dynamic_addend),
+      .accumulator_value   (dynamic_accumulator_value),
+      .addition_result     (dynamic_addition_result),
+      .addition_carry      (dynamic_addition_carry),
+      .addition_overflow   (dynamic_addition_overflow),
+      .accumulator_overflow(dynamic_accumulator_overflow),
+      .stage_write_enable  (dynamic_stage_write_enable)
   );
 `endif
 

@@ -5,7 +5,7 @@ import random
 
 import cocotb
 from cocotb.clock import Clock
-from cocotb.triggers import RisingEdge, Timer
+from cocotb.triggers import FallingEdge, RisingEdge, Timer
 
 
 ACCUMULATOR_WIDTH = 20
@@ -216,20 +216,24 @@ async def test_accumulator_back_to_back_throughput(dut):
 
 @cocotb.test()
 async def test_core_datapath_reaches_accumulator_addition_input(dut):
-    """The core must connect every signed/unsigned product to the adder."""
+    """Every product reaches only the enabled conventional adder."""
     await start_and_reset(dut)
 
     for signed_mode in (0, 1):
+        dut.ui_in.value = 0
         dut.uio_in.value = control_value(
             command=COMMAND_CLEAR, signed_mode=signed_mode, valid=1
         )
         await RisingEdge(dut.clk)
-        dut.uio_in.value = control_value(signed_mode=signed_mode)
+        await FallingEdge(dut.clk)
+        dut.uio_in.value = control_value(
+            command=0b010, signed_mode=1 - signed_mode, valid=1
+        )
 
         for multiplier in range(16):
             for multiplicand in range(16):
                 dut.ui_in.value = (multiplier << 4) | multiplicand
-                await Timer(1, unit="ns")
+                await Timer(1, unit="ps")
 
                 if signed_mode:
                     expected = (
@@ -248,8 +252,13 @@ async def test_core_datapath_reaches_accumulator_addition_input(dut):
                     f"expected adder input 0x{expected:05x}, "
                     f"got 0x{actual:05x}"
                 )
+                assert int(dut.integrated_conventional_addend.value) == expected
+                assert int(dut.integrated_dynamic_addend.value) == 0
 
-    # Protocol controls are deliberately inactive until the command stage.
+        dut.uio_in.value = 0
+
+    # The tight sub-nanosecond sweep deasserts valid before the next edge, so it
+    # observes all 512 products without committing any of them.
     assert int(dut.integrated_accumulator_value.value) == 0
 
 
