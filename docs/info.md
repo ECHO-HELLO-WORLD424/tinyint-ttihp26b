@@ -7,9 +7,9 @@ start, software selects a conventional mode or an 8-, 12-, or 16-bit dynamic
 boundary. Cold stages update only when a carry or borrow crosses the selected
 boundary; no accumulator bits are truncated.
 
-The current repository RTL implements the conventional baseline. The dynamic
-path and its new configuration/readback behavior are the frozen next
-implementation milestone described in `project-description.md`.
+The repository RTL implements the conventional and dynamic paths, operand
+isolation, configuration latching, and the complete readback behavior frozen in
+`project-description.md`.
 
 ## How to test
 
@@ -32,9 +32,10 @@ returns pair count; `100` status; `101` last product; `110` latched
 configuration; and `111` design ID. `uo_out` is valid in the cycle marked by
 `uio_out[6]`.
 
-The pre-silicon suite will exhaust the multiplier and boundary transition
-spaces, formally prove conventional/dynamic equivalence for arbitrary streams,
-and run randomized command traces. Those vectors will be reused on silicon.
+The pre-silicon suite exhausts the multiplier and boundary transition spaces,
+formally proves conventional/dynamic equivalence for arbitrary streams, and
+runs randomized command traces at RTL and gate level. Those vectors can be
+reused on silicon.
 
 ## External hardware
 

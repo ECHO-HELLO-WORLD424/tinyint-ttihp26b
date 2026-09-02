@@ -11,12 +11,13 @@ stages. Software selects an 8-, 12-, or 16-bit active boundary; higher stages
 update only when a carry or borrow crosses that boundary. Every mode retains
 the same full 20-bit modulo result.
 
-The current RTL is the conventional baseline. The frozen target architecture,
-protocol, verification gates, and measurement method are in the
+The RTL implements both accumulator architectures, their isolated mode mux,
+the complete command/readback protocol, and the tapeout wrapper. The frozen
+architecture, protocol, verification gates, and measurement method are in the
 [project specification](project-description.md). The literature review and
 research plan are in the [research proposal](research-proposal.md).
 
-## Target interface
+## Interface
 
 - `ui_in[3:0]`: operand B during `MAC`
 - `ui_in[7:4]`: operand A during `MAC`
@@ -34,7 +35,7 @@ dynamic-8, dynamic-12, or dynamic-16, and `ui_in[2]` enables exact zero-product
 skipping. `ui_in[7:3]` must be zero during `CLEAR`. The physical pinout is
 unchanged from the baseline.
 
-## Target architecture
+## Architecture
 
 ```mermaid
 flowchart LR
@@ -55,24 +56,30 @@ flowchart LR
     READ --> HOST
 ```
 
-The nonselected accumulator is operand-isolated and state-disabled. Baseline-
-only and dynamic-only builds will be synthesized separately for uncontaminated
-area/timing estimates; the composite tapeout enables same-die active-energy
-A/B measurements.
+The nonselected accumulator is operand-isolated and state-disabled. The
+provided synthesis scripts generate baseline-only and dynamic-only builds with
+identical constraints for uncontaminated comparison; the composite tapeout
+enables same-die active-energy A/B measurements.
 
 ## Verification
 
-Run the existing baseline Cocotb regression with:
+Run the full RTL Cocotb regression with:
 
 ```sh
 make test=ALL
 ```
 
-Before tapeout, the dynamic revision must add exhaustive multiplier and
-one-step boundary tests, formal equivalence for arbitrary streams, randomized
-protocol tests, gate-level regression, post-layout activity/power analysis,
-and clean timing/DRC/LVS results. The same vectors will be reused post-silicon
-through the Tiny Tapeout SDK or `microcotb`.
+The repository also contains exhaustive one-step dynamic-accumulator tests,
+formal arbitrary-stream equivalence, randomized protocol/model tests,
+standalone/composite synthesis checks, and post-layout gate regression. Every
+command and result used for release verification is recorded in
+[`TEST_LOG.md`](TEST_LOG.md). The same architectural vectors can be reused
+post-silicon through the Tiny Tapeout SDK or `microcotb`.
+
+The final IHP SG13G2 implementation fits one 1x1 tile at 50 MHz and is clean in
+route DRC, Magic DRC, KLayout DRC, Netgen LVS, antenna, setup, and hold checks.
+The reusable activity flow and standalone comparison scripts are documented in
+[`synthesis/README.md`](synthesis/README.md).
 
 ## Tiny Tapeout
 

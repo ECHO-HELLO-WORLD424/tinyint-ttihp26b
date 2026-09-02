@@ -35,17 +35,17 @@ make play
 ```
 
 The `show`, `set ui`, `set uio`, and `step` commands provide raw pin-level
-control. Convenience commands such as `clear signed`, `mac -3 4`, `last 2 5`,
-and `read acc_lo` exercise the TinyInt protocol. Type `help` in the simulator
-for the complete command list. The session also writes `test/tb.fst`, so the
-same manual interaction can be inspected afterward in GTKWave or Surfer.
+control. Convenience commands such as `clear dynamic8 signed skip`, `mac -3 4`,
+`last 2 5`, and `read config` exercise the TinyInt protocol. Type `help` in the
+simulator for the complete command list. The session also writes `test/tb.fst`,
+so the same manual interaction can be inspected afterward in GTKWave or
+Surfer.
 
-To run gatelevel simulation, first harden your project and copy `../runs/wokwi/results/final/verilog/gl/{your_module_name}.v` to `gate_level_netlist.v`.
-
-Then run:
+After copying the final hardened netlist from `runs/wokwi/final/nl/` to the
+ignored local file `test/gate_level_netlist.v`, run gate-level simulation with:
 
 ```sh
-make test=ALL GATES=yes
+make -C test GATES=yes
 ```
 
 If you wish to save the waveform in VCD format instead of FST format, edit tb.v to use `$dumpfile("tb.vcd");` and then run:

@@ -9,7 +9,10 @@ src/user_config.json
 src/config_merged.json
 test/sim_build
 test/__pycache__/
+__pycache__/
 test/results.xml
+test/interactive_results.xml
 test/gate_level_netlist.v
+formal/tiny_int_dynamic_accumulator_equivalence/
 /tt/
 .devcontainer/devcontainer-lock.json
