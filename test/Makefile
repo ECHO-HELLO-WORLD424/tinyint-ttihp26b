@@ -49,6 +49,11 @@ SIM_BUILD				= sim_build/rtl
 VERILOG_SOURCES += $(addprefix $(SRC_DIR)/,$(PROJECT_SOURCES))
 VERILOG_SOURCES += $(DYNAMIC_ACCUMULATOR_SOURCE)
 VERILOG_SOURCES += $(CORE_SOURCE)
+# The core instantiates the ICG accumulator banks, whose sg13g2_lgcp_1 cells
+# need this simulation-only behavioral model (never synthesized).
+VERILOG_SOURCES += $(PWD)/sg13g2_lgcp_model.v
+VERILOG_SOURCES += $(SRC_DIR)/tiny_int_accumulator_icg.v
+VERILOG_SOURCES += $(SRC_DIR)/tiny_int_dynamic_accumulator_icg.v
 
 else
 

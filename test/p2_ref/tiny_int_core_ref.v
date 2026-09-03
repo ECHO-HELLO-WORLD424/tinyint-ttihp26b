@@ -6,9 +6,14 @@
 `timescale 1ns / 1ps
 `default_nettype none
 
+// Reference copy of the baseline (data-gated only, no clock gating) command
+// core, renamed for the two-compilation log-diff equivalence flow in
+// test/p2_core_stream_tb.v. Instantiates the baseline accumulator leaves;
+// kept frozen on purpose: it is the golden RTL for the ICG proposal.
+
 // State-owning command core for the streaming INT4 dot-product engine.
 // The physical Tiny Tapeout protocol is deliberately kept outside this module.
-module tiny_int_core (
+module tiny_int_core_ref (
     input  wire        clk,
     input  wire        rst_n,
 
@@ -96,16 +101,14 @@ module tiny_int_core (
   wire accumulator_write_enable = mac_accepted &&
       (!zero_skip_register || !product_is_zero);
   wire conventional_selected = accumulator_mode_register == 2'b00;
-  wire dynamic_selected = !conventional_selected;
   wire conventional_accumulate = accumulator_write_enable &&
                                  conventional_selected;
   wire dynamic_accumulate = accumulator_write_enable &&
                             !conventional_selected;
 
   // Operand isolation keeps each unselected adder input constant as well as
-  // disabling its state write. The accumulator registers additionally gate
-  // their clocks through integrated clock-gating cells (see the *_icg bank
-  // modules); the bookkeeping registers above stay on the raw clock.
+  // disabling its state write. This is synchronous data gating, not clock
+  // gating; clk reaches every register through the normal CTS network.
   wire [19:0] conventional_addend = conventional_accumulate ?
                                     extended_product : 20'b0;
   wire [19:0] dynamic_addend = dynamic_accumulate ?
@@ -116,13 +119,8 @@ module tiny_int_core (
   wire conventional_addition_carry;
   wire conventional_addition_overflow;
   wire conventional_accumulator_overflow;
-  wire conventional_bank_gclk_en;
 
-  // Bank-level clock gating: GATE = conventional_selected &
-  // (accumulator_write_enable | clear_accepted). conventional_accumulate
-  // already folds in the selection and zero-skip; a deselected bank's clock
-  // stops entirely.
-  tiny_int_accumulator_icg conventional_accumulator (
+  tiny_int_accumulator conventional_accumulator (
       .clk                 (clk),
       .rst_n               (rst_n),
       .clear               (clear_accepted),
@@ -135,9 +133,7 @@ module tiny_int_core (
       .addition_result     (conventional_addition_result),
       .addition_carry      (conventional_addition_carry),
       .addition_overflow   (conventional_addition_overflow),
-      .accumulator_overflow(conventional_accumulator_overflow),
-      .bank_select         (conventional_selected),
-      .bank_gclk_en        (conventional_bank_gclk_en)
+      .accumulator_overflow(conventional_accumulator_overflow)
   );
 
   wire [19:0] dynamic_accumulator_value;
@@ -146,19 +142,11 @@ module tiny_int_core (
   wire dynamic_addition_overflow;
   wire dynamic_accumulator_overflow;
   wire [4:0] dynamic_stage_write_enable;
-  wire dynamic_bank_gclk_en;
-  wire [4:2] dynamic_stage_gclk_en;
 
-  // Bank-level clock gating: GATE = dynamic_selected &
-  // (accumulator_write_enable | clear_accepted). The *_icg module computes
-  // GATE = accumulate | clear | load from its inputs, so the core folds the
-  // selection into both terms. Clearing a deselected dynamic bank is
-  // unobservable: mode changes only via CLEAR, and the CLEAR that leaves
-  // dynamic mode still sees dynamic_selected=1 and clears it.
-  tiny_int_dynamic_accumulator_icg dynamic_accumulator (
+  tiny_int_dynamic_accumulator dynamic_accumulator (
       .clk                 (clk),
       .rst_n               (rst_n),
-      .clear               (clear_accepted && dynamic_selected),
+      .clear               (clear_accepted),
       .load                (1'b0),
       .accumulate          (dynamic_accumulate),
       .signed_mode         (signed_mode_register),
@@ -170,9 +158,7 @@ module tiny_int_core (
       .addition_carry      (dynamic_addition_carry),
       .addition_overflow   (dynamic_addition_overflow),
       .accumulator_overflow(dynamic_accumulator_overflow),
-      .stage_write_enable  (dynamic_stage_write_enable),
-      .bank_gclk_en        (dynamic_bank_gclk_en),
-      .stage_gclk_en       (dynamic_stage_gclk_en)
+      .stage_write_enable  (dynamic_stage_write_enable)
   );
 
   assign accumulator_value = conventional_selected ?
@@ -267,9 +253,6 @@ module tiny_int_core (
                                       dynamic_addition_carry,
                                       dynamic_addition_overflow,
                                       dynamic_stage_write_enable,
-                                      conventional_bank_gclk_en,
-                                      dynamic_bank_gclk_en,
-                                      dynamic_stage_gclk_en,
                                       request_from_bist, 1'b0};
 
 endmodule
