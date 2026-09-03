@@ -6,15 +6,13 @@
 `timescale 1ns / 1ps
 `default_nettype none
 
-// State-owning command core for the streaming INT4 dot-product engine.
+// Golden reference for the P1 unified-bank equivalence testbench. This is a
+// byte-for-byte copy of the pre-proposal composite core (two full accumulator
+// banks behind bank-select muxes) with only the module renamed to
+// tiny_int_core_ref so it can be compiled next to proposal leaves. It is NOT
+// part of the design; src/tiny_int_core.v is the single source of truth.
 // The physical Tiny Tapeout protocol is deliberately kept outside this module.
-//
-// P1 unified-bank proposal: a single five-nibble accumulator bank serves all
-// architecture modes. The latched accumulator_mode selects the update policy
-// inside tiny_int_unified_accumulator, where the conventional mode is exactly
-// the dynamic engine with the active boundary pushed to 20 bits. The former
-// conventional bank, its addend gating, and the bank-select muxes are gone.
-module tiny_int_core (
+module tiny_int_core_ref (
     input  wire        clk,
     input  wire        rst_n,
 
@@ -101,45 +99,81 @@ module tiny_int_core (
   wire product_is_zero = multiplier_product == 8'b0;
   wire accumulator_write_enable = mac_accepted &&
       (!zero_skip_register || !product_is_zero);
+  wire conventional_selected = accumulator_mode_register == 2'b00;
+  wire conventional_accumulate = accumulator_write_enable &&
+                                 conventional_selected;
+  wire dynamic_accumulate = accumulator_write_enable &&
+                            !conventional_selected;
 
-  // One shared addend path replaces the former per-bank gating pair: the
-  // unified bank sees the extended product only on an enabled accumulation,
-  // otherwise every adder operand is held constant.
-  wire [19:0] accumulator_addend = accumulator_write_enable ?
-                                   extended_product : 20'b0;
+  // Operand isolation keeps each unselected adder input constant as well as
+  // disabling its state write. This is synchronous data gating, not clock
+  // gating; clk reaches every register through the normal CTS network.
+  wire [19:0] conventional_addend = conventional_accumulate ?
+                                    extended_product : 20'b0;
+  wire [19:0] dynamic_addend = dynamic_accumulate ?
+                               extended_product : 20'b0;
 
-  wire [19:0] unified_accumulator_value;
-  wire [19:0] unified_addition_result;
-  wire unified_addition_carry;
-  wire unified_addition_overflow;
-  wire unified_accumulator_overflow;
-  wire [4:0] accumulator_stage_write_enable;
+  wire [19:0] conventional_accumulator_value;
+  wire [19:0] conventional_addition_result;
+  wire conventional_addition_carry;
+  wire conventional_addition_overflow;
+  wire conventional_accumulator_overflow;
 
-  tiny_int_unified_accumulator unified_accumulator (
+  tiny_int_accumulator conventional_accumulator (
       .clk                 (clk),
       .rst_n               (rst_n),
       .clear               (clear_accepted),
       .load                (1'b0),
-      .accumulate          (accumulator_write_enable),
+      .accumulate          (conventional_accumulate),
+      .signed_mode         (signed_mode_register),
+      .load_value          (20'b0),
+      .addend              (conventional_addend),
+      .accumulator_value   (conventional_accumulator_value),
+      .addition_result     (conventional_addition_result),
+      .addition_carry      (conventional_addition_carry),
+      .addition_overflow   (conventional_addition_overflow),
+      .accumulator_overflow(conventional_accumulator_overflow)
+  );
+
+  wire [19:0] dynamic_accumulator_value;
+  wire [19:0] dynamic_addition_result;
+  wire dynamic_addition_carry;
+  wire dynamic_addition_overflow;
+  wire dynamic_accumulator_overflow;
+  wire [4:0] dynamic_stage_write_enable;
+
+  tiny_int_dynamic_accumulator dynamic_accumulator (
+      .clk                 (clk),
+      .rst_n               (rst_n),
+      .clear               (clear_accepted),
+      .load                (1'b0),
+      .accumulate          (dynamic_accumulate),
       .signed_mode         (signed_mode_register),
       .accumulator_mode    (accumulator_mode_register),
       .load_value          (20'b0),
-      .addend              (accumulator_addend),
-      .accumulator_value   (unified_accumulator_value),
-      .addition_result     (unified_addition_result),
-      .addition_carry      (unified_addition_carry),
-      .addition_overflow   (unified_addition_overflow),
-      .accumulator_overflow(unified_accumulator_overflow),
-      .stage_write_enable  (accumulator_stage_write_enable)
+      .addend              (dynamic_addend),
+      .accumulator_value   (dynamic_accumulator_value),
+      .addition_result     (dynamic_addition_result),
+      .addition_carry      (dynamic_addition_carry),
+      .addition_overflow   (dynamic_addition_overflow),
+      .accumulator_overflow(dynamic_accumulator_overflow),
+      .stage_write_enable  (dynamic_stage_write_enable)
   );
 
-  assign accumulator_value = unified_accumulator_value;
-  assign accumulator_overflow = unified_accumulator_overflow;
+  assign accumulator_value = conventional_selected ?
+                             conventional_accumulator_value :
+                             dynamic_accumulator_value;
+  assign accumulator_overflow = conventional_selected ?
+                                conventional_accumulator_overflow :
+                                dynamic_accumulator_overflow;
 
   // Preserve the selected arithmetic observation points used by RTL tests.
-  wire [19:0] accumulator_addition_result = unified_addition_result;
-  wire accumulator_addition_carry = unified_addition_carry;
-  wire accumulator_addition_overflow = unified_addition_overflow;
+  wire [19:0] accumulator_addition_result = conventional_selected ?
+      conventional_addition_result : dynamic_addition_result;
+  wire accumulator_addition_carry = conventional_selected ?
+      conventional_addition_carry : dynamic_addition_carry;
+  wire accumulator_addition_overflow = conventional_selected ?
+      conventional_addition_overflow : dynamic_addition_overflow;
 
   // Transaction bookkeeping. The count saturates rather than wrapping, while
   // every accepted pair still reaches the accumulator after count overflow.
@@ -213,7 +247,11 @@ module tiny_int_core (
   wire _unused_accumulator_status = &{accumulator_addition_result,
                                       accumulator_addition_carry,
                                       accumulator_addition_overflow,
-                                      accumulator_stage_write_enable,
+                                      conventional_addition_carry,
+                                      conventional_addition_overflow,
+                                      dynamic_addition_carry,
+                                      dynamic_addition_overflow,
+                                      dynamic_stage_write_enable,
                                       request_from_bist, 1'b0};
 
 endmodule

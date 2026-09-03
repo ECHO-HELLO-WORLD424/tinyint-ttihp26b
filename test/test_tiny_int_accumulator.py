@@ -216,7 +216,7 @@ async def test_accumulator_back_to_back_throughput(dut):
 
 @cocotb.test()
 async def test_core_datapath_reaches_accumulator_addition_input(dut):
-    """Every product reaches only the enabled conventional adder."""
+    """Every product reaches only the enabled unified-bank adder."""
     await start_and_reset(dut)
 
     for signed_mode in (0, 1):
@@ -252,8 +252,7 @@ async def test_core_datapath_reaches_accumulator_addition_input(dut):
                     f"expected adder input 0x{expected:05x}, "
                     f"got 0x{actual:05x}"
                 )
-                assert int(dut.integrated_conventional_addend.value) == expected
-                assert int(dut.integrated_dynamic_addend.value) == 0
+                assert int(dut.integrated_accumulator_addend.value) == expected
 
         dut.uio_in.value = 0
 

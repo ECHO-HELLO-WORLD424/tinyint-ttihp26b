@@ -102,8 +102,7 @@ async def test_core_configuration_and_new_read_selectors(dut):
                 assert await read(dut, SELECT_CONFIGURATION) == expected
                 assert int(dut.integrated_accumulator_mode.value) == mode
                 assert int(dut.integrated_zero_skip.value) == zero_skip
-                assert int(dut.integrated_conventional_accumulator_value.value) == 0
-                assert int(dut.integrated_dynamic_accumulator_value.value) == 0
+                assert int(dut.integrated_accumulator_value.value) == 0
 
                 # Live configuration pins cannot alter latched readback.
                 dut.ui_in.value = 0xFF
@@ -172,26 +171,19 @@ async def test_core_operand_isolation_zero_skip_and_stage_enables(dut):
         await Timer(1, unit="ns")
 
         extended = (-15) & MASK
+        # The unified bank is the only datapath: an accepted MAC feeds it the
+        # extended product and always writes the two active low stages. In
+        # boundary-20 mode every stage commits on the same edge.
+        assert int(dut.integrated_accumulator_addend.value) == extended
+        assert (int(dut.integrated_stage_write_enable.value) & 0b11) == 0b11
         if mode == 0:
-            assert int(dut.integrated_conventional_accumulate.value) == 1
-            assert int(dut.integrated_dynamic_accumulate.value) == 0
-            assert int(dut.integrated_conventional_addend.value) == extended
-            assert int(dut.integrated_dynamic_addend.value) == 0
-        else:
-            assert int(dut.integrated_conventional_accumulate.value) == 0
-            assert int(dut.integrated_dynamic_accumulate.value) == 1
-            assert int(dut.integrated_conventional_addend.value) == 0
-            assert int(dut.integrated_dynamic_addend.value) == extended
+            assert int(dut.integrated_stage_write_enable.value) == 0b11111
 
         await RisingEdge(dut.clk)
         await Timer(1, unit="ns")
         dut.uio_in.value = 0
         expected = extended
         assert int(dut.integrated_accumulator_value.value) == expected
-        if mode == 0:
-            assert int(dut.integrated_dynamic_accumulator_value.value) == 0
-        else:
-            assert int(dut.integrated_conventional_accumulator_value.value) == 0
 
     # A skipped zero is still an accepted pair and updates last_product/count,
     # but both data operands and state enables remain inactive.
@@ -200,11 +192,8 @@ async def test_core_operand_isolation_zero_skip_and_stage_enables(dut):
     dut.ui_in.value = pack_operands(0, -8)
     dut.uio_in.value = control_value(COMMAND_MAC, valid=1)
     await Timer(1, unit="ns")
-    assert int(dut.integrated_conventional_accumulate.value) == 0
-    assert int(dut.integrated_dynamic_accumulate.value) == 0
-    assert int(dut.integrated_conventional_addend.value) == 0
-    assert int(dut.integrated_dynamic_addend.value) == 0
-    assert int(dut.integrated_dynamic_stage_write_enable.value) == 0
+    assert int(dut.integrated_accumulator_addend.value) == 0
+    assert int(dut.integrated_stage_write_enable.value) == 0
     await RisingEdge(dut.clk)
     dut.uio_in.value = 0
     await Timer(1, unit="ns")
