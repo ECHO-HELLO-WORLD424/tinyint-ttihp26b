@@ -15,22 +15,22 @@
 // The monitor exploits the measured workload structure of this design:
 //   - The energy the staged policy saves over the full 20-bit adder comes
 //     from the redundant sign-extension bits of the addend, which toggle only
-//     when consecutive signed products change sign.
-//   - Dense carry/borrow crossings across the active boundary make the staged
-//     event machinery more expensive than the conventional ripple, so the
-//     boundary must move up (toward the full adder) when crossings are dense.
-// Every 64 accepted MACs the monitor classifies the window and retunes the
-// effective boundary between 8 and 20 bits:
-//   - extension flips >= 16/64 and crossings <= 8/64  -> boundary 8,
-//   - crossings > 8/64 below boundary 20              -> one nibble step up,
-//   - otherwise                                       -> boundary 20.
-// A decision applies after it repeats in two consecutive windows, except an
-// escalation, which applies immediately. CLEAR reloads the latched mode as
-// the initial effective boundary. Because every boundary policy is bit-exact
-// (identical stored value, identical true carry), retuning changes which
-// adders evaluate, never the architecture state. The only observable change
-// is READ selector 3'b110, whose former constant-zero upper nibble now
-// reports {2'b00, effective_boundary}.
+//     when consecutive signed products change sign. Measured post-layout
+//     sweeps show the intermediate boundaries (12/16) are never the optimum:
+//     dense unsigned streams make every staged policy lose to the full adder,
+//     and sparse/unsigned streams leave the cold stages quasi-static anyway.
+// Every 64 accepted MACs the monitor counts written MACs whose extended
+// product flipped its top bit (the sign-extension region changed) and
+// retunes between the only two policies that can be optimal:
+//   - extension flips >= 16/64 (25%)  -> boundary 8 (staged policy),
+//   - extension flips < 16/64         -> boundary 20 (full adder).
+// A decision applies after it repeats in two consecutive windows. CLEAR
+// reloads the latched mode as the initial effective boundary (so the latched
+// 12/16 modes remain available as static choices). Because every boundary
+// policy is bit-exact (identical stored value, identical true carry),
+// retuning changes which adders evaluate, never the architecture state. The
+// only observable change is READ selector 3'b110, whose former constant-zero
+// upper nibble now reports {2'b00, effective_boundary}.
 module tiny_int_core (
     input  wire        clk,
     input  wire        rst_n,
@@ -160,50 +160,30 @@ module tiny_int_core (
   // Window statistics over 64 accepted MACs (written or zero-skipped):
   //   extension_event_count: written MACs whose extended product flipped
   //     its top bit, i.e. the sign-extension region changed. This is the
-  //     event stream the staged policy saves over the full adder.
-  //   crossing_event_count: written MACs whose carry/borrow crossed the
-  //     first stage beyond the current effective boundary. Boundary 20 has
-  //     no cold region, so it counts nothing to escape from.
-  // Counters cannot saturate: at most 64 events fit a 64-MAC window and
-  // the counters are 7 bits wide.
+  //     event stream the staged boundary-8 policy saves over the full
+  //     20-bit adder, and the only workload statistic that decides the
+  //     optimal policy in the measured sweeps.
+  // The counter cannot saturate: at most 64 events fit a 64-MAC window and
+  // the counter is 7 bits wide.
   // ------------------------------------------------------------------
   reg [5:0] window_mac_count;
   reg [6:0] extension_event_count;
-  reg [6:0] crossing_event_count;
   reg       previous_extension_bit;
   reg [1:0] previous_window_decision;
 
   wire extension_flip = accumulator_write_enable &&
                         (extended_product[19] != previous_extension_bit);
 
-  // Boundary encoding matches accumulator_mode: 00 = 20 bits, 01 = 8,
-  // 10 = 12, 11 = 16. The crossing event of boundary b is the write event
-  // of the first stage beyond b (stage 2/3/4 for 8/12/16).
-  wire crossing_event =
-      (effective_boundary == 2'b01 && accumulator_stage_write_enable[2]) ||
-      (effective_boundary == 2'b10 && accumulator_stage_write_enable[3]) ||
-      (effective_boundary == 2'b11 && accumulator_stage_write_enable[4]);
-
   wire window_complete = mac_accepted && (window_mac_count == 6'd63);
-  wire extension_active = extension_event_count >= 7'd16;
-  wire crossings_dense = crossing_event_count > 7'd8;
-  wire [1:0] escalated_boundary =
-      (effective_boundary == 2'b01) ? 2'b10 :
-      (effective_boundary == 2'b10) ? 2'b11 : 2'b00;
   wire [1:0] window_decision =
-      (extension_active && !crossings_dense) ? 2'b01 :
-      crossings_dense ? escalated_boundary : 2'b00;
-  wire decision_is_escalation = crossings_dense &&
-                                (effective_boundary != 2'b00);
+      (extension_event_count >= 7'd16) ? 2'b01 : 2'b00;
   wire apply_window_decision = window_complete &&
-      (decision_is_escalation ||
-       (window_decision == previous_window_decision));
+      (window_decision == previous_window_decision);
 
   always @(posedge clk or negedge rst_n) begin
     if (!rst_n) begin
       window_mac_count        <= 6'd0;
       extension_event_count   <= 7'd0;
-      crossing_event_count    <= 7'd0;
       previous_extension_bit  <= 1'b0;
       effective_boundary      <= 2'b00;
       previous_window_decision <= 2'b00;
@@ -211,26 +191,20 @@ module tiny_int_core (
       // A new transaction restarts the monitor at the latched mode.
       window_mac_count        <= 6'd0;
       extension_event_count   <= 7'd0;
-      crossing_event_count    <= 7'd0;
       previous_extension_bit  <= 1'b0;
       effective_boundary      <= request_data[1:0];
       previous_window_decision <= request_data[1:0];
     end else begin
       if (accumulator_write_enable) begin
         previous_extension_bit <= extended_product[19];
-        if (extension_flip &&
-            (extension_event_count != 7'd127)) begin
+        if (extension_flip) begin
           extension_event_count <= extension_event_count + 7'd1;
-        end
-        if (crossing_event) begin
-          crossing_event_count <= crossing_event_count + 7'd1;
         end
       end
 
       if (window_complete) begin
         window_mac_count      <= 6'd0;
         extension_event_count <= 7'd0;
-        crossing_event_count  <= 7'd0;
         previous_window_decision <= window_decision;
         if (apply_window_decision) begin
           effective_boundary <= window_decision;

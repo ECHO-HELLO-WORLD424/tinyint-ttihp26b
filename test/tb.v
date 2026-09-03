@@ -46,15 +46,10 @@ module tb ();
   wire        integrated_done;
   wire        integrated_count_overflow;
   wire        integrated_protocol_error;
-  wire [19:0] integrated_conventional_accumulator_value;
-  wire [19:0] integrated_dynamic_accumulator_value;
-  wire [19:0] integrated_conventional_addend;
-  wire [19:0] integrated_dynamic_addend;
+  wire [19:0] integrated_accumulator_addend;
   wire [1:0]  integrated_accumulator_mode;
   wire        integrated_zero_skip;
-  wire        integrated_conventional_accumulate;
-  wire        integrated_dynamic_accumulate;
-  wire [4:0]  integrated_dynamic_stage_write_enable;
+  wire [4:0]  integrated_stage_write_enable;
 
   // Independent accumulator-leaf interface for state and arithmetic tests.
   reg         accumulator_clear;
@@ -108,32 +103,19 @@ module tb ();
 `ifndef CORE_GATE_TEST
   assign integrated_accumulator_addition_result =
       user_project.core.accumulator_addition_result;
-  assign integrated_conventional_accumulator_value =
-      user_project.core.conventional_accumulator_value;
-  assign integrated_dynamic_accumulator_value =
-      user_project.core.dynamic_accumulator_value;
-  assign integrated_conventional_addend =
-      user_project.core.conventional_addend;
-  assign integrated_dynamic_addend = user_project.core.dynamic_addend;
+  assign integrated_accumulator_addend =
+      user_project.core.accumulator_addend;
   assign integrated_accumulator_mode =
       user_project.core.accumulator_mode_register;
   assign integrated_zero_skip = user_project.core.zero_skip_register;
-  assign integrated_conventional_accumulate =
-      user_project.core.conventional_accumulate;
-  assign integrated_dynamic_accumulate = user_project.core.dynamic_accumulate;
-  assign integrated_dynamic_stage_write_enable =
-      user_project.core.dynamic_stage_write_enable;
+  assign integrated_stage_write_enable =
+      user_project.core.accumulator_stage_write_enable;
 `else
   assign integrated_accumulator_addition_result = 20'b0;
-  assign integrated_conventional_accumulator_value = 20'b0;
-  assign integrated_dynamic_accumulator_value = 20'b0;
-  assign integrated_conventional_addend = 20'b0;
-  assign integrated_dynamic_addend = 20'b0;
+  assign integrated_accumulator_addend = 20'b0;
   assign integrated_accumulator_mode = 2'b0;
   assign integrated_zero_skip = 1'b0;
-  assign integrated_conventional_accumulate = 1'b0;
-  assign integrated_dynamic_accumulate = 1'b0;
-  assign integrated_dynamic_stage_write_enable = 5'b0;
+  assign integrated_stage_write_enable = 5'b0;
 `endif
 
   int4_multiplier multiplier_dut (

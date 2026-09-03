@@ -98,12 +98,15 @@ async def test_core_configuration_and_new_read_selectors(dut):
         for zero_skip in (0, 1):
             for mode in range(4):
                 await clear_config(dut, mode, signed_mode, zero_skip)
-                expected = (zero_skip << 3) | (mode << 1) | signed_mode
+                # P4: the monitor starts at the latched mode, so the former
+                # constant-zero upper nibble reports it until MACs retune.
+                expected = (
+                    (mode << 4) | (zero_skip << 3) | (mode << 1) | signed_mode
+                )
                 assert await read(dut, SELECT_CONFIGURATION) == expected
                 assert int(dut.integrated_accumulator_mode.value) == mode
                 assert int(dut.integrated_zero_skip.value) == zero_skip
-                assert int(dut.integrated_conventional_accumulator_value.value) == 0
-                assert int(dut.integrated_dynamic_accumulator_value.value) == 0
+                assert int(dut.integrated_accumulator_value.value) == 0
 
                 # Live configuration pins cannot alter latched readback.
                 dut.ui_in.value = 0xFF
@@ -172,26 +175,19 @@ async def test_core_operand_isolation_zero_skip_and_stage_enables(dut):
         await Timer(1, unit="ns")
 
         extended = (-15) & MASK
+        # The unified bank is the only datapath: an accepted MAC feeds it the
+        # extended product and always writes the two active low stages. In
+        # boundary-20 mode every stage commits on the same edge.
+        assert int(dut.integrated_accumulator_addend.value) == extended
+        assert (int(dut.integrated_stage_write_enable.value) & 0b11) == 0b11
         if mode == 0:
-            assert int(dut.integrated_conventional_accumulate.value) == 1
-            assert int(dut.integrated_dynamic_accumulate.value) == 0
-            assert int(dut.integrated_conventional_addend.value) == extended
-            assert int(dut.integrated_dynamic_addend.value) == 0
-        else:
-            assert int(dut.integrated_conventional_accumulate.value) == 0
-            assert int(dut.integrated_dynamic_accumulate.value) == 1
-            assert int(dut.integrated_conventional_addend.value) == 0
-            assert int(dut.integrated_dynamic_addend.value) == extended
+            assert int(dut.integrated_stage_write_enable.value) == 0b11111
 
         await RisingEdge(dut.clk)
         await Timer(1, unit="ns")
         dut.uio_in.value = 0
         expected = extended
         assert int(dut.integrated_accumulator_value.value) == expected
-        if mode == 0:
-            assert int(dut.integrated_dynamic_accumulator_value.value) == 0
-        else:
-            assert int(dut.integrated_conventional_accumulator_value.value) == 0
 
     # A skipped zero is still an accepted pair and updates last_product/count,
     # but both data operands and state enables remain inactive.
@@ -200,11 +196,8 @@ async def test_core_operand_isolation_zero_skip_and_stage_enables(dut):
     dut.ui_in.value = pack_operands(0, -8)
     dut.uio_in.value = control_value(COMMAND_MAC, valid=1)
     await Timer(1, unit="ns")
-    assert int(dut.integrated_conventional_accumulate.value) == 0
-    assert int(dut.integrated_dynamic_accumulate.value) == 0
-    assert int(dut.integrated_conventional_addend.value) == 0
-    assert int(dut.integrated_dynamic_addend.value) == 0
-    assert int(dut.integrated_dynamic_stage_write_enable.value) == 0
+    assert int(dut.integrated_accumulator_addend.value) == 0
+    assert int(dut.integrated_stage_write_enable.value) == 0
     await RisingEdge(dut.clk)
     dut.uio_in.value = 0
     await Timer(1, unit="ns")
@@ -270,6 +263,46 @@ async def test_core_overflow_status_in_every_architecture_mode(dut):
         assert status & 0x08
 
 
+class BoundaryMonitor:
+    """Python mirror of the RTL adaptive-boundary monitor.
+
+    Every accepted MAC advances a 64-MAC window; written MACs whose extended
+    product flips its top bit (the sign-extension region changed) count as
+    extension events. A window decision (boundary 8 when the window saw at
+    least 16 extension events, boundary 20 otherwise) applies after it
+    repeats in two consecutive windows. CLEAR restarts at the latched mode.
+    """
+
+    WINDOW = 64
+    EXTENSION_THRESHOLD = 16
+
+    def __init__(self, initial_mode):
+        self.effective = initial_mode & 0x3
+        self.window_count = 0
+        self.extension_events = 0
+        self.previous_extension_bit = 0
+        self.previous_decision = initial_mode & 0x3
+
+    def on_mac(self, written, addend):
+        if written:
+            extension_bit = (addend >> 19) & 1
+            if extension_bit != self.previous_extension_bit:
+                self.extension_events += 1
+            self.previous_extension_bit = extension_bit
+        self.window_count += 1
+        if self.window_count == self.WINDOW:
+            self.window_count = 0
+            decision_events = self.extension_events
+            self.extension_events = 0
+            decision = (
+                0b01 if decision_events >= self.EXTENSION_THRESHOLD else 0b00
+            )
+            apply_decision = decision == self.previous_decision
+            self.previous_decision = decision
+            if apply_decision:
+                self.effective = decision
+
+
 def model_response(model, selector):
     state = model["conventional"] if model["mode"] == 0 else model["dynamic"]
     responses = {
@@ -286,7 +319,8 @@ def model_response(model, selector):
         ),
         SELECT_LAST_PRODUCT: model["last_product"],
         SELECT_CONFIGURATION: (
-            (model["zero_skip"] << 3)
+            (model["monitor"].effective << 4)
+            | (model["zero_skip"] << 3)
             | (model["mode"] << 1)
             | model["signed"]
         ),
@@ -302,7 +336,7 @@ async def test_core_constrained_random_command_stream(dut):
     rng = random.Random(0x5EEDC0DE)
 
     def reset_model():
-        return {
+        result = {
             "conventional": 0,
             "dynamic": 0,
             "mode": 0,
@@ -315,6 +349,8 @@ async def test_core_constrained_random_command_stream(dut):
             "count_overflow": 0,
             "protocol_error": 0,
         }
+        result["monitor"] = BoundaryMonitor(result["mode"])
+        return result
 
     model = reset_model()
 
@@ -336,6 +372,7 @@ async def test_core_constrained_random_command_stream(dut):
             model["mode"] = data & 0x3
             model["zero_skip"] = (data >> 2) & 1
             model["signed"] = live_signed
+            model["monitor"] = BoundaryMonitor(model["mode"])
         elif command in (COMMAND_MAC, COMMAND_MAC_LAST):
             if model["done"]:
                 model["protocol_error"] = 1
@@ -365,6 +402,9 @@ async def test_core_constrained_random_command_stream(dut):
                         overflow = old_state + addend > MASK
                     model[key] = new_state
                     model["acc_overflow"] |= int(overflow)
+
+                written = not (model["zero_skip"] and raw_product == 0)
+                model["monitor"].on_mac(written, addend)
 
                 if command == COMMAND_MAC_LAST:
                     model["done"] = 1
