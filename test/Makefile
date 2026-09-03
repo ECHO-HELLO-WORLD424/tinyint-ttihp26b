@@ -5,7 +5,9 @@
 SIM ?= icarus
 FST ?= -fst # Use more efficient FST format
 TOPLEVEL_LANG ?= verilog
-SRC_DIR = $(PWD)/../src
+# $(CURDIR), not $(PWD): CURDIR follows make's -C directory change on every
+# make version, so `make -C test p3-equiv` resolves the sources correctly.
+SRC_DIR = $(CURDIR)/../src
 PROJECT_SOURCES = int4_multiplier.v product_extender.v tiny_int_accumulator.v tiny_int_protocol.v tt_um_echo_hello_world424_tinyint.v
 DYNAMIC_ACCUMULATOR_SOURCE ?= $(SRC_DIR)/tiny_int_dynamic_accumulator.v
 EVENT_ACCUMULATOR_SOURCE ?= $(SRC_DIR)/tiny_int_event_accumulator.v
@@ -119,5 +121,15 @@ clean::
 	$(RM) -rf sim_build __pycache__ .pytest_cache
 	$(RM) -f results.xml interactive_results.xml *.fst *.fst.hier *.vcd
 
-# include cocotb's make rules to take care of the simulator setup
-include $(shell cocotb-config --makefiles)/Makefile.sim
+# Include cocotb's make rules only when cocotb is installed. The standalone
+# P3 iverilog targets above (p3-equiv, p3-metrics, p3-core-read) are the
+# documented local verification entry points and must keep working on hosts
+# without cocotb.
+COCOTB_MAKEFILE := $(shell cocotb-config --makefiles 2>/dev/null)
+ifneq ($(COCOTB_MAKEFILE),)
+include $(COCOTB_MAKEFILE)/Makefile.sim
+else
+.PHONY: sim
+sim:
+	$(error cocotb is not installed; the standalone targets p3-equiv, p3-metrics and p3-core-read remain available)
+endif

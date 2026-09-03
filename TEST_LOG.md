@@ -1060,3 +1060,44 @@ replacement of the removed conventional/dynamic bank probes with the
 event-accumulator probes). The dynamic exhaustive testbench passes unchanged
 for all three boundaries. Verified `iverilog -Wall` compiles the variant
 sources without warnings.
+
+### P3.A1 — Independent audit rerun, portable standalone targets, adversarial cells
+
+```sh
+make -C test p3-equiv
+make -C test p3-metrics
+make -C test p3-core-read
+cd test && iverilog -g2012 -o /tmp/dyn_exh.vvp \
+  ../src/tiny_int_dynamic_accumulator.v dynamic_accumulator_exhaustive_tb.v \
+  && vvp /tmp/dyn_exh.vvp
+iverilog -g2012 -Wall -o /tmp/p3_top.vvp src/*.v
+```
+
+Purpose: independent audit rerun of every claimed P3 verification on a host
+without cocotb, plus hardening found during the audit: (1) the standalone
+p3-* targets previously required cocotb to even run (unguarded
+`include $(shell cocotb-config ...)`), and `$(PWD)`-based SRC_DIR broke
+`make -C test` invocation on hosts whose make does not rewrite PWD (GNU make
+3.81); both fixed without changing container behavior. (2) Three adversarial
+equivalence cells added: a max-rate carry/borrow alternation that latches an
+opposite-signed event on every single MAC while drains fold same-cycle,
+an unsigned large-addend storm from 0xfffff that crosses 2^20 while wraps are
+pending in the counters (exercising the result_wrap_4 - pending_wrap_4
+per-MAC correction), and an asynchronous reset asserted during a flush with
+pending counters and a same-cycle MAC event.
+
+Result: PASS. p3-equiv held the represented-value invariant, canonical value,
+canonical_valid and bit-exact sticky overflow on every cycle of 122,329
+cycles (was 111,317) across all workloads; the metrics TB reproduced the
+published numbers exactly (mixed stream cold writes 190/12/4, cold_we 2.51%,
+toggles 367/43/16; 30k carry storm cold writes 3750/102/6, cold_we 9.82%,
+max |cnt| 7/15/15); the core READ TB still matches the frozen reference with
+exactly-2-cycle latency over 6700 cycles; the exhaustive TB passes unchanged;
+`iverilog -Wall` is clean. An additional 75,000-cycle out-of-repo stress
+(random ops with ~25% flush injection, accumulate+flush+clear coincidences,
+40 async resets with pending counters, max |cnt| 7/15/15, zero errors)
+corroborated the saturation-guard losslessness. The cocotb regression
+(P3.V4, 33/33) could not be rerun on the audit host (no cocotb installed);
+the remap diff was reviewed and the two-cycle response timing re-derived
+(each randomized-loop iteration spans one cycle, so the one-iteration-delayed
+response check samples exactly two cycles after READ acceptance).

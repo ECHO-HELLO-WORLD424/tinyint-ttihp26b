@@ -25,8 +25,12 @@
 // cleared. Workloads: the released power-activity mixed 8192-MAC signed
 // stream (LFSR / sparse / +-7,-1 / ramp quarters), unsigned 0xff, signed
 // 0x11, signed 0x00 runs, randomized clear/load/flush injection, mid-stream
-// asynchronous reset, directed nibble-boundary walks, and 30k-MAC one-sided
-// carry/borrow storms that exercise the counter saturation guard.
+// asynchronous reset (also during a flush with pending counters), directed
+// nibble-boundary walks, 30k-MAC one-sided carry/borrow storms that exercise
+// the counter saturation guard, a max-rate carry/borrow alternation that
+// latches an event on every single MAC, and a large-addend unsigned storm
+// from 0xfffff that crosses 2^20 while wraps are still pending in the
+// counters.
 module p3_event_equiv_tb;
   reg         clk;
   reg         rst_n;
@@ -346,6 +350,23 @@ module p3_event_equiv_tb;
     end
   endtask
 
+  // Max-rate direction alternation: in signed mode 20'hfffff is the
+  // sign-extended -1 and 20'h00001 the zero-extended +1. Driven in this
+  // order from a cleared bank the low byte orbits 0xfffff <-> 0x00000, so a
+  // carry or borrow crossing is latched on EVERY MAC with alternating sign,
+  // and divider drains keep folding opposite-direction events into the same
+  // stage-2 drain. Also crosses 0 and 2^20 modulo boundaries every two MACs.
+  task run_alternating_events;
+    input integer count;
+    begin
+      signed_mode = 1'b1;
+      for (i = 0; i < count; i = i + 1) begin
+        do_accumulate_raw(i[0] ? 20'h00001 : 20'hfffff);
+      end
+      do_idle_cycle();
+    end
+  endtask
+
   // Randomized operation mix with clear/load/flush injection and occasional
   // accumulate+flush coincidence.
   task run_random_stream;
@@ -502,6 +523,24 @@ module p3_event_equiv_tb;
     do_flush_and_verify;
     report_counters("borrow-storm-30k-signed-f1");
 
+    $display("WORKLOAD alternating-max-rate-events");
+    do_clear;
+    run_alternating_events(6000);
+    do_flush_and_verify;
+    report_counters("alternating-max-rate-events");
+
+    // Large-addend 2^20 crossings in unsigned mode: the wrap sits pending in
+    // the counters for many cycles while MACs keep arriving, so every per-MAC
+    // unsigned carry must equal result_wrap_4 - pending_wrap_4 (the sticky
+    // correction for wraps already carried by the counters).
+    $display("WORKLOAD wrap-storm-5k-unsigned-from-fffff");
+    do_clear;
+    signed_mode = 1'b0;
+    do_load(20'hfffff);
+    run_constant_data(8'hff, 5000);
+    do_flush_and_verify;
+    report_counters("wrap-storm-5k-unsigned-from-fffff");
+
     $display("WORKLOAD boundary-walks");
     do_clear;
     run_boundary_walks;
@@ -514,9 +553,12 @@ module p3_event_equiv_tb;
     for (i = 0; i < 300; i = i + 1) begin
       do_accumulate_data(8'hf1);
     end
-    // Asynchronous reset between edges with inputs still toggling.
+    // Asynchronous reset during a flush with pending counters and a
+    // same-cycle MAC event: clear/load/reset must win over the flush drain
+    // and no event may survive into the reset state.
     @(negedge clk);
     accumulate = 1'b1;
+    flush      = 1'b1;
     addend = mac_extended;
     #2 rst_n = 1'b0;
     repeat (2) @(negedge clk);
@@ -527,6 +569,7 @@ module p3_event_equiv_tb;
       $display("FAIL async reset did not clear both accumulators");
       error_count = error_count + 1;
     end
+    flush = 1'b0;
     rst_n = 1'b1;
     for (i = 0; i < 300; i = i + 1) begin
       do_accumulate_data(8'h71);
