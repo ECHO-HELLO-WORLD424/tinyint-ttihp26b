@@ -284,6 +284,10 @@ class BoundaryMonitor:
         self.previous_decision = initial_mode & 0x3
 
     def on_mac(self, written, addend):
+        # The RTL samples the window decision from the event count as it
+        # stands before the acceptance edge, so a flip on the 64th MAC of a
+        # window belongs to the decision of the next window, not this one.
+        decision_events = self.extension_events
         if written:
             extension_bit = (addend >> 19) & 1
             if extension_bit != self.previous_extension_bit:
@@ -292,8 +296,6 @@ class BoundaryMonitor:
         self.window_count += 1
         if self.window_count == self.WINDOW:
             self.window_count = 0
-            decision_events = self.extension_events
-            self.extension_events = 0
             decision = (
                 0b01 if decision_events >= self.EXTENSION_THRESHOLD else 0b00
             )
@@ -301,6 +303,7 @@ class BoundaryMonitor:
             self.previous_decision = decision
             if apply_decision:
                 self.effective = decision
+            self.extension_events = 0
 
 
 def model_response(model, selector):

@@ -94,7 +94,11 @@ async def test_gate_core_configuration_and_matched_modes(dut):
         for zero_skip in (0, 1):
             for mode in range(4):
                 await clear_config(dut, mode, signed, zero_skip)
-                expected_config = (zero_skip << 3) | (mode << 1) | signed
+                # P4: the monitor starts at the latched mode, so the former
+                # constant-zero upper nibble reports it until MACs retune.
+                expected_config = (
+                    (mode << 4) | (zero_skip << 3) | (mode << 1) | signed
+                )
                 assert await read(dut, CONFIGURATION) == expected_config
                 dut.uio_in.value = control(MAC, 1 - signed, 1)
                 for a, b in vectors:
@@ -143,7 +147,7 @@ async def test_gate_core_errors_completion_zero_skip_and_overflow(dut):
 
 
 def new_model():
-    return {
+    result = {
         "state": 0,
         "mode": 0,
         "skip": 0,
@@ -155,6 +159,51 @@ def new_model():
         "count_ov": 0,
         "proto": 0,
     }
+    result["monitor"] = BoundaryMonitor(result["mode"])
+    return result
+
+
+class BoundaryMonitor:
+    """Python mirror of the RTL adaptive-boundary monitor.
+
+    Every accepted MAC advances a 64-MAC window; written MACs whose extended
+    product flips its top bit (the sign-extension region changed) count as
+    extension events. A window decision (boundary 8 when the window saw at
+    least 16 extension events, boundary 20 otherwise) applies after it
+    repeats in two consecutive windows. CLEAR restarts at the latched mode.
+    """
+
+    WINDOW = 64
+    EXTENSION_THRESHOLD = 16
+
+    def __init__(self, initial_mode):
+        self.effective = initial_mode & 0x3
+        self.window_count = 0
+        self.extension_events = 0
+        self.previous_extension_bit = 0
+        self.previous_decision = initial_mode & 0x3
+
+    def on_mac(self, written, addend):
+        # The RTL samples the window decision from the event count as it
+        # stands before the acceptance edge, so a flip on the 64th MAC of a
+        # window belongs to the decision of the next window, not this one.
+        decision_events = self.extension_events
+        if written:
+            extension_bit = (addend >> 19) & 1
+            if extension_bit != self.previous_extension_bit:
+                self.extension_events += 1
+            self.previous_extension_bit = extension_bit
+        self.window_count += 1
+        if self.window_count == self.WINDOW:
+            self.window_count = 0
+            decision = (
+                0b01 if decision_events >= self.EXTENSION_THRESHOLD else 0b00
+            )
+            apply_decision = decision == self.previous_decision
+            self.previous_decision = decision
+            if apply_decision:
+                self.effective = decision
+            self.extension_events = 0
 
 
 def expected_read(model, selector):
@@ -172,7 +221,8 @@ def expected_read(model, selector):
         ),
         LAST_PRODUCT: model["last"],
         CONFIGURATION: (
-            (model["skip"] << 3)
+            (model["monitor"].effective << 4)
+            | (model["skip"] << 3)
             | (model["mode"] << 1)
             | model["signed"]
         ),
@@ -203,6 +253,7 @@ async def test_gate_core_random_architectural_model(dut):
             model["mode"] = data & 3
             model["skip"] = (data >> 2) & 1
             model["signed"] = live_signed
+            model["monitor"] = BoundaryMonitor(model["mode"])
         elif command in (MAC, MAC_LAST):
             if model["done"]:
                 model["proto"] = 1
@@ -228,6 +279,8 @@ async def test_gate_core_random_architectural_model(dut):
                     model["acc_ov"] |= int(overflow)
                 if command == MAC_LAST:
                     model["done"] = 1
+                written = not (model["skip"] and raw == 0)
+                model["monitor"].on_mac(written, addend)
         elif command == FINISH:
             if model["done"]:
                 model["proto"] = 1
