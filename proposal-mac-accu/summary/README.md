@@ -98,7 +98,41 @@ Mechanism breakdown (consistent with the routed-baseline per-group numbers):
   transitions, no thrash), but its always-on activity counters cost ~58 µW
   at 100% MAC occupancy — more than they save on this trace.
 
-## 6. Findings and recommendation
+## 6. Routed confirmation (CI-hardened branches, post CI-fix commits)
+
+After the CI fixes (`24f1516` on P1, `00de0c9` on P2) both branches hardened
+cleanly in the `gds` workflow. Their released artifacts (routed netlist +
+nominal extracted SPEF) were simulated with the identical released 8,192-MAC
+mixed trace and annotated onto the extracted SPEF (0 unannotated pins), using
+the same flow that produced the baseline numbers 386.90 (m0) / 380.92 (m1) µW
+on `main`. Raw reports: `data/confirm_p*_m*.rpt`.
+
+| routed chip | Seq µW | Comb µW | Clock µW | Total µW | Δ vs baseline |
+|---|---:|---:|---:|---:|---:|
+| baseline (main) m0 / m1 | 218.8 / 220.0 | 58.7 / 51.5 | 109.5 / 109.5 | 386.90 / 380.92 | — |
+| **P1 unified m0 / m1** | 163.9 / 164.4 | 55.4 / 46.6 | 97.7 / 97.7 | **316.94 / 308.67** | **−18.1% / −19.0%** |
+| P2 ICG m0 / m1 | 163.8 / 131.3 | 60.2 / 54.4 | 295.7 / 340.4 | 519.73 / 526.06 | **+34.3% / +38.1%** |
+
+Interpretation:
+
+- **P1's advantage is confirmed on the routed chip**: −55 µW of sequential
+  (the removed idle bank), −12 µW of clock tree (9 vs 17 clock buffers for
+  53 vs 74 FFs), and the cold-adder combinational delta on top. ~19% chip
+  level, every mode, bit-exact.
+- **P2's advantage is reversed on the routed chip.** The register gating
+  works exactly as designed (sequential 131–164 µW vs 219–220 µW baseline),
+  but the six gated clock domains (2 bank roots + 3 cascaded stage ICGs)
+  forced CTS to build six trees: **51 clock buffers (3x the baseline's 17),
+  0.71 ns worst clock skew (baseline 0.27 ns), and 295–340 µW of clock
+  power** (+186…+231 µW), swamping the register savings. This is the same
+  fragmentation failure as the earlier hand-gated prototype, now with proper
+  drivers: the ICG cell fixed the *buffer weakness*, not the *tree count*.
+- Consequence for the fusion recommendation: the tapeout candidate is
+  **P1 (single bank) plus CTS-tractable gating only** — ideally a single
+  shared cold-domain ICG (two clock domains total, not six) or root-level
+  bank gating, with the per-stage cascaded ICGs dropped or re-planned.
+
+## 7. Findings and recommendation
 
 1. **P2 is the biggest power win (−32.2% core)** and demonstrably fixes the
    earlier hand-gated-clock failure (which had +29…+157 µW): the library ICG
@@ -108,10 +142,12 @@ Mechanism breakdown (consistent with the routed-baseline per-group numbers):
 2. **P1 is the biggest structural win** (−23% area, −21 FFs) and turns the
    same-die A/B into a temporal comparison on identical cells — a cleaner
    experiment.
-3. **P1+P2 fusion is the recommended next-tapeout candidate**: P1's area with
-   P2's gating, estimated −35–40% core power; both halves are independently
-   bit-exact-proven, and the fusion is mostly mechanical (the ICG wrappers
-   apply to the unified bank's stages).
+3. **The recommended next-tapeout candidate is P1 plus CTS-tractable gating**
+   (see the routed confirmation in section 6): P1 alone is already −18…−19%
+   chip-level on the routed die; adding gating must be limited to at most two
+   clock domains (a single shared cold-domain ICG over the unified bank's cold
+   stages, or root-level bank gating). Per-stage cascaded ICG trees are
+   measurably counterproductive at this scale.
 4. **P3's arithmetic is sound and novel** but its power case requires
    clocking the maintenance domain from the divided tick (i.e., adding
    P2-style gating to the event-scheduled registers). As implemented it is a
@@ -122,7 +158,7 @@ Mechanism breakdown (consistent with the routed-baseline per-group numbers):
    counting to a slower domain; the cost also scales down with real workload
    duty cycles.
 
-## 7. Reproduction
+## 8. Reproduction
 
 All flows ran with the pinned `ghcr.io/librelane/librelane:3.0.0.dev44`
 image (yosys 0.54, OpenSTA 2.7.0) and the IHP SG13G2 liberty at
@@ -142,7 +178,7 @@ P2 synthesis needs the ICG blackbox (`flow/bb_lgcp.v`); simulation uses the
 PDK behavioral model of `sg13g2_lgcp_1` (branch `proposal-mac-accu/2-icg-clock-gating`,
 `test/sg13g2_lgcp_model.v`).
 
-## 8. Branch index
+## 9. Branch index
 
 - `main` — released tapeout, untouched by this exploration.
 - `proposal-mac-accu/1-unified-bank` — single-bank unified accumulator.
