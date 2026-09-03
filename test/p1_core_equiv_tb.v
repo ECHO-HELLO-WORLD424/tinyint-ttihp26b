@@ -20,7 +20,7 @@
 //
 // With +define+REF_CORE the DUT is tiny_int_core_ref; without it the proposed
 // tiny_int_core. Plusargs select the latched CLEAR mode payload (+MODE=0..3,
-// data[1:0] = mode, data[2] = 0), the stimulus stream (+WORKLOAD=0..3
+// data[1:0] = mode, data[2] = zero_skip), the stimulus stream (+WORKLOAD=0..6
 // arithmetic streams, 4 = control interleavings with an async reset) and the
 // log file (+OUT=<file>). One request is presented per cycle at negedge clk
 // and every cycle appends one line of observables. The two logs for the same
@@ -118,15 +118,19 @@ module p1_core_equiv_tb;
   // One accepted MAC per cycle. Kind selects the workload stream:
   // 0 = W_MIXED (LFSR, 75%-zero, +/- carry/borrow, nibble-ramp quarters),
   // 1 = W_UNSIGNED_DENSE, 2 = W_CONST1, 3 = W_ZERO.
+  // stream_zero_skip latches zero_skip_register from CLEAR data[2], so the
+  // skipped-MAC path (no accumulator write, count/last still update) is
+  // covered by the equivalence matrix as well.
   task run_arith_stream;
     input integer kind;
     input integer count;
     input         stream_signed;
+    input         stream_zero_skip;
     integer i;
     reg [7:0] d;
     begin
       lfsr = 16'h1ace;
-      step(1'b1, 3'b001, {1'b0, mode[1:0]}, stream_signed);
+      step(1'b1, 3'b001, {stream_zero_skip, mode[1:0]}, stream_signed);
       for (i = 0; i < count; i = i + 1) begin
         case (kind)
           0: begin
@@ -150,7 +154,7 @@ module p1_core_equiv_tb;
     end
   endtask
 
-  // Clear/READ/MAC_LAST interleavings, signed-pin and zero-skip-pin wiggles,
+  // Clear/READ/MAC_LAST interleavings, signed-pin wiggles,
   // done/rejection behaviour and an asynchronous reset in mid-stream. After
   // the reset is released without a CLEAR the configuration registers hold
   // their defaults, so the continuation exercises the boundary-20 policy in
@@ -289,12 +293,18 @@ module p1_core_equiv_tb;
     rst_n = 1'b1;
 
     case (workload)
-      0: run_arith_stream(0, 8192, 1'b1);
-      1: run_arith_stream(1, 8192, 1'b0);
-      2: run_arith_stream(2, 8192, 1'b1);
-      3: run_arith_stream(3, 8192, 1'b1);
+      0: run_arith_stream(0, 8192, 1'b1, 1'b0);
+      1: run_arith_stream(1, 8192, 1'b0, 1'b0);
+      2: run_arith_stream(2, 8192, 1'b1, 1'b0);
+      3: run_arith_stream(3, 8192, 1'b1, 1'b0);
       4: run_ctrl_stream(1'b1);
-      default: $fatal(1, "WORKLOAD must be 0 through 4");
+      // Zero-skip-enabled variants: the CLEAR payload sets data[2], so the
+      // 75%-zero quarter of W_MIXED skips most writes and W_ZERO skips every
+      // write while pair_count/last_product still advance. The tail READ of
+      // the configuration selector verifies the latched zero_skip bit.
+      5: run_arith_stream(0, 8192, 1'b1, 1'b1);
+      6: run_arith_stream(3, 8192, 1'b1, 1'b1);
+      default: $fatal(1, "WORKLOAD must be 0 through 6");
     endcase
 
     run_tail(workload == 1 ? 1'b0 : 1'b1);

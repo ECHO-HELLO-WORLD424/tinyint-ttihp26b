@@ -4,7 +4,8 @@
 # Each matrix cell compiles the shared driver twice (golden composite core
 # from test/p1_ref plus unchanged leaves; proposed single-bank core plus
 # tiny_int_unified_accumulator), runs both simulations for the same MODE and
-# WORKLOAD plusargs, and requires byte-identical cycle logs.
+# WORKLOAD plusargs, and requires byte-identical cycle logs. Workloads 5/6
+# latch zero_skip_register so the skipped-MAC path is covered in every mode.
 #
 # Usage: test/run_p1_equiv.sh
 #
@@ -37,7 +38,7 @@ fail=0
     ../src/int4_multiplier.v ../src/product_extender.v || exit 2
 
 for mode in 0 1 2 3; do
-    for workload in 0 1 2 3 4; do
+    for workload in 0 1 2 3 4 5 6; do
         "$VVP" "$LOG_DIR/ref.vvp" +MODE=$mode +WORKLOAD=$workload \
             +OUT="$LOG_DIR/ref_m${mode}_w${workload}.log" > "$LOG_DIR/ref_m${mode}_w${workload}.out" || fail=1
         "$VVP" "$LOG_DIR/var.vvp" +MODE=$mode +WORKLOAD=$workload \
@@ -55,7 +56,7 @@ for mode in 0 1 2 3; do
 done
 
 if [ "$fail" -eq 0 ]; then
-    echo "PASS p1 equivalence matrix: 20/20 cells byte-identical"
+    echo "PASS p1 equivalence matrix: 28/28 cells byte-identical"
 else
     echo "FAIL p1 equivalence matrix"
 fi

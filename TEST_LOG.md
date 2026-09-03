@@ -954,3 +954,40 @@ whitespace errors, no unfinished result entries, valid release-script syntax,
 valid Python, independent DRC enabled in the merged config, zero values for all
 required physical violation metrics, and every required submission view
 present and nonempty.
+
+## P1 unified-bank proposal audit
+
+### P1.A1 — Independent audit rerun and zero-skip equivalence cells
+
+```sh
+sh test/run_p1_equiv.sh
+iverilog -g2012 -o /tmp/p1_mode00.vvp src/tiny_int_unified_accumulator.v \
+  src/tiny_int_accumulator.v src/tiny_int_dynamic_accumulator.v \
+  test/p1_unified_mode00_tb.v && vvp /tmp/p1_mode00.vvp
+iverilog -g2012 -o /tmp/p1_act.vvp src/tiny_int_core.v \
+  src/tiny_int_unified_accumulator.v src/int4_multiplier.v \
+  src/product_extender.v test/p1_activity_tb.v && \
+  vvp /tmp/p1_act.vvp +MODE=0 && vvp /tmp/p1_act.vvp +MODE=1
+iverilog -g2012 -o /tmp/p1_exh.vvp src/tiny_int_dynamic_accumulator.v \
+  test/dynamic_accumulator_exhaustive_tb.v && vvp /tmp/p1_exh.vvp
+iverilog -g2012 -Wall -o /tmp/p1_top.vvp src/*.v
+```
+
+Purpose: independent audit rerun of every claimed P1 verification, plus two
+new equivalence workload cells (5 = W_MIXED signed with zero_skip latched,
+6 = W_ZERO signed with zero_skip latched). Before this audit the matrix never
+asserted zero_skip, so the skipped-MAC path (no accumulator write while
+pair_count/last_product still advance) was uncovered at core level.
+
+Result: PASS. The equivalence matrix is byte-identical in all 28/28 cells
+(4 modes x 7 workloads; workloads 5/6 added by this audit; the tail
+configuration-selector READ verifies the latched zero_skip bit and the W_ZERO
+cell exercises pair_count saturation with every write skipped). The leaf
+three-way check passed (17402 MACs, 37404 checks), the activity metrics
+reproduced exactly (mode 0: 8192 write events on every stage; mode 1:
+8192/8192/324/44/40), the retained dynamic-leaf exhaustive TB passed
+unchanged, and `iverilog -Wall` compiled all sources without warnings. The
+cocotb regression (make test=ALL) could not be rerun on the audit host (no
+cocotb installed); the cocotb remap diff was reviewed instead and weakens no
+assertion. No mutation-test artifacts are committed, so that claim is not
+reproducible from the repository.
