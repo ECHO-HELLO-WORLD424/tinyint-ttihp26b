@@ -6,7 +6,7 @@ SIM ?= icarus
 FST ?= -fst # Use more efficient FST format
 TOPLEVEL_LANG ?= verilog
 SRC_DIR = $(PWD)/../src
-PROJECT_SOURCES = int4_multiplier.v product_extender.v tiny_int_accumulator.v tiny_int_protocol.v tt_um_echo_hello_world424_tinyint.v
+PROJECT_SOURCES = int4_multiplier.v product_extender.v tiny_int_accumulator.v tiny_int_unified_accumulator.v tiny_int_protocol.v tt_um_echo_hello_world424_tinyint.v
 DYNAMIC_ACCUMULATOR_SOURCE ?= $(SRC_DIR)/tiny_int_dynamic_accumulator.v
 CORE_SOURCE ?= $(SRC_DIR)/tiny_int_core.v
 
