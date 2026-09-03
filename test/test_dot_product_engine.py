@@ -77,10 +77,17 @@ async def issue_command(dut, command, *, data=0, signed_mode=0):
 
 
 async def read_selector(dut, selector, *, signed_mode=0):
+    # P3 protocol: the response byte is emitted two cycles after acceptance.
     await issue_command(
         dut, COMMAND_READ, data=selector, signed_mode=signed_mode
     )
-    assert response_valid(dut) == 1
+    for _ in range(6):
+        if response_valid(dut) == 1:
+            break
+        await RisingEdge(dut.clk)
+        await Timer(1, unit="ns")
+    else:
+        raise AssertionError("READ response_valid did not assert within 6 cycles")
     value = int(dut.uo_out.value)
 
     # The registered byte is retained, but valid is exactly one cycle for an
@@ -203,14 +210,26 @@ async def test_registered_read_latency_and_back_to_back_reads(dut):
         (expected >> 16) & 0xF,
     ]
 
+    # Back-to-back READs pipeline: with the P3 two-cycle latency the
+    # response to each READ appears two cycles after its own acceptance, one
+    # response per cycle, in order.
     assert response_valid(dut) == 0
     dut.uio_in.value = control_value(command=COMMAND_READ, valid=1)
     for selector, expected_byte in enumerate(expected_bytes):
         dut.ui_in.value = selector
         await RisingEdge(dut.clk)
         await Timer(1, unit="ns")
-        assert response_valid(dut) == 1
-        assert int(dut.uo_out.value) == expected_byte
+        if selector >= 1:
+            assert response_valid(dut) == 1
+            assert int(dut.uo_out.value) == expected_bytes[selector - 1]
+        if selector == len(expected_bytes) - 1:
+            # Exactly one valid cycle per READ.
+            dut.uio_in.value = control_value(signed_mode=0)
+
+    await RisingEdge(dut.clk)
+    await Timer(1, unit="ns")
+    assert response_valid(dut) == 1
+    assert int(dut.uo_out.value) == expected_bytes[-1]
 
     dut.uio_in.value = 0
     await RisingEdge(dut.clk)
@@ -246,6 +265,8 @@ async def test_reset_cancels_pending_response_and_transaction(dut):
     await issue_command(dut, COMMAND_CLEAR, signed_mode=1)
     await issue_command(dut, COMMAND_MAC, data=pack_operands(-8, -8))
     await issue_command(dut, COMMAND_READ, data=SELECT_ACC_LOW)
+    await RisingEdge(dut.clk)
+    await Timer(1, unit="ns")
     assert response_valid(dut) == 1
 
     # Assert reset between rising edges to exercise the asynchronous path.

@@ -954,3 +954,109 @@ whitespace errors, no unfinished result entries, valid release-script syntax,
 valid Python, independent DRC enabled in the merged config, zero values for all
 required physical violation metrics, and every required submission view
 present and nonempty.
+
+## P3 event-scheduled variant (branch proposal/3-event-scheduled)
+
+These entries cover the P3 research variant ("event-scheduled deferred-carry
+accumulator with maintenance domain"), which replaces the conventional/dynamic
+bank pair in `tiny_int_core` with `tiny_int_event_accumulator`. Commands run
+from the repository root of this worktree.
+
+### P3.V1 — Represented-value invariant equivalence
+
+```sh
+make -C test p3-equiv
+```
+
+Purpose: drive the event-scheduled accumulator and the released conventional
+`tiny_int_accumulator` with identical MAC/clear/load/flush/reset streams and
+check on EVERY cycle that the represented value
+`{stage4,stage3,stage2,stage1,stage0} + cnt2*256 + cnt3*4096 + cnt4*65536`
+(mod 2^20, counters signed) equals the golden value, that the combinational
+canonical value equals the golden value, that `canonical_valid` matches the
+pending counters, and that the sticky overflow flag is bit-identical. After
+every stream a flush must make the stored bank equal the golden value with
+all counters cleared. Workloads: the released mixed 8192-MAC signed stream
+(LFSR/sparse/+7,-1/ramp quarters), unsigned 0xff 4096, signed 0x11 4096,
+signed 0x00 4096, 20k randomized ops with clear/load/flush injection and
+accumulate+flush coincidence, 30k unsigned 0xff carry storm, 30k signed 0xf1
+borrow storm, directed nibble-boundary walks, and a mid-stream asynchronous
+reset.
+
+Result: PASS. 111,317 cycles checked with zero mismatches. Observed counter
+bounds: |cnt2| <= 7 (divider bound 8; saturation guard unreachable at cadence
+8), |cnt3| <= 15 and |cnt4| <= 15 only in the sustained one-sided storms,
+where the lossless same-cycle saturation-guard drains keep the counters inside
+[-16, +15] without ever dropping an event. Two testbench-only corrections were
+made while converging: a mod-2^20 wrap legitimately pushes +/-1 out of stage 4
+during canonicalization (the drop IS the modulo reduction), and the stimulus
+driver must hold the addend contract (extension mode consistent with
+signed_mode at the sampling edge) for the event decomposition to apply.
+
+### P3.V2 — Maintenance-domain activity metrics
+
+```sh
+make -C test p3-metrics
+```
+
+Purpose: measure hot/cold write events, maintenance-tick (cold_we) cycles,
+maximum counter magnitudes, and per-nibble toggle counts for the released
+mixed 8192-MAC signed stream, with the invariant checks of P3.V1 running as a
+correctness guard, followed by a 30k-MAC unsigned 0xff carry storm as a
+worst-case cadence reference.
+
+Result: PASS. Mixed stream: 8192 MACs; hot writes stage0=8192 stage1=8192;
+cold writes stage2=190 stage3=12 stage4=4; cold_we = 206 of 8195 cycles
+(2.51%, all divider ticks, zero out-of-order ticks); max |cnt2|=1, |cnt3|=1,
+|cnt4|=1; cold bit toggles stage2=367 (baseline dynamic-8: 599), stage3=43
+(107), stage4=16 (104) — 39%/60%/85% reductions. Carry storm: 30000 MACs,
+cold writes 3750/102/6, cold_we 9.82% of cycles, max |cnt2|=7 |cnt3|=15
+|cnt4|=15, stage3/stage4 bit toggles 0 (the counters absorb the sustained
+carry stream; the guard drains fold whole +16 wraps upward).
+
+### P3.V3 — Core-level READ protocol equivalence
+
+```sh
+make -C test p3-core-read
+```
+
+Purpose: drive the P3 core and a frozen copy of the released core
+(`test/p3_ref/tiny_int_core_ref.v`, module `tiny_int_core_ref`) with identical
+request streams and verify (1) every READ response byte matches the reference
+for all eight selectors, including back-to-back READ bursts and READs injected
+into dense MAC storms, (2) the READ response latency is bounded (asserted
+<= 6 cycles; measured exactly 2), (3) MAC acceptance never stalls
+(request_ready, pair_count, done, last_product, count_overflow,
+protocol_error, sticky overflow, latched signed mode, and the canonical
+accumulator value match continuously), (4) protocol rejection parity, and
+(5) asynchronous reset clears both cores identically including the pending
+response pipeline. Phases: directed transaction, unsigned/signed overflow
+storms with interleaved READs, read bursts, reserved/done rejection parity,
+4000 randomized commands at one request per cycle, and a mid-stream reset.
+
+Result: PASS. One RTL bug was found and fixed during this run: the first
+implementation registered `response_valid` from the second pipeline stage,
+emitting responses three cycles after acceptance and misaligning them with
+the captured data; corrected to the intended two-cycle latency.
+
+### P3.V4 — Full repository regression on the variant core
+
+```sh
+make -C test test=ALL
+cd test && iverilog -g2012 -o /tmp/dyn_exh.vvp \
+  ../src/tiny_int_dynamic_accumulator.v dynamic_accumulator_exhaustive_tb.v \
+  && vvp /tmp/dyn_exh.vvp
+```
+
+Purpose: run the complete cocotb regression (33 tests) against the variant
+core and top level, plus the standalone dynamic-accumulator exhaustive
+testbench for the retained leaf.
+
+Result: PASS. TESTS=33 PASS=33 FAIL=0 after updating the released tests for
+the documented two-cycle READ response latency (bounded-wait `read` helpers, a
+one-iteration-delayed response check in the two constrained-random command
+loops, single-cycle valid discipline in the two timing-sensitive helpers, and
+replacement of the removed conventional/dynamic bank probes with the
+event-accumulator probes). The dynamic exhaustive testbench passes unchanged
+for all three boundaries. Verified `iverilog -Wall` compiles the variant
+sources without warnings.

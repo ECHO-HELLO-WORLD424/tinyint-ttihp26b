@@ -8,6 +8,7 @@ TOPLEVEL_LANG ?= verilog
 SRC_DIR = $(PWD)/../src
 PROJECT_SOURCES = int4_multiplier.v product_extender.v tiny_int_accumulator.v tiny_int_protocol.v tt_um_echo_hello_world424_tinyint.v
 DYNAMIC_ACCUMULATOR_SOURCE ?= $(SRC_DIR)/tiny_int_dynamic_accumulator.v
+EVENT_ACCUMULATOR_SOURCE ?= $(SRC_DIR)/tiny_int_event_accumulator.v
 CORE_SOURCE ?= $(SRC_DIR)/tiny_int_core.v
 
 # Test selection:
@@ -42,12 +43,46 @@ test-suite: sim
 interactive:
 	$(MAKE) sim COCOTB_TEST_MODULES=interactive COCOTB_RESULTS_FILE=interactive_results.xml
 
+# P3 proposal self-checking iverilog testbenches (standalone, no cocotb).
+#   make p3-equiv     represented-value invariant vs the conventional bank
+#   make p3-metrics   maintenance-domain activity metrics
+#   make p3-core-read core-level READ protocol vs a frozen reference core
+P3_SIM_BUILD ?= sim_build/p3
+P3_LEAF_SOURCES = $(SRC_DIR)/int4_multiplier.v $(SRC_DIR)/product_extender.v \
+                  $(SRC_DIR)/tiny_int_accumulator.v
+P3_EVENT_SOURCES = $(P3_LEAF_SOURCES) $(EVENT_ACCUMULATOR_SOURCE)
+
+p3-equiv: $(P3_EVENT_SOURCES) p3_event_equiv_tb.v
+	@mkdir -p $(P3_SIM_BUILD)
+	iverilog -g2012 -o $(P3_SIM_BUILD)/p3_event_equiv.vvp \
+	    $(P3_EVENT_SOURCES) p3_event_equiv_tb.v
+	vvp $(P3_SIM_BUILD)/p3_event_equiv.vvp
+
+p3-metrics: $(P3_EVENT_SOURCES) p3_event_metrics_tb.v
+	@mkdir -p $(P3_SIM_BUILD)
+	iverilog -g2012 -o $(P3_SIM_BUILD)/p3_event_metrics.vvp \
+	    $(P3_EVENT_SOURCES) p3_event_metrics_tb.v
+	vvp $(P3_SIM_BUILD)/p3_event_metrics.vvp
+
+p3-core-read: $(P3_LEAF_SOURCES) $(EVENT_ACCUMULATOR_SOURCE) \
+              $(DYNAMIC_ACCUMULATOR_SOURCE) $(CORE_SOURCE) \
+              p3_ref/tiny_int_core_ref.v p3_core_read_tb.v
+	@mkdir -p $(P3_SIM_BUILD)
+	iverilog -g2012 -o $(P3_SIM_BUILD)/p3_core_read.vvp \
+	    $(P3_LEAF_SOURCES) $(EVENT_ACCUMULATOR_SOURCE) \
+	    $(DYNAMIC_ACCUMULATOR_SOURCE) $(CORE_SOURCE) \
+	    p3_ref/tiny_int_core_ref.v p3_core_read_tb.v
+	vvp $(P3_SIM_BUILD)/p3_core_read.vvp
+
+.PHONY: p3-equiv p3-metrics p3-core-read
+
 ifneq ($(GATES),yes)
 
 # RTL simulation:
 SIM_BUILD				= sim_build/rtl
 VERILOG_SOURCES += $(addprefix $(SRC_DIR)/,$(PROJECT_SOURCES))
 VERILOG_SOURCES += $(DYNAMIC_ACCUMULATOR_SOURCE)
+VERILOG_SOURCES += $(EVENT_ACCUMULATOR_SOURCE)
 VERILOG_SOURCES += $(CORE_SOURCE)
 
 else

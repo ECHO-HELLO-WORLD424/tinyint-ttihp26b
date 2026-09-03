@@ -57,9 +57,14 @@ async def issue(dut, command, data=0, signed=0):
 
 
 async def read(dut, selector):
+    # P3 protocol: the response byte is emitted two cycles after acceptance.
     await issue(dut, READ, selector)
-    assert (int(dut.uio_out.value) >> 6) & 1
-    return int(dut.uo_out.value)
+    for _ in range(6):
+        if (int(dut.uio_out.value) >> 6) & 1:
+            return int(dut.uo_out.value)
+        await RisingEdge(dut.clk)
+        await Timer(1, unit="ns")
+    raise AssertionError("READ response_valid did not assert within 6 cycles")
 
 
 async def read_accumulator(dut):
@@ -186,11 +191,14 @@ async def test_gate_core_random_architectural_model(dut):
     await start(dut)
     rng = random.Random(0x6A7EC0DE)
     model = new_model()
+    pending_read = None
 
     for cycle in range(15_000):
         if rng.randrange(700) == 0:
             await reset(dut)
             model = new_model()
+            # A reset discards any in-flight READ response on both sides.
+            pending_read = None
             continue
 
         command = rng.choices(range(8), (2, 4, 16, 4, 8, 1, 1, 1), k=1)[0]
@@ -237,10 +245,17 @@ async def test_gate_core_random_architectural_model(dut):
             model["proto"] = 1
 
         await issue(dut, command, data, live_signed)
-        if read_value is not None:
-            assert int(dut.uo_out.value) == read_value
 
-        if cycle % 97 == 0:
+        # P3 protocol: the READ response becomes valid two cycles after
+        # acceptance, so the byte checked here belongs to the READ issued
+        # one iteration ago; it stays bit-identical to the model.
+        assert ((int(dut.uio_out.value) >> 6) & 1) == (pending_read is not None)
+        if pending_read is not None:
+            assert int(dut.uo_out.value) == pending_read
+            pending_read = None
+        pending_read = read_value
+
+        if cycle % 97 == 0 and command != READ:
             assert await read_accumulator(dut) == model["state"]
             for selector in (
                 PAIR_COUNT,

@@ -52,9 +52,17 @@ async def read_low_byte(dut, live_signed_mode):
     )
     await RisingEdge(dut.clk)
     await Timer(1, unit="ns")
-    assert (int(dut.uio_out.value) >> 6) & 1
-    result = int(dut.uo_out.value)
+    # Exactly one valid cycle per READ, as in the released protocol.
     dut.uio_in.value = control_value(signed_mode=live_signed_mode)
+    # P3 protocol: the response byte is emitted two cycles after acceptance.
+    for _ in range(6):
+        if (int(dut.uio_out.value) >> 6) & 1:
+            break
+        await RisingEdge(dut.clk)
+        await Timer(1, unit="ns")
+    else:
+        raise AssertionError("READ response_valid did not assert within 6 cycles")
+    result = int(dut.uo_out.value)
     await RisingEdge(dut.clk)
     await Timer(1, unit="ns")
     assert ((int(dut.uio_out.value) >> 6) & 1) == 0

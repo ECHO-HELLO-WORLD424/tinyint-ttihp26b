@@ -69,9 +69,14 @@ async def issue(dut, command, data=0, signed_mode=0):
 
 
 async def read(dut, selector):
+    # P3 protocol: the response byte is emitted two cycles after acceptance.
     await issue(dut, COMMAND_READ, selector)
-    assert (int(dut.uio_out.value) >> 6) & 1
-    return int(dut.uo_out.value)
+    for _ in range(6):
+        if (int(dut.uio_out.value) >> 6) & 1:
+            return int(dut.uo_out.value)
+        await RisingEdge(dut.clk)
+        await Timer(1, unit="ns")
+    raise AssertionError("READ response_valid did not assert within 6 cycles")
 
 
 async def read_accumulator(dut):
@@ -102,8 +107,8 @@ async def test_core_configuration_and_new_read_selectors(dut):
                 assert await read(dut, SELECT_CONFIGURATION) == expected
                 assert int(dut.integrated_accumulator_mode.value) == mode
                 assert int(dut.integrated_zero_skip.value) == zero_skip
-                assert int(dut.integrated_conventional_accumulator_value.value) == 0
-                assert int(dut.integrated_dynamic_accumulator_value.value) == 0
+                assert int(dut.integrated_event_stored_value.value) == 0
+                assert int(dut.integrated_event_canonical_value.value) == 0
 
                 # Live configuration pins cannot alter latched readback.
                 dut.ui_in.value = 0xFF
@@ -172,26 +177,17 @@ async def test_core_operand_isolation_zero_skip_and_stage_enables(dut):
         await Timer(1, unit="ns")
 
         extended = (-15) & MASK
-        if mode == 0:
-            assert int(dut.integrated_conventional_accumulate.value) == 1
-            assert int(dut.integrated_dynamic_accumulate.value) == 0
-            assert int(dut.integrated_conventional_addend.value) == extended
-            assert int(dut.integrated_dynamic_addend.value) == 0
-        else:
-            assert int(dut.integrated_conventional_accumulate.value) == 0
-            assert int(dut.integrated_dynamic_accumulate.value) == 1
-            assert int(dut.integrated_conventional_addend.value) == 0
-            assert int(dut.integrated_dynamic_addend.value) == extended
+        # P3: one event-scheduled accumulator serves every mode, so the
+        # enabled addend reaches it identically in all four modes.
+        assert int(dut.integrated_event_accumulate.value) == 1
+        assert int(dut.integrated_event_addend.value) == extended
 
         await RisingEdge(dut.clk)
         await Timer(1, unit="ns")
         dut.uio_in.value = 0
         expected = extended
         assert int(dut.integrated_accumulator_value.value) == expected
-        if mode == 0:
-            assert int(dut.integrated_dynamic_accumulator_value.value) == 0
-        else:
-            assert int(dut.integrated_conventional_accumulator_value.value) == 0
+        assert int(dut.integrated_event_canonical_value.value) == expected
 
     # A skipped zero is still an accepted pair and updates last_product/count,
     # but both data operands and state enables remain inactive.
@@ -200,11 +196,9 @@ async def test_core_operand_isolation_zero_skip_and_stage_enables(dut):
     dut.ui_in.value = pack_operands(0, -8)
     dut.uio_in.value = control_value(COMMAND_MAC, valid=1)
     await Timer(1, unit="ns")
-    assert int(dut.integrated_conventional_accumulate.value) == 0
-    assert int(dut.integrated_dynamic_accumulate.value) == 0
-    assert int(dut.integrated_conventional_addend.value) == 0
-    assert int(dut.integrated_dynamic_addend.value) == 0
-    assert int(dut.integrated_dynamic_stage_write_enable.value) == 0
+    assert int(dut.integrated_event_accumulate.value) == 0
+    assert int(dut.integrated_event_addend.value) == 0
+    assert int(dut.integrated_event_stage_write_enable.value) == 0
     await RisingEdge(dut.clk)
     dut.uio_in.value = 0
     await Timer(1, unit="ns")
@@ -318,10 +312,13 @@ async def test_core_constrained_random_command_stream(dut):
 
     model = reset_model()
 
+    pending_read = None
     for cycle in range(25_000):
         if rng.randrange(500) == 0:
             await reset(dut)
             model = reset_model()
+            # A reset discards any in-flight READ response on both sides.
+            pending_read = None
             continue
 
         command = rng.choices(
@@ -391,8 +388,16 @@ async def test_core_constrained_random_command_stream(dut):
         assert int(dut.integrated_done.value) == model["done"]
         assert int(dut.integrated_count_overflow.value) == model["count_overflow"]
         assert int(dut.integrated_protocol_error.value) == model["protocol_error"]
-        assert ((int(dut.uio_out.value) >> 6) & 1) == (command == COMMAND_READ)
-        if expected_read is not None:
-            assert int(dut.uo_out.value) == expected_read, (
-                f"read mismatch selector={data & 7} cycle={cycle}"
+
+        # P3 protocol: a READ response becomes valid two cycles after its
+        # acceptance, so the response checked here belongs to the READ
+        # issued one iteration ago; it stays bit-identical to the model.
+        assert ((int(dut.uio_out.value) >> 6) & 1) == (pending_read is not None)
+        if pending_read is not None:
+            pending_selector, pending_expected = pending_read
+            assert int(dut.uo_out.value) == pending_expected, (
+                f"read mismatch selector={pending_selector} cycle={cycle}"
             )
+            pending_read = None
+        if command == COMMAND_READ:
+            pending_read = (data & 0x7, expected_read)

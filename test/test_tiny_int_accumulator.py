@@ -216,7 +216,7 @@ async def test_accumulator_back_to_back_throughput(dut):
 
 @cocotb.test()
 async def test_core_datapath_reaches_accumulator_addition_input(dut):
-    """Every product reaches only the enabled conventional adder."""
+    """Every product reaches the enabled accumulator addend input."""
     await start_and_reset(dut)
 
     for signed_mode in (0, 1):
@@ -242,9 +242,7 @@ async def test_core_datapath_reaches_accumulator_addition_input(dut):
                 else:
                     expected = multiplier * multiplicand
 
-                actual = int(
-                    dut.integrated_accumulator_addition_result.value
-                )
+                actual = int(dut.integrated_event_addend.value)
                 assert actual == expected, (
                     f"mode={'signed' if signed_mode else 'unsigned'}, "
                     f"multiplier=0x{multiplier:x}, "
@@ -252,8 +250,6 @@ async def test_core_datapath_reaches_accumulator_addition_input(dut):
                     f"expected adder input 0x{expected:05x}, "
                     f"got 0x{actual:05x}"
                 )
-                assert int(dut.integrated_conventional_addend.value) == expected
-                assert int(dut.integrated_dynamic_addend.value) == 0
 
         dut.uio_in.value = 0
 
