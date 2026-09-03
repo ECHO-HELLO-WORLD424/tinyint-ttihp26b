@@ -21,6 +21,7 @@ project:
     - "product_extender.v"
     - "tiny_int_accumulator.v"
     - "tiny_int_dynamic_accumulator.v"
+    - "tiny_int_event_accumulator.v"
     - "tiny_int_core.v"
     - "tiny_int_protocol.v"
     - "tt_um_echo_hello_world424_tinyint.v"
