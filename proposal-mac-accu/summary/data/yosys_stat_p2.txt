@@ -1,0 +1,90 @@
+[p2] Generating RTLIL representation for module `\sg13g2_lgcp_1'.
+[p2]    Number of cells:                957
+[p2]      sg13g2_lgcp_1                   5
+[p2]   cell sg13g2_dfrbpq_1 (noninv, pins=4, area=48.99) is a direct match for cell type $_DFF_PN0_.
+[p2]     \sg13g2_dfrbpq_1 _DFF_PN0_ (.CLK( C), .D( D), .Q( Q), .RESET_B( R));
+[p2]   mapped 74 $_DFF_PN0_ cells to \sg13g2_dfrbpq_1 cells.
+[p2] ABC: + read_lib -w /pdk/sg13g2_stdcell_typ.lib 
+[p2] ABC: Scl_LibertyReadGenlib() skipped cell "sg13g2_antennanp" due to dont_use attribute.
+[p2] ABC: Scl_LibertyReadGenlib() skipped cell "sg13g2_decap_4" due to dont_use attribute.
+[p2] ABC: Scl_LibertyReadGenlib() skipped cell "sg13g2_decap_8" due to dont_use attribute.
+[p2] ABC: Scl_LibertyReadGenlib() skipped sequential cell "sg13g2_dfrbp_1".
+[p2] ABC: Scl_LibertyReadGenlib() skipped sequential cell "sg13g2_dfrbp_2".
+[p2] ABC: Scl_LibertyReadGenlib() skipped sequential cell "sg13g2_dfrbpq_1".
+[p2] ABC: Scl_LibertyReadGenlib() skipped sequential cell "sg13g2_dfrbpq_2".
+[p2] ABC: Scl_LibertyReadGenlib() skipped sequential cell "sg13g2_dlhq_1".
+[p2] ABC: Scl_LibertyReadGenlib() skipped sequential cell "sg13g2_dlhr_1".
+[p2] ABC: Scl_LibertyReadGenlib() skipped sequential cell "sg13g2_dlhrq_1".
+[p2] ABC: Scl_LibertyReadGenlib() skipped sequential cell "sg13g2_dllr_1".
+[p2] ABC: Scl_LibertyReadGenlib() skipped sequential cell "sg13g2_dllrq_1".
+[p2] ABC: Scl_LibertyReadGenlib() skipped three-state cell "sg13g2_ebufn_2".
+[p2] ABC: Scl_LibertyReadGenlib() skipped three-state cell "sg13g2_ebufn_4".
+[p2] ABC: Scl_LibertyReadGenlib() skipped three-state cell "sg13g2_ebufn_8".
+[p2] ABC: Scl_LibertyReadGenlib() skipped three-state cell "sg13g2_einvn_2".
+[p2] ABC: Scl_LibertyReadGenlib() skipped three-state cell "sg13g2_einvn_4".
+[p2] ABC: Scl_LibertyReadGenlib() skipped three-state cell "sg13g2_einvn_8".
+[p2] ABC: Scl_LibertyReadGenlib() skipped cell "sg13g2_fill_1" due to dont_use attribute.
+[p2] ABC: Scl_LibertyReadGenlib() skipped cell "sg13g2_fill_2" due to dont_use attribute.
+[p2] ABC: Scl_LibertyReadGenlib() skipped cell "sg13g2_fill_4" due to dont_use attribute.
+[p2] ABC: Scl_LibertyReadGenlib() skipped cell "sg13g2_fill_8" due to dont_use attribute.
+[p2] ABC: Scl_LibertyReadGenlib() skipped cell "sg13g2_lgcp_1" due to dont_use attribute.
+[p2] ABC: Scl_LibertyReadGenlib() skipped sequential cell "sg13g2_sdfbbp_1".
+[p2] ABC: Scl_LibertyReadGenlib() skipped sequential cell "sg13g2_sdfrbp_1".
+[p2] ABC: Scl_LibertyReadGenlib() skipped sequential cell "sg13g2_sdfrbp_2".
+[p2] ABC: Scl_LibertyReadGenlib() skipped sequential cell "sg13g2_sdfrbpq_1".
+[p2] ABC: Scl_LibertyReadGenlib() skipped sequential cell "sg13g2_sdfrbpq_2".
+[p2] ABC: Scl_LibertyReadGenlib() skipped cell "sg13g2_sighold" due to dont_use attribute.
+[p2] ABC: Scl_LibertyReadGenlib() skipped cell "sg13g2_slgcp_1" due to dont_use attribute.
+[p2] ABC: Library "sg13g2_stdcell_typ_1p20V_25C" from "/pdk/sg13g2_stdcell_typ.lib" has 54 cells (20 skipped: 14 seq; 6 tri-state; 0 no func; 10 dont_use).  Time =     0.01 sec
+[p2] ABC RESULTS:     sg13g2_a21o_1 cells:       17
+[p2] ABC RESULTS:    sg13g2_a21oi_1 cells:       76
+[p2] ABC RESULTS:   sg13g2_a221oi_1 cells:        3
+[p2] ABC RESULTS:    sg13g2_a22oi_1 cells:       30
+[p2] ABC RESULTS:     sg13g2_and2_1 cells:       28
+[p2] ABC RESULTS:     sg13g2_and3_1 cells:        9
+[p2] ABC RESULTS:     sg13g2_and4_1 cells:        2
+[p2] ABC RESULTS:      sg13g2_inv_1 cells:       54
+[p2] ABC RESULTS:     sg13g2_mux2_1 cells:       21
+[p2] ABC RESULTS:    sg13g2_nand2_1 cells:       73
+[p2] ABC RESULTS:   sg13g2_nand2b_1 cells:       14
+[p2] ABC RESULTS:    sg13g2_nand3_1 cells:       34
+[p2] ABC RESULTS:   sg13g2_nand3b_1 cells:        2
+[p2] ABC RESULTS:    sg13g2_nand4_1 cells:       10
+[p2] ABC RESULTS:     sg13g2_nor2_1 cells:       55
+[p2] ABC RESULTS:    sg13g2_nor2b_1 cells:       20
+[p2] ABC RESULTS:     sg13g2_nor3_1 cells:       30
+[p2] ABC RESULTS:     sg13g2_nor4_1 cells:        1
+[p2] ABC RESULTS:    sg13g2_o21ai_1 cells:       72
+[p2] ABC RESULTS:      sg13g2_or2_1 cells:       12
+[p2] ABC RESULTS:      sg13g2_or3_1 cells:        2
+[p2] ABC RESULTS:      sg13g2_or4_1 cells:        1
+[p2] ABC RESULTS:    sg13g2_xnor2_1 cells:       36
+[p2] ABC RESULTS:     sg13g2_xor2_1 cells:       19
+[p2]    Number of cells:                740
+[p2]      sg13g2_a21o_1                  17
+[p2]      sg13g2_a21oi_1                 76
+[p2]      sg13g2_a221oi_1                 3
+[p2]      sg13g2_a22oi_1                 30
+[p2]      sg13g2_and2_1                  28
+[p2]      sg13g2_and3_1                   9
+[p2]      sg13g2_and4_1                   2
+[p2]      sg13g2_dfrbpq_1                74
+[p2]      sg13g2_inv_1                   54
+[p2]      sg13g2_lgcp_1                   5
+[p2]      sg13g2_mux2_1                  21
+[p2]      sg13g2_nand2_1                 73
+[p2]      sg13g2_nand2b_1                14
+[p2]      sg13g2_nand3_1                 34
+[p2]      sg13g2_nand3b_1                 2
+[p2]      sg13g2_nand4_1                 10
+[p2]      sg13g2_nor2_1                  55
+[p2]      sg13g2_nor2b_1                 20
+[p2]      sg13g2_nor3_1                  30
+[p2]      sg13g2_nor4_1                   1
+[p2]      sg13g2_o21ai_1                 72
+[p2]      sg13g2_or2_1                   12
+[p2]      sg13g2_or3_1                    2
+[p2]      sg13g2_or4_1                    1
+[p2]      sg13g2_xnor2_1                 36
+[p2]      sg13g2_xor2_1                  19
+[p2]    Chip area for module '\tiny_int_core': 9671.432400

@@ -1,0 +1,9 @@
+read_verilog -sv src_p3/int4_multiplier.v src_p3/product_extender.v src_p3/tiny_int_core.v src_p3/tiny_int_event_accumulator.v 
+hierarchy -check -top tiny_int_core
+synth -flatten -top tiny_int_core
+dfflibmap -liberty /pdk/sg13g2_stdcell_typ.lib
+abc -liberty /pdk/sg13g2_stdcell_typ.lib
+setundef -zero
+clean -purge
+stat -liberty /pdk/sg13g2_stdcell_typ.lib
+write_verilog -noattr net_p3.v

@@ -1,0 +1,10 @@
+read_verilog -sv src_p2/*.v
+read_verilog -sv bb_lgcp.v 
+hierarchy -check -top tiny_int_core
+synth -flatten -top tiny_int_core
+dfflibmap -liberty /pdk/sg13g2_stdcell_typ.lib
+abc -liberty /pdk/sg13g2_stdcell_typ.lib
+setundef -zero
+clean -purge
+stat -liberty /pdk/sg13g2_stdcell_typ.lib
+write_verilog -noattr net_p2.v
