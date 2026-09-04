@@ -108,15 +108,14 @@ def run_sta(corner, cases_tcl, report_out, smoke=False):
         "ES_CASES_TCL": cases_tcl.replace(C.REPO, "/work"),
         "ES_REPORT": report_out.replace(C.REPO, "/work"),
     }
-    cmd = [
-        "docker", "exec", "amazing_robinson", "docker", "run", "--rm",
-        "-v", "/workspaces/tinyint-ttihp26b:/work", "-w", "/work",
-        "-v", f"{C.PDK_HOST}:/pdk:ro",
+    cmd = C.docker_prefix() + ["docker", "run", "--rm"]
+    for k, v in env.items():
+        cmd += ["-e", f"{k}={v}"]
+    cmd += C.docker_mount_args() + [
+        "-w", "/work",
         C.LL_IMAGE, "sta", "-no_init", "-exit",
         "tools/sta/experiment_sta.tcl",
     ]
-    for k, v in env.items():
-        cmd[5:5] = ["-e", f"{k}={v}"]
     print("+", " ".join(cmd[:12]), "...")
     res = subprocess.run(cmd, capture_output=True, text=True)
     # OpenSTA prints the case reports on stdout (delimited by ES markers);

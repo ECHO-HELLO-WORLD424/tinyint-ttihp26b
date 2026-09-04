@@ -9,9 +9,23 @@ SPEF parasitics) and derives:
 
   f_osc [MHz]      = 1 / (2 * T_loop)
   count[win]       = floor(window_cycles * T_clk / (2 * T_loop))
-  overflow flag    = count > 1023 (10-bit edge counters)
+  overflow flag    = count > 65535 (16-bit edge counters)
 
-Outputs data/ro_predict.csv + .json, plus data/ro_report_<corner>.txt raw.
+T_loop is the FULL loop period, the sum of two measured segments around the
+ring (see tools/ro/ro_predict.tcl):
+
+  line segment: nand_out (u_a3/X) -> line -> tail -> u_close -> close -> u_a2/A
+  gate segment: u_a2/A -> u_a2/X (g2) -> u_a3/B -> nand_out (u_a3/X)
+
+Each segment is measured with the loop broken OUTSIDE the segment (line: at
+u_a2 A->X; gate: at u_close A->Y), so every physical arc of the loop is
+counted exactly once. The gate segment (u_a2/u_a3, part of the loop closure)
+was missing from the first-pass model.
+
+Outputs data/ro_predict.csv + .json, plus per-corner raw provenance:
+data/ro_cases_<corner>.tcl (case script; segment pins selected at sta runtime
+from ES_RO_MODE) and data/ro_report_<corner>.txt (both raw segment reports,
+marked with their ES_RO_MODE).
 
 Run: python3 tools/run_ro_predict.py [--smoke]
 """
@@ -28,29 +42,37 @@ import common as C  # noqa: E402
 
 
 def gen_cases_tcl(path, sels):
-    lines = []
+    """Per-can_sel report cases for both ROs.
+
+    One file serves both segment measurements: the -from/-to pins are
+    selected at sta runtime from ES_RO_MODE (see tools/ro/ro_predict.tcl).
+    """
+    lines = [
+        'if {$::env(ES_RO_MODE) eq "line"} {',
+        '  set ro_frm_fmt {u_ro_%s.u_gate.u_a3/X}',
+        '  set ro_to_fmt {u_ro_%s.u_gate.u_a2/A}',
+        '} else {',
+        '  set ro_frm_fmt {u_ro_%s.u_gate.u_a2/A}',
+        '  set ro_to_fmt {u_ro_%s.u_gate.u_a3/X}',
+        '}',
+    ]
     for sel in sels:
         lines.append(f'puts "==ROCASE sel={sel}"')
-        lines.append(f"ro_case_net {(sel) & 1} {{can_sel[0]}}")
-        lines.append(f"ro_case_net {(sel >> 1) & 1} {{can_sel[1]}}")
-        lines.append('puts "RO-GEN"')
-        lines.append(
-            "set_max_delay 1000 -from [get_pins {u_ro_gen.u_gate.u_a3/X}] "
-            "-to [get_pins {u_ro_gen.u_gate.u_a2/A}]")
-        lines.append(
-            "report_checks -from [get_pins {u_ro_gen.u_gate.u_a3/X}] "
-            "-to [get_pins {u_ro_gen.u_gate.u_a2/A}] -path_delay max "
-            "-group_path_count 1 -fields {slew cap} "
-            "-format full_clock_expanded -corner nom")
-        lines.append('puts "RO-MAT"')
-        lines.append(
-            "set_max_delay 1000 -from [get_pins {u_ro_mat.u_gate.u_a3/X}] "
-            "-to [get_pins {u_ro_mat.u_gate.u_a2/A}]")
-        lines.append(
-            "report_checks -from [get_pins {u_ro_mat.u_gate.u_a3/X}] "
-            "-to [get_pins {u_ro_mat.u_gate.u_a2/A}] -path_delay max "
-            "-group_path_count 1 -fields {slew cap} "
-            "-format full_clock_expanded -corner nom")
+        lines.append(f'ro_case_net {sel & 1} {{can_sel[0]}}')
+        lines.append(f'ro_case_net {(sel >> 1) & 1} {{can_sel[1]}}')
+        for ro in ("gen", "mat"):
+            lines.append(f'puts "RO-{ro.upper()}"')
+            lines.append(
+                "set_max_delay 1000 "
+                "-from [get_pins [format $ro_frm_fmt %s]] "
+                "-to [get_pins [format $ro_to_fmt %s]]" % (ro, ro))
+            lines.append(
+                "report_checks "
+                "-from [get_pins [format $ro_frm_fmt %s]] "
+                "-to [get_pins [format $ro_to_fmt %s]] "
+                "-path_delay max -group_path_count 1 "
+                "-fields {slew cap} "
+                "-format full_clock_expanded -corner nom" % (ro, ro))
         lines.append('puts "RO-END"')
     with open(path, "w") as f:
         f.write("\n".join(lines) + "\n")
@@ -84,11 +106,11 @@ def parse_ro_report(text):
 def loop_delay_ns(block):
     if not block or block.get("arrival_ns") is None:
         return None
-    # unconstrained comb path: arrival at the -to pin IS the loop delay
+    # unconstrained comb path: arrival at the -to pin IS the segment delay
     return block["arrival_ns"]
 
 
-def run_ro(corner, cases_tcl):
+def run_ro(corner, cases_tcl, mode):
     libs = " ".join(
         C.PDK_INNER + "/" + rel for rel in C.CORNER_LIBS[corner])
     env = {
@@ -96,23 +118,21 @@ def run_ro(corner, cases_tcl):
         "ES_NETLIST": C.netlist_path().replace(C.REPO, "/work"),
         "ES_SPEF": C.spef_path().replace(C.REPO, "/work"),
         "ES_CASES_TCL": cases_tcl.replace(C.REPO, "/work"),
+        "ES_RO_MODE": mode,
     }
-    cmd = [
-        "docker", "exec", "amazing_robinson", "docker", "run", "--rm",
-        "-v", "/workspaces/tinyint-ttihp26b:/work", "-w", "/work",
-        "-v", f"{C.PDK_HOST}:/pdk:ro",
+    cmd = C.docker_prefix() + ["docker", "run", "--rm"]
+    for k, v in env.items():
+        cmd += ["-e", f"{k}={v}"]
+    cmd += C.docker_mount_args() + [
+        "-w", "/work",
         C.LL_IMAGE, "sta", "-no_init", "-exit",
         "tools/ro/ro_predict.tcl",
     ]
-    for k, v in env.items():
-        cmd[5:5] = ["-e", f"{k}={v}"]
     res = subprocess.run(cmd, capture_output=True, text=True)
-    open(os.path.join(C.DATA, f"ro_report_{corner}.txt"), "w").write(
-        res.stdout + "\n===STDERR===\n" + res.stderr)
     if res.returncode != 0:
         print(res.stdout[-3000:], res.stderr[-3000:])
-        raise SystemExit(f"ro sta failed for {corner}")
-    return res.stdout
+        raise SystemExit(f"ro sta failed for {corner} ({mode})")
+    return res.stdout + "\n===STDERR===\n" + res.stderr
 
 
 def main():
@@ -126,12 +146,23 @@ def main():
     for corner in C.CORNER_NAMES:
         cases_tcl = os.path.join(C.DATA, f"ro_cases_{corner}.tcl")
         gen_cases_tcl(cases_tcl, sels)
-        text = run_ro(corner, cases_tcl)
-        cases = parse_ro_report(text)
-        for key, reps in cases.items():
+        raw, reps_by_mode = {}, {}
+        for mode in ("line", "gate"):
+            raw[mode] = run_ro(corner, cases_tcl, mode)
+            reps_by_mode[mode] = parse_ro_report(raw[mode])
+        with open(os.path.join(C.DATA, f"ro_report_{corner}.txt"), "w") as f:
+            for mode in ("line", "gate"):
+                f.write(f"######## ES_RO_MODE={mode}\n")
+                f.write(raw[mode] + ("" if raw[mode].endswith("\n") else "\n"))
+        for key in reps_by_mode["line"]:
             sel = int(key.split("=")[1])
             for ro in ("gen", "mat"):
-                t = loop_delay_ns(reps.get(ro))
+                seg = {m: loop_delay_ns(reps_by_mode[m].get(key, {}).get(ro))
+                       for m in ("line", "gate")}
+                if None in seg.values():
+                    t = None
+                else:
+                    t = seg["line"] + seg["gate"]
                 row = {
                     "corner": corner,
                     "v_volt": dict((c[0], c[1]) for c in C.CORNERS)[corner],
@@ -139,8 +170,12 @@ def main():
                     "canary": f"ro_{ro}",
                     "can_sel": sel,
                     "loop_delay_ns": round(t, 4) if t is not None else "",
-                    "startpoint": (reps.get(ro) or {}).get("startpoint", ""),
-                    "endpoint": (reps.get(ro) or {}).get("endpoint", ""),
+                    "line_seg_ns": (round(seg["line"], 4)
+                                    if seg["line"] is not None else ""),
+                    "gate_seg_ns": (round(seg["gate"], 4)
+                                    if seg["gate"] is not None else ""),
+                    "startpoint": "u_ro_%s.u_gate.u_a3/X (nand_out)" % ro,
+                    "endpoint": "u_ro_%s.u_gate.u_a3/X (nand_out)" % ro,
                 }
                 if t:
                     t_half = 2 * t  # ro_node period (posedge every loop traversal pair)
@@ -149,7 +184,7 @@ def main():
                         dur = wcyc * C.CLK_PERIOD_NS
                         cnt = int(dur / t_half)
                         row[f"count_win{win_sel}"] = cnt
-                        row[f"sat_win{win_sel}"] = int(cnt > 1023)
+                        row[f"sat_win{win_sel}"] = int(cnt > 65535)
                 else:
                     row["f_osc_mhz"] = ""
                     for win_sel in C.WINDOW_CYCLES:
@@ -170,7 +205,8 @@ def main():
         json.dump({"provenance": {
             "run_id": C.RUN_ID, "git_commit": C.GIT_COMMIT,
             "librelane_image": C.LL_IMAGE, "pdk_rev": C.CIEL_PDK_REV,
-            "method": "broken-loop extracted STA (see tools/ro/ro_predict.tcl)",
+            "method": ("broken-loop extracted STA, full loop = line + gate "
+                       "segment sum (see tools/ro/ro_predict.tcl)"),
         }, "rows": rows}, f, indent=1)
     print(f"wrote {csv_path} ({len(rows)} rows)")
 
