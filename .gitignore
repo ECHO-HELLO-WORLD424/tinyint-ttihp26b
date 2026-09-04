@@ -17,4 +17,6 @@ test/gate_level.sdf
 # Pre-silicon tooling: generated sim binaries and derived libs
 data/sdfsim/tb.vvp
 data/sdfsim/sg13g2_stdcell_sdf.v
+data/sdfsim/netlist_sim.v
 data/sdf_path/*.iopath.sdf
+__pycache__/

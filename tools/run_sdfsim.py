@@ -33,6 +33,11 @@ import common as C  # noqa: E402
 SIMDIR = os.path.join(C.DATA, "sdfsim")
 TB = os.path.join(C.REPO, "tools", "sdf", "tb_sdfsim.v")
 SDF_LIB = os.path.join(SIMDIR, "sg13g2_stdcell_sdf.v")
+NETLIST_SIM = os.path.join(SIMDIR, "netlist_sim.v")
+
+# Wall-clock guard for vvp runs (annotation problems show up as runaway
+# simulation, not as a hang on I/O).
+VVP_TIMEOUT_S = 1800
 
 RESULT_RE = re.compile(r"RESULT (\w+)=(\S+)")
 
@@ -72,17 +77,32 @@ def _inner(path):
     return path.replace(C.REPO, "/work")
 
 
+def make_sim_netlist():
+    """Rename escaped identifiers (dots/brackets -> underscores) in a copy
+    of the post-route netlist so SDF (INSTANCE) strings bind in Icarus."""
+    import subprocess
+    rnr = os.path.join(C.REPO, "tools", "sdf", "rename_netlist.py")
+    if (os.path.exists(NETLIST_SIM)
+            and os.path.getmtime(NETLIST_SIM) > os.path.getmtime(C.netlist_path())):
+        return
+    res = subprocess.run([sys.executable, rnr, C.netlist_path(), NETLIST_SIM],
+                         capture_output=True, text=True)
+    if res.returncode != 0:
+        print(res.stdout, res.stderr)
+        raise SystemExit("rename_netlist failed")
+    print(res.stdout.strip())
+
+
 def compile_tb():
     os.makedirs(SIMDIR, exist_ok=True)
+    make_sim_netlist()
     vvp = os.path.join(SIMDIR, "tb.vvp")
-    cmd = [
-        "docker", "exec", "amazing_robinson", "docker", "run", "--rm",
-        "-v", "/workspaces/tinyint-ttihp26b:/work", "-w", "/work",
-        "-v", f"{C.PDK_HOST}:/pdk:ro",
-        C.LL_IMAGE, "iverilog", "-gspecify",
-        "-o", _inner(vvp),
-        _inner(TB), _inner(SDF_LIB), _inner(C.netlist_path()),
-    ]
+    cmd = (C.docker_prefix() + ["docker", "run", "--rm"]
+           + C.docker_mount_args() + ["-w", "/work", C.LL_IMAGE,
+                                      "iverilog", "-gspecify",
+                                      "-o", _inner(vvp),
+                                      _inner(TB), _inner(SDF_LIB),
+                                      _inner(NETLIST_SIM)])
     res = subprocess.run(cmd, capture_output=True, text=True)
     open(os.path.join(SIMDIR, "compile.log"), "w").write(
         res.stdout + "\n===STDERR===\n" + res.stderr)
@@ -116,17 +136,24 @@ def run_point(period_ns, word, nframes, corner=None, forcecan=None):
     ]
     if corner:
         args.append("+sdf=" + _inner(sdf_path(corner)))
-    cmd = [
-        "docker", "exec", "amazing_robinson", "docker", "run", "--rm",
-        "-v", "/workspaces/tinyint-ttihp26b:/work", "-w", "/work",
-        C.LL_IMAGE, "vvp", "-n",
-        _inner(os.path.join(SIMDIR, "tb.vvp")),
-    ] + args
-    res = subprocess.run(cmd, capture_output=True, text=True)
+    cmd = (C.docker_prefix() + ["docker", "run", "--rm"]
+           + C.docker_mount_args() + ["-w", "/work", C.LL_IMAGE,
+                                      "vvp", "-n",
+                                      _inner(os.path.join(SIMDIR, "tb.vvp"))]
+           ) + args
+    res = subprocess.run(cmd, capture_output=True, text=True,
+                         timeout=VVP_TIMEOUT_S)
     log = os.path.join(
         SIMDIR, "run_p%d_w%04x%s.log"
         % (period_ns, word, "_" + corner if corner else "_zdelay"))
     open(log, "w").write(res.stdout + "\n===STDERR===\n" + res.stderr)
+    # Surface annotation problems: unannotated IOPATH / bad instance refs.
+    warns = [l for l in res.stderr.splitlines()
+             if "IOPATH" in l or "SDF" in l.upper() or "annotat" in l.lower()]
+    if warns:
+        print("  vvp annotation warnings (%d lines, see log): %s%s" % (
+            len(warns), warns[0][:120],
+            " ..." if len(warns) > 1 else ""))
     fields = dict(RESULT_RE.findall(res.stdout))
     fields["log"] = os.path.basename(log)
     return fields
@@ -181,6 +208,7 @@ def main():
             "cfg_echo": f.get("cfg_echo", ""),
             "stat": f.get("stat", ""),
             "err_dut": f.get("err_dut", ""),
+            "ro_note": "",
             "sdf": sdf_path(corner) if corner else "",
             "run_id": C.RUN_ID,
             "git_commit": C.GIT_COMMIT,
@@ -194,10 +222,18 @@ def main():
               "gen", row["gen_cnt"], "mat", row["mat_cnt"])
 
     # RO canary cross-check: with the SDF annotated and the loops live
-    # (FORCE_CAN off), the edge counters measure the real annotated
+    # (FORCE_CAN off), the edge counters would measure the annotated
     # oscillation over a small window -- compare against the STA loop-delay
-    # prediction in data/ro_predict.csv (P1.3). Small frame count to bound
-    # the ~0.5-1 GHz RO event rate in simulation.
+    # prediction in data/ro_predict.csv (P1.3). INVALID for that purpose:
+    # pnr.sdc disables the RO timing arcs, so write_sdf emits hard 0.000
+    # IOPATH triples for every u_ro_* cell (see
+    # docs/ro-sdf-crosscheck-diagnosis.md). The loops then race at ~zero
+    # delay and the counters latch deterministic simulator race artifacts,
+    # not oscillation counts. The row is kept for its DUT error count only;
+    # gen_cnt/mat_cnt are blanked here so they cannot be mistaken for RO
+    # measurements. RO frequency prediction is the STA loop-delay model
+    # (data/ro_predict.csv); extracted transient SPICE remains the
+    # validation path if an engine becomes available.
     ro_frames = 30
     f = run_point(20, word, ro_frames, "nom_slow_1p08V_125C", forcecan=0)
     rows.append({
@@ -216,11 +252,13 @@ def main():
         "err_rate_per_op": (
             round(int(f["err_cnt"]) / int(f["ops"]), 6)
             if f.get("err_cnt") and f.get("ops") and int(f["ops"]) else ""),
-        "gen_cnt": f.get("gen_cnt", ""),
-        "mat_cnt": f.get("mat_cnt", ""),
+        "gen_cnt": "",
+        "mat_cnt": "",
         "cfg_echo": f.get("cfg_echo", ""),
         "stat": f.get("stat", ""),
         "err_dut": f.get("err_dut", ""),
+        "ro_note": ("invalid: RO cells zero-annotated (disabled arcs); "
+                    "counts blanked, see docs/ro-sdf-crosscheck-diagnosis.md"),
         "sdf": sdf_path("nom_slow_1p08V_125C"),
         "run_id": C.RUN_ID,
         "git_commit": C.GIT_COMMIT,
@@ -228,8 +266,8 @@ def main():
         "pdk_rev": C.CIEL_PDK_REV,
         "log": f.get("log", ""),
     })
-    print("RO cross-check:", {k: f.get(k) for k in ("ops", "err_cnt",
-                                                    "gen_cnt", "mat_cnt")})
+    print("RO cross-check (DUT-only, RO counts blanked):",
+          {k: f.get(k) for k in ("ops", "err_cnt", "cfg_echo")})
 
     csv_path = os.path.join(C.DATA, "sdfsim.csv")
     with open(csv_path, "w", newline="") as fh:
@@ -240,8 +278,11 @@ def main():
         json.dump({"provenance": {
             "run_id": C.RUN_ID, "git_commit": C.GIT_COMMIT,
             "librelane_image": C.LL_IMAGE, "pdk_rev": C.CIEL_PDK_REV,
-            "note": ("full-chip SDF annotation (INTERCONNECT+IOPATH); timing "
-                     "checks removed from cell models; specify kept"),
+            "note": ("IOPATH-only SDF annotation (per-cell delays; wire "
+                     "interconnect not annotated -- Icarus's interconnect "
+                     "annotator crashes on this design); timing checks "
+                     "removed from cell models; escaped instance names "
+                     "renamed to underscore form for Icarus binding"),
         }, "rows": rows}, fh, indent=1)
     print("wrote", csv_path)
 

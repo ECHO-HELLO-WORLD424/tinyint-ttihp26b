@@ -1,13 +1,13 @@
 SDF annotating /work/data/sdf_path/nom_slow_1p08V_125C.iopath.sdf
-RESULT period_ns=28
+RESULT period_ns=20
 RESULT segs=ff pat=1 winsel=0
-RESULT ops=200
-RESULT err_cnt=0
-RESULT gen_cnt=0
+RESULT ops=30
+RESULT err_cnt=7
+RESULT gen_cnt=6
 RESULT mat_cnt=0
 RESULT cfg_echo=ff
-RESULT stat=ec
+RESULT stat=dc
 RESULT err_dut=00
-/work/tools/sdf/tb_sdfsim.v:141: $finish called at 107352000 (1ps)
+/work/tools/sdf/tb_sdfsim.v:141: $finish called at 12080000 (1ps)
 
 ===STDERR===

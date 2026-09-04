@@ -19,9 +19,16 @@ Transformations (scope recorded in data/sdf_path_check.csv):
      thereby lost; acceptable for first-order capture-path timing.
 
 Usage: filter_sdf.py <corner.sdf> <corner.iopath.sdf>
+
+The (INSTANCE ...) fields are additionally renamed to underscore form with
+sdfnames.canon(), matching the simulation netlist copy produced by
+rename_netlist.py (Icarus's SDF binder treats dots as hierarchy
+separators, which cannot bind to the flattened escaped instance names).
 """
 
 import sys
+
+import sdfnames
 
 
 def tokenize(text):
@@ -139,7 +146,7 @@ def fix_absolute(node):
     return ('ABSOLUTE', plain + unwrapped), len(unwrapped)
 
 
-stats = {"cells": 0, "sections": 0, "unwrapped": 0}
+stats = {"cells": 0, "sections": 0, "unwrapped": 0, "renamed": 0}
 
 root, _ = parse(tokenize(open(sys.argv[1]).read()))
 assert root[0] == 'DELAYFILE', root[0]
@@ -154,9 +161,14 @@ for node in root[1]:
         if not instance:
             stats["sections"] += 1  # top-level interconnect-only block
             continue
+        inst_renamed = sdfnames.canon(instance)
+        if inst_renamed != instance:
+            stats["renamed"] += 1
         inner = []
         for ch in node[1]:
-            if ch[0] == 'TIMINGCHECK':
+            if ch[0] == 'INSTANCE':
+                inner.append(('INSTANCE', [('atom', inst_renamed)]))
+            elif ch[0] == 'TIMINGCHECK':
                 stats["sections"] += 1
             elif ch[0] == 'DELAY':
                 dhead, dchildren = ch
@@ -179,5 +191,5 @@ for node in root[1]:
 root = fix_tokens(('DELAYFILE', new_children))
 open(sys.argv[2], 'w').write(emit(root) + '\n')
 print("filter_sdf: kept {cells} cells, dropped {sections} sections, "
-      "unwrapped {unwrapped} conditional IOPATHs -> {out}".format(
-          out=sys.argv[2], **stats))
+      "unwrapped {unwrapped} conditional IOPATHs, renamed {renamed} "
+      "instances -> {out}".format(out=sys.argv[2], **stats))

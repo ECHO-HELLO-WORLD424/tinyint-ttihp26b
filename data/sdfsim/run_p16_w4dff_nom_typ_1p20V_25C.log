@@ -1,23 +1,13 @@
 SDF annotating /work/data/sdf_path/nom_typ_1p20V_25C.iopath.sdf
-SDF ERROR: /work/data/sdf_path/nom_typ_1p20V_25C.iopath.sdf:1: Chosen value not defined.
-SDF ERROR: /work/data/sdf_path/nom_typ_1p20V_25C.iopath.sdf:1: Chosen value not defined.
-SDF ERROR: /work/data/sdf_path/nom_typ_1p20V_25C.iopath.sdf: Too many errors: syntax error
-SDF ERROR: /work/data/sdf_path/nom_typ_1p20V_25C.iopath.sdf:1: Invalid/malformed COND
-SDF ERROR: /work/data/sdf_path/nom_typ_1p20V_25C.iopath.sdf: Too many errors: syntax error
-SDF ERROR: /work/data/sdf_path/nom_typ_1p20V_25C.iopath.sdf:3: Invalid/malformed delay type
-SDF ERROR: /work/data/sdf_path/nom_typ_1p20V_25C.iopath.sdf:3: Invalid/malformed delay type
-SDF ERROR: /work/data/sdf_path/nom_typ_1p20V_25C.iopath.sdf: Too many errors: syntax error
-SDF ERROR: /work/data/sdf_path/nom_typ_1p20V_25C.iopath.sdf:1: Syntax error in CELL
-SDF ERROR: /work/data/sdf_path/nom_typ_1p20V_25C.iopath.sdf:1: Invalid DELAYFILE format
 RESULT period_ns=16
 RESULT segs=ff pat=1 winsel=0
-RESULT ops=8
+RESULT ops=200
 RESULT err_cnt=0
 RESULT gen_cnt=0
 RESULT mat_cnt=0
 RESULT cfg_echo=ff
-RESULT stat=8c
+RESULT stat=ec
 RESULT err_dut=00
-/work/tools/sdf/tb_sdfsim.v:141: $finish called at 2976000 (1ps)
+/work/tools/sdf/tb_sdfsim.v:141: $finish called at 61344000 (1ps)
 
 ===STDERR===
