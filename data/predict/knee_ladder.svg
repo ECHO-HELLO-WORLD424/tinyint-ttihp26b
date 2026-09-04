@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="470" viewBox="0 0 960 470" font-family="sans-serif">
+<rect width="960" height="470" fill="white"/>
+<text x="480" y="26" font-size="17" font-weight="bold" text-anchor="middle">STA-predicted first-failure frequency ladder (pattern = worst)</text>
+<text x="480" y="46" font-size="12" fill="#444444" text-anchor="middle">model tpv-predict-1.0.1 | extracted case-analyzed STA | T_fail = T_clk - slack</text>
+<line x1="80" y1="408.0" x2="946" y2="408.0" stroke="#dddddd"/>
+<text x="74" y="412.0" font-size="11" text-anchor="end">0</text>
+<line x1="80" y1="342.0" x2="946" y2="342.0" stroke="#dddddd"/>
+<text x="74" y="346.0" font-size="11" text-anchor="end">100</text>
+<line x1="80" y1="276.0" x2="946" y2="276.0" stroke="#dddddd"/>
+<text x="74" y="280.0" font-size="11" text-anchor="end">200</text>
+<line x1="80" y1="210.0" x2="946" y2="210.0" stroke="#dddddd"/>
+<text x="74" y="214.0" font-size="11" text-anchor="end">300</text>
+<line x1="80" y1="144.0" x2="946" y2="144.0" stroke="#dddddd"/>
+<text x="74" y="148.0" font-size="11" text-anchor="end">400</text>
+<line x1="80" y1="78.0" x2="946" y2="78.0" stroke="#dddddd"/>
+<text x="74" y="82.0" font-size="11" text-anchor="end">500</text>
+<line x1="80" y1="78" x2="80" y2="408.0" stroke="#333333"/>
+<line x1="80" y1="408.0" x2="946" y2="408.0" stroke="#333333"/>
+<rect x="95.2" y="235.7" width="26.0" height="172.3" fill="#1f77b4"/>
+<text x="108.1" y="232.7" font-size="8" text-anchor="middle">261.1</text>
+<rect x="203.4" y="302.9" width="26.0" height="105.1" fill="#1f77b4"/>
+<text x="216.4" y="299.9" font-size="8" text-anchor="middle">159.2</text>
+<rect x="311.7" y="332.3" width="26.0" height="75.7" fill="#1f77b4"/>
+<text x="324.6" y="329.3" font-size="8" text-anchor="middle">114.7</text>
+<rect x="419.9" y="348.9" width="26.0" height="59.1" fill="#1f77b4"/>
+<text x="432.9" y="345.9" font-size="8" text-anchor="middle">89.53</text>
+<rect x="528.2" y="291.6" width="26.0" height="116.4" fill="#1f77b4"/>
+<text x="541.1" y="288.6" font-size="8" text-anchor="middle">176.4</text>
+<rect x="636.4" y="291.0" width="26.0" height="117.0" fill="#1f77b4"/>
+<text x="649.4" y="288.0" font-size="8" text-anchor="middle">177.3</text>
+<rect x="744.7" y="320.4" width="26.0" height="87.6" fill="#1f77b4"/>
+<text x="757.6" y="317.4" font-size="8" text-anchor="middle">132.8</text>
+<rect x="852.9" y="319.9" width="26.0" height="88.1" fill="#1f77b4"/>
+<text x="865.9" y="316.9" font-size="8" text-anchor="middle">133.5</text>
+<rect x="121.1" y="292.4" width="26.0" height="115.6" fill="#ff7f0e"/>
+<text x="134.1" y="289.4" font-size="8" text-anchor="middle">175.1</text>
+<rect x="229.4" y="336.5" width="26.0" height="71.5" fill="#ff7f0e"/>
+<text x="242.4" y="333.5" font-size="8" text-anchor="middle">108.3</text>
+<rect x="337.6" y="356.2" width="26.0" height="51.8" fill="#ff7f0e"/>
+<text x="350.6" y="353.2" font-size="8" text-anchor="middle">78.56</text>
+<rect x="445.9" y="367.4" width="26.0" height="40.6" fill="#ff7f0e"/>
+<text x="458.9" y="364.4" font-size="8" text-anchor="middle">61.46</text>
+<rect x="554.1" y="328.9" width="26.0" height="79.1" fill="#ff7f0e"/>
+<text x="567.1" y="325.9" font-size="8" text-anchor="middle">119.8</text>
+<rect x="662.4" y="328.6" width="26.0" height="79.4" fill="#ff7f0e"/>
+<text x="675.4" y="325.6" font-size="8" text-anchor="middle">120.3</text>
+<rect x="770.6" y="348.2" width="26.0" height="59.8" fill="#ff7f0e"/>
+<text x="783.6" y="345.2" font-size="8" text-anchor="middle">90.58</text>
+<rect x="878.9" y="347.8" width="26.0" height="60.2" fill="#ff7f0e"/>
+<text x="891.9" y="344.8" font-size="8" text-anchor="middle">91.16</text>
+<rect x="147.1" y="334.1" width="26.0" height="73.9" fill="#2ca02c"/>
+<text x="160.1" y="331.1" font-size="8" text-anchor="middle">112</text>
+<rect x="255.4" y="362.3" width="26.0" height="45.7" fill="#2ca02c"/>
+<text x="268.4" y="359.3" font-size="8" text-anchor="middle">69.25</text>
+<rect x="363.6" y="374.8" width="26.0" height="33.2" fill="#2ca02c"/>
+<text x="376.6" y="371.8" font-size="8" text-anchor="middle">50.25</text>
+<rect x="471.9" y="382.0" width="26.0" height="26.0" fill="#2ca02c"/>
+<text x="484.9" y="379.0" font-size="8" text-anchor="middle">39.34</text>
+<rect x="580.1" y="357.5" width="26.0" height="50.5" fill="#2ca02c"/>
+<text x="593.1" y="354.5" font-size="8" text-anchor="middle">76.57</text>
+<rect x="688.4" y="357.2" width="26.0" height="50.8" fill="#2ca02c"/>
+<text x="701.4" y="354.2" font-size="8" text-anchor="middle">77.04</text>
+<rect x="796.6" y="369.8" width="26.0" height="38.2" fill="#2ca02c"/>
+<text x="809.6" y="366.8" font-size="8" text-anchor="middle">57.9</text>
+<rect x="904.9" y="369.5" width="26.0" height="38.5" fill="#2ca02c"/>
+<text x="917.9" y="366.5" font-size="8" text-anchor="middle">58.31</text>
+<text x="134.1" y="424.0" font-size="11" text-anchor="middle">0000</text>
+<text x="242.4" y="424.0" font-size="11" text-anchor="middle">1111</text>
+<text x="350.6" y="424.0" font-size="11" text-anchor="middle">2222</text>
+<text x="458.9" y="424.0" font-size="11" text-anchor="middle">3333</text>
+<text x="567.1" y="424.0" font-size="11" text-anchor="middle">3000</text>
+<text x="675.4" y="424.0" font-size="11" text-anchor="middle">0003</text>
+<text x="783.6" y="424.0" font-size="11" text-anchor="middle">2130</text>
+<text x="891.9" y="424.0" font-size="11" text-anchor="middle">1203</text>
+<line x1="80" y1="375.0" x2="946" y2="375.0" stroke="#d62728" stroke-dasharray="6,4"/>
+<text x="942" y="370.0" font-size="11" fill="#d62728" text-anchor="end">50 MHz board ceiling</text>
+<rect x="821.0" y="54" width="11" height="11" fill="#2ca02c"/>
+<text x="836.0" y="64" font-size="12">slow 1.08V 125C</text>
+<rect x="697.2" y="54" width="11" height="11" fill="#ff7f0e"/>
+<text x="712.2" y="64" font-size="12">typ 1.20V 25C</text>
+<rect x="560.2" y="54" width="11" height="11" fill="#1f77b4"/>
+<text x="575.2" y="64" font-size="12">fast 1.32V -40C</text>
+<text transform="translate(16,243) rotate(-90)" font-size="12" text-anchor="middle">predicted Fmax (MHz)</text>
+<text x="80" y="460" font-size="9" fill="#666666">model tpv-predict-1.0.1 | run 33839023290 | commit 1e31757e5008</text>
+</svg>

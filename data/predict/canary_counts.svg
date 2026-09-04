@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="470" viewBox="0 0 960 470" font-family="sans-serif">
+<rect width="960" height="470" fill="white"/>
+<text x="480" y="26" font-size="17" font-weight="bold" text-anchor="middle">Canary edge counts vs PVT corner</text>
+<text x="480" y="46" font-size="12" fill="#444444" text-anchor="middle">can_sel=3, win0 (256 clk cycles); 16-bit counters saturate at 65535</text>
+<line x1="80" y1="408.0" x2="946" y2="408.0" stroke="#dddddd"/>
+<text x="74" y="412.0" font-size="11" text-anchor="end">0</text>
+<line x1="80" y1="342.0" x2="946" y2="342.0" stroke="#dddddd"/>
+<text x="74" y="346.0" font-size="11" text-anchor="end">500</text>
+<line x1="80" y1="276.0" x2="946" y2="276.0" stroke="#dddddd"/>
+<text x="74" y="280.0" font-size="11" text-anchor="end">1000</text>
+<line x1="80" y1="210.0" x2="946" y2="210.0" stroke="#dddddd"/>
+<text x="74" y="214.0" font-size="11" text-anchor="end">1500</text>
+<line x1="80" y1="144.0" x2="946" y2="144.0" stroke="#dddddd"/>
+<text x="74" y="148.0" font-size="11" text-anchor="end">2000</text>
+<line x1="80" y1="78.0" x2="946" y2="78.0" stroke="#dddddd"/>
+<text x="74" y="82.0" font-size="11" text-anchor="end">2500</text>
+<line x1="80" y1="78" x2="80" y2="408.0" stroke="#333333"/>
+<line x1="80" y1="408.0" x2="946" y2="408.0" stroke="#333333"/>
+<rect x="120.4" y="157.7" width="103.9" height="250.3" fill="#1f77b4"/>
+<text x="172.4" y="154.7" font-size="8" text-anchor="middle">1896</text>
+<rect x="409.1" y="236.5" width="103.9" height="171.5" fill="#1f77b4"/>
+<text x="461.0" y="233.5" font-size="8" text-anchor="middle">1299</text>
+<rect x="697.7" y="299.1" width="103.9" height="108.9" fill="#1f77b4"/>
+<text x="749.7" y="296.1" font-size="8" text-anchor="middle">825</text>
+<rect x="224.3" y="331.8" width="103.9" height="76.2" fill="#ff7f0e"/>
+<text x="276.3" y="328.8" font-size="8" text-anchor="middle">577</text>
+<rect x="513.0" y="357.3" width="103.9" height="50.7" fill="#ff7f0e"/>
+<text x="565.0" y="354.3" font-size="8" text-anchor="middle">384</text>
+<rect x="801.7" y="376.3" width="103.9" height="31.7" fill="#ff7f0e"/>
+<text x="853.6" y="373.3" font-size="8" text-anchor="middle">240</text>
+<text x="224.3" y="424.0" font-size="11" text-anchor="middle">fast 1.32V -40C</text>
+<text x="513.0" y="424.0" font-size="11" text-anchor="middle">typ 1.20V 25C</text>
+<text x="801.7" y="424.0" font-size="11" text-anchor="middle">slow 1.08V 125C</text>
+<rect x="880.4" y="54" width="11" height="11" fill="#ff7f0e"/>
+<text x="895.4" y="64" font-size="12">ro_mat</text>
+<rect x="802.8" y="54" width="11" height="11" fill="#1f77b4"/>
+<text x="817.8" y="64" font-size="12">ro_gen</text>
+<text transform="translate(16,243) rotate(-90)" font-size="12" text-anchor="middle">edges per window</text>
+<text x="80" y="460" font-size="9" fill="#666666">model tpv-predict-1.0.1 | run 33839023290 | commit 1e31757e5008</text>
+</svg>
