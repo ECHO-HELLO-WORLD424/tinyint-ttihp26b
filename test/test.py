@@ -149,7 +149,7 @@ async def test_reset_and_config_echo(dut):
         assert s["gen_cnt"] == 0 and s["mat_cnt"] == 0  # loops stalled in GL
     else:
         assert s["gen_cnt"] > 0 and s["mat_cnt"] > 0, "RO canaries must be counting"
-    assert s["ops"] >= 15  # ~308 cycles / 18
+    assert s["ops"] >= 15  # ~308 cycles / 19
 
 
 @cocotb.test()
@@ -229,6 +229,55 @@ async def test_canary_window_counts(dut):
     assert 6 <= s["mat_cnt"] <= 11, s["mat_cnt"]  # ~2560/288 = 9
 
 
+@cocotb.test(skip=GL)
+async def test_oneshot_capture_holds(dut):
+    """P0.1 acceptance: result_reg is a one-shot DUT timing capture.
+
+    Monitors every clock edge over six frames and asserts:
+      - result_reg changes ONLY on edges whose preceding cycle had chk_start
+        high (the single capture strobe per 19-cycle frame, right after the
+        operand load) -- a timing-failed first sample can never be overwritten;
+      - each captured value equals the DUT combinational result present at
+        the capture edge XOR the FORCE_ERR mask (first sample, not a later
+        repaired sample);
+      - the captured value then holds until the next capture edge, i.e.
+        through the frame-boundary comparison.
+
+    RTL-only: relies on hierarchical access to internal state.
+    """
+    up = dut.user_project
+    word = cfg_word(seg=(3, 3, 3, 3), pat=1, cansel=0, winsel=0, force_err=1)
+    await configure(dut, word)
+
+    n_changes = 0
+    for _ in range(6 * FRAME):
+        dut.clk.value = 0
+        await Timer(CLK_HALF, "ns")
+        cs = int(up.chk_start.value)      # capture strobe (mid-cycle level)
+        pre = int(up.result_reg.value)
+        fe = int(up.force_err.value)
+        cout = int(up.rca_cout.value)
+        summ = int(up.rca_sum.value)
+        expect = (((cout << 16) | summ) ^ (0x1FFFF if fe else 0)) & 0x1FFFF
+        dut.clk.value = 1
+        await Timer(CLK_HALF, "ns")
+        post = int(up.result_reg.value)
+        if post != pre:
+            assert cs == 1, (
+                f"result_reg changed on a non-capture edge: "
+                f"{pre:#05x} -> {post:#05x}"
+            )
+            assert post == expect, f"capture mismatch: {post:#05x} != {expect:#05x}"
+            n_changes += 1
+    assert n_changes >= 3, n_changes  # one capture per frame, values differ
+
+    await freeze(dut, True)
+    s = await read_status(dut)
+    await freeze(dut, False)
+    assert s["ops"] >= 6, s["ops"]
+    assert s["err_cnt"] >= n_changes, (s["err_cnt"], n_changes)
+
+
 @cocotb.test()
 async def test_prbs_first_error_capture(dut):
     """PRBS op0 (computed independently here) must be the first captured
@@ -300,7 +349,7 @@ async def test_reconfigure_midrun(dut):
 
 @cocotb.test()
 async def test_frame_strobe_pacing(dut):
-    """uo[7] must pulse once per 18-cycle frame (36 strobes in 648 cycles)."""
+    """uo[7] must pulse once per 19-cycle frame (36 strobes in 684 cycles)."""
     await configure(dut, cfg_word(seg=(0, 0, 0, 0), pat=3, cansel=0, winsel=0))
     strobes = 0
     for _ in range(36 * FRAME):

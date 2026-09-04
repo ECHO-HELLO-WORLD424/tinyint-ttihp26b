@@ -6,8 +6,9 @@
  *  - Oracle: bit-serial reference adder (very short path), self-checking.
  *  - Canaries: generic and structure-matched ring oscillators with edge
  *    counters over a configurable window (delay telemetry).
- *  - Measurement: 18-cycle frames, error/op counters, first-error capture,
- *    serial byte readout with auto-incrementing pointer, freeze input.
+ *  - Measurement: 19-cycle frames (FRAME_LAST=18, 0..18), error/op counters,
+ *    first-error capture, serial byte readout with auto-incrementing pointer,
+ *    freeze input.
  *
  * Pin protocol:
  *  - Reset/config phase (rst_n low): {uio_in, ui_in} = 16-bit config word,
@@ -141,10 +142,17 @@ module tt_um_echoworld424_tpv (
     .cout   (rca_cout)
   );
 
+  /* One-shot DUT timing capture: result_reg samples the DUT exactly once per
+     operation, on the chk_start edge (frame_cnt == 0, one cycle after the
+     operand load, the first edge where the combinational result is sampled).
+     It then holds that first sample until the checker comparison at the next
+     frame boundary, so a timing-failed capture can never be overwritten by a
+     later settled value. chk_start is gated by `started`, so the reset-operand
+     state is never captured, and by update_en, so freeze holds the capture. */
   reg [16:0] result_reg;
   always @(posedge clk or negedge rst_n) begin
     if (!rst_n)         result_reg <= 17'd0;
-    else if (update_en) result_reg <= {rca_cout, rca_sum} ^ {17{force_err}};
+    else if (chk_start) result_reg <= {rca_cout, rca_sum} ^ {17{force_err}};
   end
 
   /* ------------------------------------------------------------------ */
@@ -246,8 +254,8 @@ module tt_um_echoworld424_tpv (
     .cnt    (mat_cnt)
   );
 
-  wire gen_dead = win_done & (gen_cnt == 16'd0);
-  wire mat_dead = win_done & (mat_cnt == 16'd0);
+  wire gen_dead = win_done & (gen_cnt == 10'd0);
+  wire mat_dead = win_done & (mat_cnt == 10'd0);
 
   /* ------------------------------------------------------------------ */
   /* Serial status readout (uio = data byte, uo[3:0] = pointer)          */
