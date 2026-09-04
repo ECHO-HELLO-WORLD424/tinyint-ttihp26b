@@ -93,7 +93,7 @@ module tt_um_echoworld424_tpv (
   assign uio_oe = {8{oe_cnt[1]}};
 
   /* ------------------------------------------------------------------ */
-  /* Frame timing: one timed operation per 18 cycles                     */
+  /* Frame timing: one timed operation per 19 cycles                     */
   /* ------------------------------------------------------------------ */
   reg [4:0] frame_cnt;
   wire frame_boundary = (frame_cnt == FRAME_LAST);

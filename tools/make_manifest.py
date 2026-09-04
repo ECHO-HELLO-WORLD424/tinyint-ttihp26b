@@ -54,7 +54,7 @@ REPRODUCE = [
     "# Hardening (canonical path): push to proposal-canary; GitHub Actions runs",
     "# TinyTapeout/tt-gds-action@ttihp26b with the ihp-sg13g2 PDK (gds +",
     "# precheck + GL tests + viewer). Redownload the archived artifact with:",
-    "gh run download %s --repo ECHO-HELLO-WORLD424/tinyint-ttihp26b --name GDS --dir /tmp/gds-%s" % (RUN_ID, RUN_ID),
+    "gh run download %s --repo ECHO-HELLO-WORLD424/tinyint-ttihp26b --name GDS_logs --dir /tmp/gds-%s" % (RUN_ID, RUN_ID),
     "# Experiment-specific case-analyzed STA (extracted, SPEF):",
     "python3 tools/run_experiment_sta.py",
     "# RO canary loop-delay prediction (broken-loop STA, SPEF):",

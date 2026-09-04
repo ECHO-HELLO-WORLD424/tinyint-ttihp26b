@@ -60,9 +60,12 @@ operand-dependence of the first-failure boundary is a primary measurement. The
 frozen operating procedure (instruments, sweep steps, op counts per error-rate
 threshold, uncertainty budget, raw-data format) is `docs/post-silicon-protocol.md`.
 
-Pre-silicon hierarchy: RTL sim -> post-synth STA -> post-route extracted STA across
-corners -> SDF gate-level sim with sensitizing vectors -> SPICE on selected paths ->
-fitted canary-vs-DUT calibration model.
+Implemented pre-silicon hierarchy: RTL simulation -> post-synthesis checks ->
+post-route, SPEF-annotated case-analyzed STA across corners -> IOPATH-only SDF
+gate-level boundary sweep with sensitizing vectors -> broken-loop extracted STA for
+the two RO delay estimates -> frozen predictor and one-point post-silicon calibration
+protocol. Extracted transient SPICE is an optional refinement and was not used in the
+current prediction package.
 
 ### Pre-silicon prediction package
 

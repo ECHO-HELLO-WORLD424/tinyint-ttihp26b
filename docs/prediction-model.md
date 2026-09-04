@@ -107,12 +107,14 @@ For each predictor `x` at the measured anchor:
     P_x_cal(cfg, pat, c) = k_x * P_x(cfg, pat, c)     (everywhere, unchanged)
     T_x_cal(cfg, pat, c) = T_x(cfg, pat, c) / k_x     (period domain)
 
-Pseudocode:
+Pseudocode (the selected anchor is primary `A`, otherwise the predeclared `A'`):
 
 ```
+anchor = primary_anchor_if_measurable_else_fallback_A_prime
 for x in ["sta", "ro_gen", "ro_mat"]:
-    F_pred_A = predict(x, corner="nom_typ_1p20V_25C", segs=3333, pattern="worst")
-    k[x] = F_meas_A / F_pred_A          # single measured division
+    F_pred_anchor = predict(x, corner=anchor.corner,
+                            segs=3333, pattern="worst")
+    k[x] = F_meas_anchor / F_pred_anchor  # single measured division
     for (corner, segs, pat) in measurement_matrix:
         P_cal = k[x] * predict(x, corner, segs, pat)
         emit(x, corner, segs, pat, P_cal)
@@ -165,8 +167,6 @@ boundary `F_meas`:
   predeclared readout (can_sel 3, win0) all counts fit without wrapping.
   Larger windows require host-side unwrapping per
   `docs/post-silicon-protocol.md`.
-- Canary counts are floor-quantized (+-1 edge); at win0 counts >= 240 the
-  ratio quantization is <= ~0.4%.
 - One die: all claims are within-die PVT/workload validation, not process
   distribution.
 

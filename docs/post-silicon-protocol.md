@@ -4,7 +4,7 @@ Status: **frozen before silicon**. This document predeclares the measurement
 matrix, raw-data format, instruments, uncertainty budget, procedure, and
 failure-boundary extraction for the post-silicon sweep. It is the measurement
 counterpart to the frozen prediction protocol `docs/prediction-model.md`
-(model `tpv-predict-1.0.0`) and uses the field conventions of
+(model `tpv-predict-1.0.1`) and uses the field conventions of
 `docs/data-dictionary.md`. Chip-level protocol (config word, 19-cycle frame,
 byte readout, FREEZE) follows `docs/info.md` ("How it works", "How to test");
 any conflict with RTL behavior is recorded as an anomaly, never silently
@@ -176,10 +176,10 @@ corner, not independent per point.
    - **Censored** (no error over N = 3e6 at 50 MHz): the predicted nominal
      knee (61.46 MHz) is above the board ceiling. Record `F_meas(A) > 50 MHz`
      and switch to the predeclared fallback anchor A' = (1.08 V, max reachable
-     T, seg3333, worst), matched to corner `nom_slow_1p08V_125C`. Using A'
-     requires bumping the model to `tpv-predict-1.0.1` and committing that
-     change **before any non-anchor boundary data is examined**; the residual
-     T mismatch (achievable T < 125 °C) is recorded and entered in §4.
+     T, seg3333, worst), matched to corner `nom_slow_1p08V_125C`. This fallback
+     is already predeclared by model `tpv-predict-1.0.1`; no model change is
+     made after observing the anchor. The residual T mismatch (achievable
+     T < 125 °C) is recorded and entered in §4.
 10. **Matrix sweep** (T1 -> T2 -> T3): per point: reset pulse with the new
     config (counters clear only on `rst_n`, `src/tt_um_echoworld424_tpv.v`
     error/op counter block), run N_ops with `ui[7]` low, then **freeze
@@ -217,9 +217,9 @@ Thresholds per point (err_rate = err_cnt / N_ops):
 | 1e-4 | err_rate >= 1e-4 | fine |
 | 1e-6 | err_rate >= 1e-6 | 1e-6 passes |
 
-1e-6 rows are recorded but **not scored** under model `tpv-predict-1.0.0`
-(its evaluation metrics use first error, 1e-4, 1e-2); scoring 1e-6 requires a
-pre-silicon model version bump. Canary counters wrap mod 65536 (no saturation
+All four thresholds are recorded and scored under model `tpv-predict-1.0.1`;
+calibration still uses the primary first-error boundary only. Canary counters
+wrap mod 65536 (no saturation
 logic in `src/tpv_ro_canary.v`); the predeclared win0 readout (counts <= ~1900
 at all corners) cannot wrap under predicted conditions, and the `wrap_suspect`
 flag of §2 catches violations of that assumption.

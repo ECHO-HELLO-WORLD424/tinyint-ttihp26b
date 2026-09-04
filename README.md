@@ -1,58 +1,92 @@
-![](../../workflows/gds/badge.svg) ![](../../workflows/docs/badge.svg) ![](../../workflows/test/badge.svg) ![](../../workflows/fpga/badge.svg)
+![](../../workflows/gds/badge.svg) ![](../../workflows/docs/badge.svg) ![](../../workflows/test/badge.svg)
 
-# Tiny Tapeout Verilog Project Template
+# Timing-Prediction Test Vehicle
 
-- [Read the documentation for project](docs/info.md)
-- [Research proposal](docs/research-proposal.md)
+A 1x1 Tiny Tapeout `ttihp26b` chip for comparing pre-silicon timing
+predictions and on-chip delay proxies with post-silicon arithmetic
+first-failure boundaries in IHP SG13G2.
 
-## Project: Timing-Prediction Test Vehicle
+## Architecture
 
-A self-checking arithmetic timing-failure experiment for the IHP SG13G2 open PDK:
+- **DUT:** a structurally preserved 16-bit ripple-carry adder with four
+  independently selectable inverter-pair delay banks.
+- **Oracle:** a short-path bit-serial reference adder that checks one captured
+  result per 19-cycle frame.
+- **Canaries:** a generic inverter ring oscillator and a structure-matched
+  ring oscillator, each with a 16-bit wrapping edge counter.
+- **Measurement:** saturating error/operation counters, first-error capture,
+  freeze-before-readout, serial status bytes, and `FORCE_ERR`/`FORCE_CAN` DFT.
 
-- **DUT** — a 16-bit ripple-carry adder whose segment carries pass through
-  programmable inverter-pair delay banks, giving selectable critical-path lengths
-  around the 50 MHz test ceiling, with operand-dependent worst-case carry propagation.
-- **Oracle** — a bit-serial reference adder makes the chip fully self-checking.
-- **Canaries** — a generic inverter RO and a structure-matched RO, each with a
-  windowed edge counter, provide continuous delay telemetry for comparing
-  pre-silicon timing predictions (STA) against post-silicon first-failure boundaries.
+The contribution is experimental quantification rather than a new canary
+architecture: case-analyzed extracted STA, a generic RO, and a matched RO are
+evaluated as predictors of the measured workload-dependent DUT boundary.
 
-See [docs/info.md](docs/info.md) for the datasheet and operating protocol, and
-[docs/research-proposal.md](docs/research-proposal.md) for the underlying study.
+## Current state
 
-## What is Tiny Tapeout?
+The pre-silicon package is complete for hardware revision
+`1e31757e50080b19fa7642b8b9cd6822f64b1d11` and hardening run
+[`33839023290`](https://github.com/ECHO-HELLO-WORLD424/tinyint-ttihp26b/actions/runs/33839023290):
 
-Tiny Tapeout is an educational project that aims to make it easier and cheaper than ever to get your digital and analog designs manufactured on a real chip.
+- 10/10 RTL cocotb tests pass.
+- The zero-delay functional GL suite has 8 passes and 2 intentional skips.
+- Tiny Tapeout precheck, GDS, GL, and viewer jobs pass.
+- DRC, Magic DRC, LVS, antenna, and power-grid checks are clean; hold slack is
+  positive at all reported corners.
+- The committed prediction package contains 96 runtime case-analyzed STA
+  cases, 24 broken-loop extracted RO cases, 13 SDF probe rows, and 288 joined
+  predictor rows.
+- Final GDS/netlist/SPEF/SDF/SDC/DEF files and hashes are archived under
+  `artifacts/run-33839023290/`.
 
-To learn more and get started, visit https://tinytapeout.com.
+The current RO estimate is a parasitic-aware broken-loop static model, not a
+transient SPICE simulation. The post-silicon voltage range is also contingent
+on the Tiny Tapeout board power topology. Both limitations are explicit parts
+of the frozen protocol.
 
-## Set up your Verilog project
+## Documentation
 
-1. Add your Verilog files to the `src` folder.
-2. Edit the [info.yaml](info.yaml) and update information about your project, paying special attention to the `source_files` and `top_module` properties. If you are upgrading an existing Tiny Tapeout project, check out our [online info.yaml migration tool](https://tinytapeout.github.io/tt-yaml-upgrade-tool/).
-3. Edit [docs/info.md](docs/info.md) and add a description of your project.
-4. Adapt the testbench to your design. See [test/README.md](test/README.md) for more information.
+- [Datasheet and chip protocol](docs/info.md)
+- [Research question and design rationale](docs/research-proposal.md)
+- [Pre-silicon status and evidence](PRE_SILICON_ACTION_PLAN.md)
+- [Frozen prediction model](docs/prediction-model.md)
+- [Frozen post-silicon protocol](docs/post-silicon-protocol.md)
+- [Dataset field definitions](docs/data-dictionary.md)
+- [Final build manifest](artifacts/run-33839023290/MANIFEST.md)
 
-The GitHub action will automatically build the ASIC files using [LibreLane](https://www.zerotoasiccourse.com/terminology/librelane/).
+## Verification
 
-## Enable GitHub actions to build the results page
+Use the repository devcontainer for HDL and physical-design work.
 
-- [Enabling GitHub Pages](https://tinytapeout.com/faq/#my-github-action-is-failing-on-the-pages-part)
+```sh
+cd test
+make clean
+make
+```
 
-## Resources
+For the functional GL test, first copy the archived final netlist:
 
-- [FAQ](https://tinytapeout.com/faq/)
-- [Digital design lessons](https://tinytapeout.com/digital_design/)
-- [Learn how semiconductors work](https://tinytapeout.com/siliwiz/)
-- [Join the community](https://tinytapeout.com/discord)
-- [Build your design locally](https://www.tinytapeout.com/guides/local-hardening/)
+```sh
+cp artifacts/run-33839023290/nl/tt_um_echoworld424_tpv.nl.v test/gate_level_netlist.v
+cd test
+make clean
+make GATES=yes
+```
 
-## What next?
+The experiment-specific tools are:
 
-- [Submit your design to the next shuttle](https://app.tinytapeout.com/).
-- Edit [this README](README.md) and explain your design, how it works, and how to test it.
-- Share your project on your social network of choice:
-  - LinkedIn [#tinytapeout](https://www.linkedin.com/search/results/content/?keywords=%23tinytapeout) [@TinyTapeout](https://www.linkedin.com/company/100708654/)
-  - Mastodon [#tinytapeout](https://chaos.social/tags/tinytapeout) [@matthewvenn](https://chaos.social/@matthewvenn)
-  - X (formerly Twitter) [#tinytapeout](https://twitter.com/hashtag/tinytapeout) [@tinytapeout](https://twitter.com/tinytapeout)
-  - Bluesky [@tinytapeout.com](https://bsky.app/profile/tinytapeout.com)
+```sh
+python3 tools/run_experiment_sta.py
+python3 tools/run_ro_predict.py
+python3 tools/run_sdfsim.py
+python3 tools/predict_model.py
+python3 tools/make_manifest.py
+```
+
+The STA, RO, and SDF drivers require the pinned LibreLane/PDK environment
+described in [AGENTS.md](AGENTS.md). Do not mix locally generated physical
+metrics with CI results without recording their provenance.
+
+## Tiny Tapeout
+
+Tiny Tapeout makes small open-source ASIC fabrication accessible. Project and
+board documentation are available at <https://tinytapeout.com/>.

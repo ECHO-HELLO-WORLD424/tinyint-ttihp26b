@@ -28,7 +28,7 @@ first-failure frequency built ONLY from nominal-corner structure (nominal STA
 ladder + nominal count anchor); no free parameters are fitted to data that does
 not exist yet. Every row carries the one-point calibration placeholder
 cal_k = 1.0; the post-silicon run substitutes k = measured/predicted at the
-nominal anchor and nothing else.
+primary anchor or its predeclared fallback and changes nothing else.
 
 Run: python3 tools/predict_model.py [--outdir data/predict]
 Stdlib only (matplotlib optional). Deterministic: fixed ordering, no
@@ -53,7 +53,7 @@ NOMINAL_CORNER = "nom_typ_1p20V_25C"  # 1.20 V / 25 C calibration anchor corner
 READOUT_CAN_SEL = 3                   # predeclared canary readout config
 READOUT_WIN = 0                       # win0 = 256 clk cycles
 WINS = [0, 1, 2, 3]
-COUNTER_MAX = 65535                   # 16-bit edge counters saturate here
+COUNTER_MAX = 65535                   # largest value before 16-bit wrap
 CAL_K_PLACEHOLDER = 1.0
 BOARD_FMAX_MHZ = 50.0                 # 20 ns Tiny Tapeout board clock ceiling
 ANCHOR_SEGS = (3, 3, 3, 3)            # calibration anchor config
@@ -215,7 +215,8 @@ def load_ro(rows):
                 sat = r[sat_col] == "1"
                 if c > COUNTER_MAX or sat:
                     ok = False
-                counts["%s@%s" % (can, corner)] = {"count": c, "saturated": sat}
+                counts["%s@%s" % (can, corner)] = {"count": c,
+                                                    "would_wrap": sat}
         fit[win] = {"window_cycles": C.WINDOW_CYCLES[win],
                     "fits_16bit": ok, "counts": counts}
     if not fit[READOUT_WIN]["fits_16bit"]:
@@ -454,10 +455,11 @@ def write_summary(path, prov, n_in, cross, ro_idx, ratios, lut, sta_idx,
     L.append("")
     L.append("## Canary readout at can_sel=%d (predeclared)" % READOUT_CAN_SEL)
     L.append("")
-    L.append("Counts are predicted edges per window (16-bit counters saturate "
-             "at %d; `*` marks a saturated window). `gen/mat` is the canary "
+    L.append("Counts are predicted edges per window (hardware counters wrap "
+             "mod 65536; `*` marks a prediction exceeding one 16-bit range). "
+             "`gen/mat` is the canary "
              "distinguishability ratio at win%d."
-             % (COUNTER_MAX, READOUT_WIN))
+             % READOUT_WIN)
     L.append("")
     L.append("| corner | gen win0 | gen win1 | gen win2 | gen win3 "
              "| mat win0 | mat win1 | mat win2 | mat win3 | gen/mat (win0) |")
@@ -474,9 +476,10 @@ def write_summary(path, prov, n_in, cross, ro_idx, ratios, lut, sta_idx,
         L.append("| %s | %s |" % (CORNER_SHORT[corner], " | ".join(cells)))
     L.append("")
     L.append("win%d (%d cycles) counts fit 16 bits at every corner for both "
-             "canaries: **yes**. win2 also fits everywhere; win3 saturates for "
-             "ro_gen at the fast/typ corners (sat flag in `ro_predict.csv`) "
-             "and is not a usable readout window there."
+             "canaries: **yes**. win2 also fits everywhere; win3 would wrap "
+             "ro_gen at the fast/typ corners (`sat_win3` is the model's "
+             "overflow-risk flag, not an RTL saturation flag) and is not a "
+             "usable single-window readout there."
              % (READOUT_WIN, C.WINDOW_CYCLES[READOUT_WIN]))
     L.append("")
     head = ["seg0..3"] + ["%s %s" % (CORNER_SHORT[c].split()[0], p)
@@ -513,10 +516,12 @@ def write_summary(path, prov, n_in, cross, ro_idx, ratios, lut, sta_idx,
     L.append("")
     L.append("## One-point calibration (placeholder rows)")
     L.append("")
-    L.append("After the nominal silicon point (1.20 V, 25 C, seg3333, worst) "
-             "is measured, each predictor x is calibrated by k_x = F_meas / "
-             "P_x(anchor) and applied as P_x_cal = k_x * P_x everywhere, "
-             "unchanged. Pre-silicon every row carries `cal_k = %s` and "
+    L.append("Each predictor x is calibrated at the primary nominal anchor "
+             "(1.20 V, 25 C, seg3333, worst), or at the predeclared slow-corner "
+             "fallback if the primary boundary is above the 50 MHz ceiling. "
+             "The rule is k_x = F_meas / P_x(anchor), applied as "
+             "P_x_cal = k_x * P_x everywhere, unchanged. Pre-silicon every "
+             "row carries `cal_k = %s` and "
              "`predicted_fmax_mhz_cal = predicted_fmax_mhz`; the post-silicon "
              "run substitutes the measured k only."
              % repr(CAL_K_PLACEHOLDER))
@@ -678,9 +683,8 @@ def plots_svg(outdir, rows, ro_idx, footer):
         series.append((can, vals))
     svg_bars(os.path.join(outdir, "canary_counts.svg"),
              "Canary edge counts vs PVT corner",
-             "can_sel=%d, win%d (%d clk cycles); 16-bit counters saturate at %d"
-             % (READOUT_CAN_SEL, READOUT_WIN, C.WINDOW_CYCLES[READOUT_WIN],
-                COUNTER_MAX),
+             "can_sel=%d, win%d (%d clk cycles); counters wrap mod 65536"
+             % (READOUT_CAN_SEL, READOUT_WIN, C.WINDOW_CYCLES[READOUT_WIN]),
              "edges per window", cats, series, footer=footer)
 
 
@@ -790,16 +794,24 @@ def main():
         },
         "calibration": {
             "method": "one-point multiplicative (docs/prediction-model.md)",
-            "anchor": {"corner": NOMINAL_CORNER, "seg_label": "3333",
-                       "pattern": "worst", "v_volt": 1.2, "t_celsius": 25},
+            "primary_anchor": {"corner": NOMINAL_CORNER,
+                               "seg_label": "3333", "pattern": "worst",
+                               "v_volt": 1.2, "t_celsius": 25},
+            "fallback_anchor": {"corner": "nom_slow_1p08V_125C",
+                                "seg_label": "3333", "pattern": "worst",
+                                "v_volt": 1.08,
+                                "t_celsius": "maximum reachable; record actual"},
+            "censor_if_unreachable": True,
             "placeholder_k": CAL_K_PLACEHOLDER,
             "note": "post-silicon run substitutes measured k_x per predictor "
-                    "and re-emits; nothing else changes",
+                    "at the first reachable predeclared anchor and re-emits; "
+                    "nothing else changes",
         },
         "notes": [
             "Frame = 19 clk cycles (frame_cnt 0..18); one timed DUT operation "
             "per frame.",
-            "Canary counters are 16-bit and saturate at 65535 with a sat flag; "
+            "Canary counters are 16-bit and wrap mod 65536; sat_win fields are "
+            "model overflow-risk flags, not hardware saturation flags; "
             "win0 = 256 clk cycles.",
             "The sdfsim.csv RO cross-check row (FORCE_CAN off) is INVALID for "
             "model purposes: RO loop cells carry hard 0.000 SDF delays because "
