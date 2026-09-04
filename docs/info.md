@@ -22,8 +22,7 @@ A timing-prediction test vehicle for the IHP SG13G2 open PDK. It contains:
 - **Canaries**: two ring-oscillator delay proxies - a generic inverter-line RO and a
   structure-matched RO (looping through delay-bank + full-adder segments like the DUT) -
   each with a 16-bit edge counter over a configurable window (2^8..2^14 cycles),
-  providing continuous delay telemetry rather than a binary flag.
-- **Measurement**: one timed operation per 19-cycle frame, 16-bit error and op counters,
+  providing continuous delay telemetry rather than a binary flag.- **Measurement**: one timed operation per 19-cycle frame, 16-bit error and op counters,
   first-error DUT byte capture, serial byte readout with an auto-incrementing pointer,
   a freeze input, and FORCE_ERR/FORCE_CAN DFT bits that make the error-accounting path
   itself testable before tapeout.
@@ -42,10 +41,8 @@ mask, [15] = force DUT error.
    number of operations (19 cycles each).
 3. Set `ui[7]` high to freeze all counters, then read the 16 status bytes: `uio[7:0]`
    is the data byte selected by `uo[3:0]` (auto-incrementing pointer). Bytes 0-1 = DUT
-   error count, 2-3/4-5 = generic/matched RO counts, 6-7 = op count, 8 = config echo,
-   9 = status flags, 10 = first-error DUT byte, 11 = reserved. The RO counters are
-   10-bit (bytes 3/5 upper bits read 0); they are sampled over the first window
-   after reset release.
+   error count, 2-3/4-5 = generic/matched RO counts (full 16-bit), 6-7 = op count, 8 =
+   config echo, 9 = status flags, 10 = first-error DUT byte, 11 = reserved. The RO
 4. Repeat across frequency/voltage/temperature; compare `f(error)` contours against the
    RO telemetry and static timing analysis.
 

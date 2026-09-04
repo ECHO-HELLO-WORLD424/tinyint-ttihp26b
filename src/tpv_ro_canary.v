@@ -56,7 +56,7 @@ module tpv_ro_gen (
     input  wire [1:0]  sel,
     input  wire        mask,    /* 1 = stall loop, counter stays zero */
     output wire        ro_node,
-    output reg  [9:0]  cnt
+    output reg  [15:0] cnt
 );
   wire       nand_out;
   wire       line_out;
@@ -93,8 +93,8 @@ module tpv_ro_gen (
   assign ro_node = nand_out;
 
   always @(posedge ro_node or negedge rst_n) begin
-    if (!rst_n) cnt <= 10'd0;
-    else        cnt <= cnt + 10'd1;
+    if (!rst_n) cnt <= 16'd0;
+    else        cnt <= cnt + 16'd1;
   end
 
 endmodule
@@ -108,7 +108,7 @@ module tpv_ro_match (
     input  wire [1:0]  sel,
     input  wire        mask,
     output wire        ro_node,
-    output reg  [9:0]  cnt
+    output reg  [15:0] cnt
 );
   wire       nand_out;
   wire       close;
@@ -152,8 +152,8 @@ module tpv_ro_match (
   assign ro_node = nand_out;
 
   always @(posedge ro_node or negedge rst_n) begin
-    if (!rst_n) cnt <= 10'd0;
-    else        cnt <= cnt + 10'd1;
+    if (!rst_n) cnt <= 16'd0;
+    else        cnt <= cnt + 16'd1;
   end
 
 endmodule

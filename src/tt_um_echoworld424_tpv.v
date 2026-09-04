@@ -233,8 +233,8 @@ module tt_um_echoworld424_tpv (
   wire        gen_node;
   wire        mat_node;
   /* verilator lint_on UNOPTFLAT */
-  reg [9:0] gen_cnt;
-  reg [9:0] mat_cnt;
+  reg [15:0] gen_cnt;
+  reg [15:0] mat_cnt;
 
   tpv_ro_gen u_ro_gen (
     .rst_n  (rst_n),
@@ -254,8 +254,8 @@ module tt_um_echoworld424_tpv (
     .cnt    (mat_cnt)
   );
 
-  wire gen_dead = win_done & (gen_cnt == 10'd0);
-  wire mat_dead = win_done & (mat_cnt == 10'd0);
+  wire gen_dead = win_done & (gen_cnt == 16'd0);
+  wire mat_dead = win_done & (mat_cnt == 16'd0);
 
   /* ------------------------------------------------------------------ */
   /* Serial status readout (uio = data byte, uo[3:0] = pointer)          */
@@ -272,9 +272,9 @@ module tt_um_echoworld424_tpv (
       4'd0:    ro_byte = err_cnt[7:0];
       4'd1:    ro_byte = err_cnt[15:8];
     4'd2:    ro_byte = gen_cnt[7:0];
-    4'd3:    ro_byte = {6'b0, gen_cnt[9:8]};
+    4'd3:    ro_byte = gen_cnt[15:8];
     4'd4:    ro_byte = mat_cnt[7:0];
-    4'd5:    ro_byte = {6'b0, mat_cnt[9:8]};
+    4'd5:    ro_byte = mat_cnt[15:8];
       4'd6:    ro_byte = ops_cnt[7:0];
       4'd7:    ro_byte = ops_cnt[15:8];
       4'd8:    ro_byte = {seg3, seg2, seg1, seg0};
