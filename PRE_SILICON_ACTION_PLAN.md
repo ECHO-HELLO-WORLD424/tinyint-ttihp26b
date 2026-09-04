@@ -340,22 +340,126 @@ Predeclare the comparison so a negative result remains useful:
 
 The pre-silicon phase is complete when all of the following are true:
 
-- [ ] `result_reg` is a verified one-shot capture that cannot self-repair before compare.
-- [ ] RTL and zero-delay gate-level regressions pass after the fix.
-- [ ] A fresh hardening run passes physical checks.
-- [ ] Experiment-specific, case-analyzed STA identifies runtime-sensitizable paths.
-- [ ] Selected configurations place predicted timing knees inside the accessible clock
+- [x] `result_reg` is a verified one-shot capture that cannot self-repair before compare.
+      (Commit `21d43c6`: capture gated by `chk_start`; `test_oneshot_capture_holds`
+      added and verified to fail against the previous always-enabled register.)
+- [x] RTL and zero-delay gate-level regressions pass after the fix.
+      (RTL 10/10 locally on `1e31757`; GL suite green in CI on runs
+      `33835818836` (8bcffc2) and `33839023290` (1e31757).)
+- [x] A fresh hardening run passes physical checks.
+      (Run `33839023290` on `1e31757`: gds + precheck + gl_test + viewer all
+      green; artifacts downloadable, not yet staged locally.)
+- [x] Experiment-specific, case-analyzed STA identifies runtime-sensitizable paths.
+      (`data/experiment_sta.csv`, 96 rows: 3 corners x 8 seg configs x 4 patterns;
+      worst runtime path `u_pat.lfsr/idx -> result_reg`, slow-corner knee 39.6 MHz
+      at seg3333/worst, 61.8 MHz typ, 89.9 MHz fast; HOLD has no runtime path.
+      Generated from run `33835818836` artifacts; regenerate on `1e31757` for the
+      record — the operand→capture path structure is unchanged by the counter fix.)
+- [x] Selected configurations place predicted timing knees inside the accessible clock
       range with margin for model error.
+      (Slow-corner knee ladder 39.6/57.7/58.3/68.8/76.2/76.2/109.9/50.1 MHz spans the
+      1–50 MHz board range; `seg2222` lands at the 50 MHz ceiling.)
 - [ ] Sensitizing sequences are confirmed in SDF simulation or reduced extracted timing
-      simulation.
-- [ ] Extracted RO simulations produce usable count ranges for both canaries.
+      simulation. **IN PROGRESS — see handoff below (paused on this machine).**
+- [x] Extracted RO simulations produce usable count ranges for both canaries.
+      (Broken-loop extracted STA, `data/ro_predict.csv` (24 rows); drove the 16-bit
+      counter fix `1e31757`. Transient SPICE extraction remains an optional refinement;
+      no SPICE engine in the pinned tool image. Two gate delays of the loop (u_a2/u_a3)
+      are not yet included in the measured loop delay — add the a2/A→a3/Y segment and
+      sum before the final table.)
 - [ ] Prediction scripts, tables, plots, data schema, and calibration procedure are
-      committed and reproducible.
+      committed and reproducible. (STA + RO tables and flows committed; prediction
+      model, plots, data schema and one-point calibration procedure still to write.)
 - [ ] The post-silicon sweep protocol, instrument requirements, uncertainty, and raw-data
       format are written before seeing silicon results.
 - [ ] Documentation uses consistent 19-cycle frame timing and final build metrics.
+      (RTL header + info.md updated; research-proposal.md still carries the stale
+      2482-instance/82% utilization text and the unqualified slow-corner violation
+      claim.)
 - [ ] The exact final submission artifact and manifest are archived outside temporary CI
-      storage.
+      storage. (`artifacts/run-33835818836` is staged in-repo; the `1e31757` run and a
+      manifest file are pending.)
+
+## Session log and handoff — 2026-09-04 (paused: move to a faster machine)
+
+This session produced the toolchain and first-pass datasets committed in `2489bc0`
+and the RTL fixes `21d43c6` (one-shot capture), `1e31757` (16-bit RO counters).
+Full-chip SDF simulation is the only P0/P1 item still open; it was paused because
+the vvp annotation runs saturate this laptop. Everything needed to resume is below.
+
+### Where the SDF work stopped (P1.2)
+
+Working so far (all under `tools/sdf/`, runs inside `ghcr.io/librelane/librelane:3.0.5`
+via the devcontainer's docker):
+
+- `make_sdf_lib.py`: strips the IHP cell models' `$setuphold/$recrem/$width/...`
+  timing-check statements while KEEPING specify IOPATH arcs (needed for
+  `$sdf_annotate`; the checks poison iverilog via undriven `delayed_*` nets).
+  Output: `data/sdfsim/sg13g2_stdcell_sdf.v`.
+- `filter_sdf.py` (latest version, uncommitted fix included in the next commit):
+  reduces a corner SDF to an Icarus-parseable IOPATH-only file — drops the
+  top-level INTERCONNECT block (Icarus's interconnect annotator crashes with
+  "NULL handle passed to vpi_scan"), drops TIMINGCHECK blocks, rewrites `a::b`
+  MTM tokens, replaces empty `()` triples, and unwraps `(COND ... (IOPATH ...))`
+  wrappers (324 unwrapped/merged of 4356 entries; conditional refinement lost).
+  Output: `data/sdf_path/<corner>.iopath.sdf`.
+- `tb_sdfsim.v`: full-chip probe; runs the complete TT protocol (config latch,
+  19-cycle frames, freeze, 16-byte readout) with plusargs
+  `+period= +segs= +pat= +cansel= +winsel= +forcecan= +nframes= +sdf=`.
+  Zero-delay reference PASSES (ops=8, err=0, cfg_echo=ff, gen/mat=0 with
+  FORCE_CAN — commit-tested; FORCE_CAN must be set for any zero-delay run or
+  the RO loops livelock the simulator).
+- `run_sdfsim.py`: driver; compiles once in the tool image, probes periods
+  (planned: slow corner 22–40 ns bracketing the 25.26 ns predicted knee;
+  typ corner 14–20 ns bracketing 16.19 ns), plus one RO cross-check point
+  (FORCE_CAN off, small frame count) against `data/ro_predict.csv`.
+
+BLOCKER (exact error, last command run):
+
+```
+SDF ERROR: ...iopath.sdf:1: Cannot find u_dut in scope tb_sdfsim.dut.
+```
+
+Cause: the routed netlist keeps Yosys's escaped dotted instance names
+(`\u_dut.g_seg[0].g_fa[0].u_fa.u_x1`, `\u_ro_gen.u_gate.u_a3`, ...). The SDF
+`(INSTANCE ...)` entries carry the same dotted paths; Icarus's SDF binder
+treats dots as hierarchy separators and looks for a nonexistent `u_dut`
+scope inside the flat module.
+
+Next step (mechanical, ~30 min): generate a simulation copy of the netlist
+with dotted instance names renamed to underscore form (replace `.` with `_`
+inside escaped identifiers `\...`), apply the SAME renaming to the `(INSTANCE)`
+fields of the filtered SDF, then rerun `python3 tools/run_sdfsim.py`.
+Acceptance: no SDF ERROR lines; err_cnt stays 0 well above the predicted knee
+and becomes nonzero at/below it (slow corner ~25.3 ns for seg3333/worst);
+RO cross-check counts should land within a few percent of `data/ro_predict.csv`
+(plus the missing u_a2/u_a3 gate-delay correction noted above).
+
+### Resume checklist on the new machine
+
+1. Start the devcontainer; inside it:
+   `docker pull ghcr.io/librelane/librelane:3.0.5` and
+   `ciel fetch --pdk-family ihp-sg13g2 c4b8b4e5e7a05f375cca3815d51b3a37721fbf5c`
+   (the tools mount `/home/vscode/ttsetup/pdk` at `/pdk`).
+2. Fetch the current-build artifacts (16-bit-counter netlist):
+   `gh run download 33839023290 --repo ECHO-HELLO-WORLD424/tinyint-ttihp26b \
+      --name GDS_logs --dir /tmp/gds-1e31757`
+   then stage the needed subset like `artifacts/run-33835818836/` and point
+   `tools/common.py` (`RUN_DIR`, `RUN_ID`, `GIT_COMMIT`) at it.
+3. Regenerate, in order: `python3 tools/run_experiment_sta.py`,
+   `python3 tools/run_ro_predict.py` (after adding the u_a2/u_a3 segment),
+   `python3 tools/run_sdfsim.py` (after the instance-rename fix).
+4. Then the remaining P1.1/P2 items: prediction model + guardband/one-point
+   calibration definitions, data schema, plots, post-silicon protocol,
+   research-proposal doc fixes, build manifest (`tools/make_manifest.py` does
+   not exist yet), and the final submission-artifact archive.
+
+Provenance pinned for all datasets produced so far: CI run `33835818836`
+(commit `8bcffc2b30d7dbb3ed86c46f522d9b7113761d03`), LibreLane image
+`ghcr.io/librelane/librelane:3.0.5` (openroad 2026-02-17, OpenSTA 2.7.0,
+iverilog s20250103), PDK ciel revision
+`c4b8b4e5e7a05f375cca3815d51b3a37721fbf5c`. Every CSV carries these columns.
+
 
 ## Recommended execution order
 

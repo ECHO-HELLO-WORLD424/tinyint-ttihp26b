@@ -1,15 +1,22 @@
 #!/usr/bin/env python3
 # SPDX-FileCopyrightText: (c) 2026 ECHO-HELLO-WORLD424
 # SPDX-License-Identifier: Apache-2.0
-"""Filter a corner SDF for Icarus full-chip annotation.
+"""Reduce a corner SDF to an Icarus-annotatable IOPATH-only file.
 
-Keeps per-cell IOPATH delay entries; drops the top-level INTERCONNECT-only
-CELL block (Icarus's interconnect annotator does not resolve this design's
-SDF interconnect section) and all TIMINGCHECK blocks (no timing checks are
-simulated; hold is validated by STA signoff instead).
-
-The resulting annotation carries cell IOPATH delays only; the wire-delay
-scope is recorded in data/sdf_path_check.csv.
+Transformations (scope recorded in data/sdf_path_check.csv):
+  1. Drop the top-level INTERCONNECT-only CELL block (Icarus's interconnect
+     annotator crashes on this design's SDF).
+  2. Drop all TIMINGCHECK blocks (no timing checks are simulated; hold is
+     validated by STA signoff instead).
+  3. Rewrite a::b MTM tokens as a:a:b (Icarus cannot parse empty MTM
+     fields; all three values are equal in these SDFs anyway).
+  4. Replace empty delay triples "()" with 0.000:0.000:0.000 (async-reset
+     Q rise arcs carry no annotated delay).
+  5. Strip (COND <expr> (IOPATH ...)) wrappers inside (ABSOLUTE ...):
+     keep the unconditional IOPATH when one exists for the same port pair,
+     else unwrap the first conditional variant and drop duplicate
+     conditional variants of the same pair. Conditional arc refinement is
+     thereby lost; acceptable for first-order capture-path timing.
 
 Usage: filter_sdf.py <corner.sdf> <corner.iopath.sdf>
 """
@@ -58,7 +65,7 @@ def parse(toks, pos=0):
             node, pos = parse(toks, pos)
             children.append(node)
         else:
-            children.append(('atom', toks[pos][1]))
+            children.append((toks[pos][0], toks[pos][1]))
             pos += 1
     return (head, children), pos + 1
 
@@ -67,18 +74,76 @@ def emit(node):
     head, children = node
     parts = ['(' + (head or '')]
     for ch in children:
-        if ch[0] == 'atom':
+        if ch[0] in ('atom', 'str'):
             parts.append(ch[1])
         else:
             parts.append(emit(ch))
     return ' '.join(parts) + ')'
 
 
+def fix_tokens(node):
+    """Rewrite a::b tokens and empty () triples everywhere in the tree."""
+    head, children = node
+    if head is None and not children:
+        return ('0.000:0.000:0.000', [])
+    fixed = []
+    for ch in children:
+        if ch[0] == 'atom':
+            v = ch[1]
+            if '::' in v:
+                a, b = v.split('::', 1)
+                fixed.append(('atom', a + ':' + a + ':' + b))
+            else:
+                fixed.append(ch)
+        elif ch[0] == 'str':
+            v = ch[1]
+            if '::' in v:
+                inner = v.strip('"\'')
+                a, b = inner.split('::', 1)
+                fixed.append(('str', '"' + a + ':' + a + ':' + b + '"'))
+            else:
+                fixed.append(ch)
+        else:
+            fixed.append(fix_tokens(ch))
+    return (head, fixed)
+
+
+def iopath_key(node):
+    return (node[1][0][1], node[1][1][1])
+
+
+def fix_absolute(node):
+    """Inside (ABSOLUTE ...): drop COND wrappers per the rules."""
+    head, children = node
+    plain = []
+    plain_keys = set()
+    unwrapped = []
+    unwrapped_keys = set()
+    for ch in children:
+        if ch[0] == 'IOPATH':
+            k = iopath_key(ch)
+            if k not in plain_keys:
+                plain.append(ch)
+                plain_keys.add(k)
+        elif ch[0] == 'COND':
+            inner = next((c for c in ch[1] if c[0] == 'IOPATH'), None)
+            if inner is None:
+                continue
+            k = iopath_key(inner)
+            if k in plain_keys or k in unwrapped_keys:
+                continue  # duplicate conditional variant: drop
+            unwrapped.append(inner)
+            unwrapped_keys.add(k)
+        else:
+            plain.append(ch)  # keep anything else as-is
+    return ('ABSOLUTE', plain + unwrapped), len(unwrapped)
+
+
+stats = {"cells": 0, "sections": 0, "unwrapped": 0}
+
 root, _ = parse(tokenize(open(sys.argv[1]).read()))
 assert root[0] == 'DELAYFILE', root[0]
 
-kept_cells = 0
-dropped = 0
 new_children = []
 for node in root[1]:
     if node[0] == 'CELL':
@@ -87,17 +152,32 @@ for node in root[1]:
             if ch[0] == 'INSTANCE':
                 instance = ' '.join(x[1] for x in ch[1] if x[0] == 'atom')
         if not instance:
-            dropped += 1  # top-level interconnect-only block
+            stats["sections"] += 1  # top-level interconnect-only block
             continue
-        inner = [ch for ch in node[1] if ch[0] != 'TIMINGCHECK']
-        if len(inner) != len(node[1]):
-            dropped += 1
+        inner = []
+        for ch in node[1]:
+            if ch[0] == 'TIMINGCHECK':
+                stats["sections"] += 1
+            elif ch[0] == 'DELAY':
+                dhead, dchildren = ch
+                new_delay = []
+                for d in dchildren:
+                    if d[0] == 'ABSOLUTE':
+                        fixed, n_unwrap = fix_absolute(d)
+                        stats["unwrapped"] += n_unwrap
+                        new_delay.append(fixed)
+                    else:
+                        new_delay.append(d)
+                inner.append(('DELAY', new_delay))
+            else:
+                inner.append(ch)
         new_children.append(('CELL', inner))
-        kept_cells += 1
+        stats["cells"] += 1
     else:
         new_children.append(node)
 
-root = ('DELAYFILE', new_children)
+root = fix_tokens(('DELAYFILE', new_children))
 open(sys.argv[2], 'w').write(emit(root) + '\n')
-print(f"filter_sdf: kept {kept_cells} cell blocks, dropped {dropped} sections"
-      f" -> {sys.argv[2]}")
+print("filter_sdf: kept {cells} cells, dropped {sections} sections, "
+      "unwrapped {unwrapped} conditional IOPATHs -> {out}".format(
+          out=sys.argv[2], **stats))
