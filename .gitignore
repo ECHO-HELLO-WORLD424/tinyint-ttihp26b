@@ -13,3 +13,8 @@ test/gate_level_netlist.v
 /tt/
 .devcontainer/devcontainer-lock.json
 test/gate_level.sdf
+
+# Pre-silicon tooling: generated sim binaries and derived libs
+data/sdfsim/tb.vvp
+data/sdfsim/sg13g2_stdcell_sdf.v
+data/sdf_path/*.iopath.sdf

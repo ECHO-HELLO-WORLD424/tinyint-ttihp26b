@@ -1,0 +1,10 @@
+
+===STDERR===
+/work/data/sdfsim/sg13g2_stdcell_sdf.v:1602: sorry: ifnone with an edge-sensitive path is not supported.
+/work/data/sdfsim/sg13g2_stdcell_sdf.v:1607: sorry: ifnone with an edge-sensitive path is not supported.
+/work/data/sdfsim/sg13g2_stdcell_sdf.v:1638: sorry: ifnone with an edge-sensitive path is not supported.
+/work/data/sdfsim/sg13g2_stdcell_sdf.v:1642: sorry: ifnone with an edge-sensitive path is not supported.
+/work/data/sdfsim/sg13g2_stdcell_sdf.v:1673: sorry: ifnone with an edge-sensitive path is not supported.
+/work/data/sdfsim/sg13g2_stdcell_sdf.v:1677: sorry: ifnone with an edge-sensitive path is not supported.
+/work/data/sdfsim/sg13g2_stdcell_sdf.v:1708: sorry: ifnone with an edge-sensitive path is not supported.
+/work/data/sdfsim/sg13g2_stdcell_sdf.v:1739: sorry: ifnone with an edge-sensitive path is not supported.

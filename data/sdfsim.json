@@ -1,0 +1,36 @@
+{
+ "provenance": {
+  "run_id": "33835818836",
+  "git_commit": "8bcffc2b30d7dbb3ed86c46f522d9b7113761d03",
+  "librelane_image": "ghcr.io/librelane/librelane:3.0.5",
+  "pdk_rev": "c4b8b4e5e7a05f375cca3815d51b3a37721fbf5c",
+  "note": "full-chip SDF annotation (INTERCONNECT+IOPATH); timing checks removed from cell models; specify kept"
+ },
+ "rows": [
+  {
+   "corner": "(zero-delay reference)",
+   "period_ns": 20,
+   "freq_mhz": 50.0,
+   "cfg_word": "0x0DFF",
+   "segs": "3333",
+   "pattern": "worst",
+   "cansel": 3,
+   "winsel": 0,
+   "nframes_req": 8,
+   "ops": "",
+   "err_cnt": "",
+   "err_rate_per_op": "",
+   "gen_cnt": "",
+   "mat_cnt": "",
+   "cfg_echo": "",
+   "stat": "",
+   "err_dut": "",
+   "sdf": "",
+   "run_id": "33835818836",
+   "git_commit": "8bcffc2b30d7dbb3ed86c46f522d9b7113761d03",
+   "librelane_image": "ghcr.io/librelane/librelane:3.0.5",
+   "pdk_rev": "c4b8b4e5e7a05f375cca3815d51b3a37721fbf5c",
+   "log": "run_p20_w0dff_zdelay.log"
+  }
+ ]
+}

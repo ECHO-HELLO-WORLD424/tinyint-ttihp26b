@@ -1,0 +1,6 @@
+ERROR: /work/tools/sdf/tb_sdfsim.v:55: $value$plusargs's second argument must be a variable, found a vpiPartSelect.
+ERROR: /work/tools/sdf/tb_sdfsim.v:56: $value$plusargs's second argument must be a variable, found a vpiPartSelect.
+ERROR: /work/tools/sdf/tb_sdfsim.v:57: $value$plusargs's second argument must be a variable, found a vpiPartSelect.
+ERROR: /work/tools/sdf/tb_sdfsim.v:58: $value$plusargs's second argument must be a variable, found a vpiPartSelect.
+
+===STDERR===

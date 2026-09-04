@@ -1,0 +1,676 @@
+OpenSTA 2.7.0 GITDIR-NOT Copyright (c) 2025, Parallax Software, Inc.
+License GPLv3: GNU GPL version 3 <http://gnu.org/licenses/gpl.html>
+
+This is free software, and you are free to change and redistribute it
+under certain conditions; type `show_copying' for details. 
+This program comes with ABSOLUTELY NO WARRANTY; for details type `show_warranty'.
+==ROCASE sel=0
+RO-GEN
+Warning: /work/data/ro_cases_nom_typ_1p20V_25C.tcl line 5, 'u_ro_gen.u_gate.u_a3/X' is not a valid start point.
+Warning: /work/data/ro_cases_nom_typ_1p20V_25C.tcl line 5, 'u_ro_gen.u_gate.u_a2/A' is not a valid endpoint.
+Startpoint: u_ro_gen.u_gate.u_a3/X (internal pin)
+Endpoint: u_ro_gen.u_gate.u_a2/A (internal path endpoint)
+Path Group: path delay
+Path Type: max
+
+    Cap    Slew   Delay    Time   Description
+-----------------------------------------------------------------------
+   0.01    0.04    0.00    0.00 v u_ro_gen.u_gate.u_a3/X (sg13g2_and2_1)
+   0.02    0.07    0.11    0.11 v fanout87/X (sg13g2_buf_1)
+   0.00    0.04    0.13    0.24 v u_ro_gen.u_line.u_mux.u_m0/X (sg13g2_mux2_1)
+   0.01    0.04    0.12    0.35 v u_ro_gen.u_line.u_mux.u_m2/X (sg13g2_mux2_1)
+   0.01    0.03    0.04    0.39 ^ u_ro_gen.g_tail[0].u_t._cell/Y (sg13g2_inv_1)
+   0.01    0.03    0.04    0.43 v u_ro_gen.g_tail[1].u_t._cell/Y (sg13g2_inv_1)
+   0.01    0.04    0.04    0.48 ^ u_ro_gen.g_tail[2].u_t._cell/Y (sg13g2_inv_1)
+   0.01    0.05    0.06    0.54 v u_ro_gen.g_tail[3].u_t._cell/Y (sg13g2_inv_1)
+   0.01    0.03    0.04    0.58 ^ u_ro_gen.g_tail[4].u_t._cell/Y (sg13g2_inv_1)
+   0.01    0.03    0.04    0.62 v u_ro_gen.g_tail[5].u_t._cell/Y (sg13g2_inv_1)
+   0.01    0.03    0.04    0.66 ^ u_ro_gen.g_tail[6].u_t._cell/Y (sg13g2_inv_1)
+   0.01    0.03    0.04    0.69 v u_ro_gen.g_tail[7].u_t._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    0.72 ^ u_ro_gen.u_close._cell/Y (sg13g2_inv_1)
+           0.02    0.00    0.72 ^ u_ro_gen.u_gate.u_a2/A (sg13g2_and2_1)
+                           0.72   data arrival time
+
+                1000.00 1000.00   max_delay
+                   0.00 1000.00   output external delay
+                        1000.00   data required time
+-----------------------------------------------------------------------
+                        1000.00   data required time
+                          -0.72   data arrival time
+-----------------------------------------------------------------------
+                         999.28   slack (MET)
+
+
+RO-MAT
+Warning: /work/data/ro_cases_nom_typ_1p20V_25C.tcl line 8, 'u_ro_mat.u_gate.u_a3/X' is not a valid start point.
+Warning: /work/data/ro_cases_nom_typ_1p20V_25C.tcl line 8, 'u_ro_mat.u_gate.u_a2/A' is not a valid endpoint.
+Startpoint: u_ro_mat.u_gate.u_a3/X (internal pin)
+Endpoint: u_ro_mat.u_gate.u_a2/A (internal path endpoint)
+Path Group: path delay
+Path Type: max
+
+    Cap    Slew   Delay    Time   Description
+-----------------------------------------------------------------------
+   0.01    0.03    0.00    0.00 v u_ro_mat.u_gate.u_a3/X (sg13g2_and2_1)
+   0.04    0.12    0.14    0.14 v fanout85/X (sg13g2_buf_1)
+   0.00    0.04    0.15    0.29 v u_ro_mat.u_line0.u_mux.u_m0/X (sg13g2_mux2_1)
+   0.00    0.04    0.11    0.40 v u_ro_mat.u_line0.u_mux.u_m2/X (sg13g2_mux2_1)
+   0.00    0.02    0.07    0.47 v u_ro_mat.u_f0.u_a2/X (sg13g2_and2_1)
+   0.01    0.04    0.11    0.58 v u_ro_mat.u_f0.u_o1/X (sg13g2_or2_1)
+   0.00    0.04    0.11    0.69 v u_ro_mat.u_line1.u_mux.u_m0/X (sg13g2_mux2_1)
+   0.00    0.03    0.11    0.80 v u_ro_mat.u_line1.u_mux.u_m2/X (sg13g2_mux2_1)
+   0.00    0.02    0.07    0.87 v u_ro_mat.u_f1.u_a2/X (sg13g2_and2_1)
+   0.00    0.03    0.10    0.97 v u_ro_mat.u_f1.u_o1/X (sg13g2_or2_1)
+   0.00    0.03    0.03    1.00 ^ u_ro_mat.g_tail[0].u_t._cell/Y (sg13g2_inv_1)
+   0.01    0.03    0.04    1.04 v u_ro_mat.g_tail[1].u_t._cell/Y (sg13g2_inv_1)
+   0.01    0.04    0.04    1.08 ^ u_ro_mat.g_tail[2].u_t._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    1.11 v u_ro_mat.g_tail[3].u_t._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    1.14 ^ u_ro_mat.g_tail[4].u_t._cell/Y (sg13g2_inv_1)
+   0.01    0.03    0.04    1.18 v u_ro_mat.g_tail[5].u_t._cell/Y (sg13g2_inv_1)
+   0.00    0.03    0.04    1.22 ^ u_ro_mat.g_tail[6].u_t._cell/Y (sg13g2_inv_1)
+   0.01    0.04    0.05    1.26 v u_ro_mat.g_tail[7].u_t._cell/Y (sg13g2_inv_1)
+   0.01    0.03    0.04    1.31 ^ u_ro_mat.u_close._cell/Y (sg13g2_inv_1)
+           0.03    0.00    1.31 ^ u_ro_mat.u_gate.u_a2/A (sg13g2_and2_1)
+                           1.31   data arrival time
+
+                1000.00 1000.00   max_delay
+                   0.00 1000.00   output external delay
+                        1000.00   data required time
+-----------------------------------------------------------------------
+                        1000.00   data required time
+                          -1.31   data arrival time
+-----------------------------------------------------------------------
+                         998.69   slack (MET)
+
+
+RO-END
+==ROCASE sel=1
+RO-GEN
+Warning: /work/data/ro_cases_nom_typ_1p20V_25C.tcl line 15, 'u_ro_gen.u_gate.u_a3/X' is not a valid start point.
+Warning: /work/data/ro_cases_nom_typ_1p20V_25C.tcl line 15, 'u_ro_gen.u_gate.u_a2/A' is not a valid endpoint.
+Startpoint: u_ro_gen.u_gate.u_a3/X (internal pin)
+Endpoint: u_ro_gen.u_gate.u_a2/A (internal path endpoint)
+Path Group: path delay
+Path Type: max
+
+    Cap    Slew   Delay    Time   Description
+-----------------------------------------------------------------------
+   0.01    0.04    0.00    0.00 v u_ro_gen.u_gate.u_a3/X (sg13g2_and2_1)
+   0.02    0.07    0.11    0.11 v fanout87/X (sg13g2_buf_1)
+   0.00    0.03    0.04    0.15 ^ u_ro_gen.u_line.g_inv[0].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    0.18 v u_ro_gen.u_line.g_inv[1].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    0.21 ^ u_ro_gen.u_line.g_inv[2].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    0.24 v u_ro_gen.u_line.g_inv[3].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    0.26 ^ u_ro_gen.u_line.g_inv[4].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.02    0.29 v u_ro_gen.u_line.g_inv[5].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    0.31 ^ u_ro_gen.u_line.g_inv[6].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    0.34 v u_ro_gen.u_line.g_inv[7].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    0.37 ^ u_ro_gen.u_line.g_inv[8].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    0.39 v u_ro_gen.u_line.g_inv[9].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    0.42 ^ u_ro_gen.u_line.g_inv[10].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    0.45 v u_ro_gen.u_line.g_inv[11].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    0.47 ^ u_ro_gen.u_line.g_inv[12].u_inv._cell/Y (sg13g2_inv_1)
+   0.01    0.03    0.03    0.51 v u_ro_gen.u_line.g_inv[13].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.04    0.11    0.62 v u_ro_gen.u_line.u_mux.u_m0/X (sg13g2_mux2_1)
+   0.01    0.04    0.12    0.73 v u_ro_gen.u_line.u_mux.u_m2/X (sg13g2_mux2_1)
+   0.01    0.03    0.04    0.78 ^ u_ro_gen.g_tail[0].u_t._cell/Y (sg13g2_inv_1)
+   0.01    0.03    0.04    0.81 v u_ro_gen.g_tail[1].u_t._cell/Y (sg13g2_inv_1)
+   0.01    0.04    0.04    0.86 ^ u_ro_gen.g_tail[2].u_t._cell/Y (sg13g2_inv_1)
+   0.01    0.05    0.06    0.92 v u_ro_gen.g_tail[3].u_t._cell/Y (sg13g2_inv_1)
+   0.01    0.03    0.04    0.96 ^ u_ro_gen.g_tail[4].u_t._cell/Y (sg13g2_inv_1)
+   0.01    0.03    0.04    1.00 v u_ro_gen.g_tail[5].u_t._cell/Y (sg13g2_inv_1)
+   0.01    0.03    0.04    1.04 ^ u_ro_gen.g_tail[6].u_t._cell/Y (sg13g2_inv_1)
+   0.01    0.03    0.04    1.07 v u_ro_gen.g_tail[7].u_t._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    1.10 ^ u_ro_gen.u_close._cell/Y (sg13g2_inv_1)
+           0.02    0.00    1.10 ^ u_ro_gen.u_gate.u_a2/A (sg13g2_and2_1)
+                           1.10   data arrival time
+
+                1000.00 1000.00   max_delay
+                   0.00 1000.00   output external delay
+                        1000.00   data required time
+-----------------------------------------------------------------------
+                        1000.00   data required time
+                          -1.10   data arrival time
+-----------------------------------------------------------------------
+                         998.90   slack (MET)
+
+
+RO-MAT
+Warning: /work/data/ro_cases_nom_typ_1p20V_25C.tcl line 18, 'u_ro_mat.u_gate.u_a3/X' is not a valid start point.
+Warning: /work/data/ro_cases_nom_typ_1p20V_25C.tcl line 18, 'u_ro_mat.u_gate.u_a2/A' is not a valid endpoint.
+Startpoint: u_ro_mat.u_gate.u_a3/X (internal pin)
+Endpoint: u_ro_mat.u_gate.u_a2/A (internal path endpoint)
+Path Group: path delay
+Path Type: max
+
+    Cap    Slew   Delay    Time   Description
+-----------------------------------------------------------------------
+   0.01    0.03    0.00    0.00 v u_ro_mat.u_gate.u_a3/X (sg13g2_and2_1)
+   0.04    0.12    0.14    0.14 v fanout85/X (sg13g2_buf_1)
+   0.02    0.11    0.13    0.27 ^ u_ro_mat.u_line0.g_inv[0].u_inv._cell/Y (sg13g2_inv_1)
+   0.03    0.11    0.14    0.41 v u_ro_mat.u_line0.g_inv[1].u_inv._cell/Y (sg13g2_inv_1)
+   0.02    0.09    0.11    0.52 ^ u_ro_mat.u_line0.g_inv[2].u_inv._cell/Y (sg13g2_inv_1)
+   0.01    0.04    0.06    0.58 v u_ro_mat.u_line0.g_inv[3].u_inv._cell/Y (sg13g2_inv_1)
+   0.02    0.07    0.07    0.65 ^ u_ro_mat.u_line0.g_inv[4].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.03    0.04    0.69 v u_ro_mat.u_line0.g_inv[5].u_inv._cell/Y (sg13g2_inv_1)
+   0.01    0.04    0.04    0.73 ^ u_ro_mat.u_line0.g_inv[6].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    0.76 v u_ro_mat.u_line0.g_inv[7].u_inv._cell/Y (sg13g2_inv_1)
+   0.01    0.03    0.03    0.79 ^ u_ro_mat.u_line0.g_inv[8].u_inv._cell/Y (sg13g2_inv_1)
+   0.01    0.03    0.04    0.83 v u_ro_mat.u_line0.g_inv[9].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    0.86 ^ u_ro_mat.u_line0.g_inv[10].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    0.89 v u_ro_mat.u_line0.g_inv[11].u_inv._cell/Y (sg13g2_inv_1)
+   0.01    0.03    0.03    0.92 ^ u_ro_mat.u_line0.g_inv[12].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    0.95 v u_ro_mat.u_line0.g_inv[13].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    0.98 ^ u_ro_mat.u_line0.g_inv[14].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    1.01 v u_ro_mat.u_line0.g_inv[15].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.03    0.03    1.04 ^ u_ro_mat.u_line0.g_inv[16].u_inv._cell/Y (sg13g2_inv_1)
+   0.02    0.06    0.06    1.10 v u_ro_mat.u_line0.g_inv[17].u_inv._cell/Y (sg13g2_inv_1)
+   0.01    0.07    0.08    1.18 ^ u_ro_mat.u_line0.g_inv[18].u_inv._cell/Y (sg13g2_inv_1)
+   0.01    0.05    0.07    1.25 v u_ro_mat.u_line0.g_inv[19].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.03    0.04    1.29 ^ u_ro_mat.u_line0.g_inv[20].u_inv._cell/Y (sg13g2_inv_1)
+   0.01    0.04    0.04    1.33 v u_ro_mat.u_line0.g_inv[21].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.04    0.11    1.44 v u_ro_mat.u_line0.u_mux.u_m0/X (sg13g2_mux2_1)
+   0.00    0.04    0.11    1.56 v u_ro_mat.u_line0.u_mux.u_m2/X (sg13g2_mux2_1)
+   0.00    0.02    0.07    1.62 v u_ro_mat.u_f0.u_a2/X (sg13g2_and2_1)
+   0.01    0.04    0.11    1.73 v u_ro_mat.u_f0.u_o1/X (sg13g2_or2_1)
+   0.00    0.03    0.03    1.76 ^ u_ro_mat.u_line1.g_inv[0].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    1.79 v u_ro_mat.u_line1.g_inv[1].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    1.82 ^ u_ro_mat.u_line1.g_inv[2].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    1.84 v u_ro_mat.u_line1.g_inv[3].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    1.87 ^ u_ro_mat.u_line1.g_inv[4].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.02    1.89 v u_ro_mat.u_line1.g_inv[5].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    1.92 ^ u_ro_mat.u_line1.g_inv[6].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    1.95 v u_ro_mat.u_line1.g_inv[7].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    1.98 ^ u_ro_mat.u_line1.g_inv[8].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    2.00 v u_ro_mat.u_line1.g_inv[9].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    2.03 ^ u_ro_mat.u_line1.g_inv[10].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    2.06 v u_ro_mat.u_line1.g_inv[11].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    2.09 ^ u_ro_mat.u_line1.g_inv[12].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    2.11 v u_ro_mat.u_line1.g_inv[13].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    2.14 ^ u_ro_mat.u_line1.g_inv[14].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    2.17 v u_ro_mat.u_line1.g_inv[15].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    2.19 ^ u_ro_mat.u_line1.g_inv[16].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    2.22 v u_ro_mat.u_line1.g_inv[17].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    2.25 ^ u_ro_mat.u_line1.g_inv[18].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    2.27 v u_ro_mat.u_line1.g_inv[19].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    2.30 ^ u_ro_mat.u_line1.g_inv[20].u_inv._cell/Y (sg13g2_inv_1)
+   0.01    0.03    0.04    2.34 v u_ro_mat.u_line1.g_inv[21].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.04    0.11    2.45 v u_ro_mat.u_line1.u_mux.u_m0/X (sg13g2_mux2_1)
+   0.00    0.03    0.11    2.56 v u_ro_mat.u_line1.u_mux.u_m2/X (sg13g2_mux2_1)
+   0.00    0.02    0.07    2.64 v u_ro_mat.u_f1.u_a2/X (sg13g2_and2_1)
+   0.00    0.03    0.10    2.73 v u_ro_mat.u_f1.u_o1/X (sg13g2_or2_1)
+   0.00    0.03    0.03    2.76 ^ u_ro_mat.g_tail[0].u_t._cell/Y (sg13g2_inv_1)
+   0.01    0.03    0.04    2.80 v u_ro_mat.g_tail[1].u_t._cell/Y (sg13g2_inv_1)
+   0.01    0.04    0.04    2.84 ^ u_ro_mat.g_tail[2].u_t._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    2.88 v u_ro_mat.g_tail[3].u_t._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    2.90 ^ u_ro_mat.g_tail[4].u_t._cell/Y (sg13g2_inv_1)
+   0.01    0.03    0.04    2.94 v u_ro_mat.g_tail[5].u_t._cell/Y (sg13g2_inv_1)
+   0.00    0.03    0.04    2.98 ^ u_ro_mat.g_tail[6].u_t._cell/Y (sg13g2_inv_1)
+   0.01    0.04    0.05    3.03 v u_ro_mat.g_tail[7].u_t._cell/Y (sg13g2_inv_1)
+   0.01    0.03    0.04    3.07 ^ u_ro_mat.u_close._cell/Y (sg13g2_inv_1)
+           0.03    0.00    3.07 ^ u_ro_mat.u_gate.u_a2/A (sg13g2_and2_1)
+                           3.07   data arrival time
+
+                1000.00 1000.00   max_delay
+                   0.00 1000.00   output external delay
+                        1000.00   data required time
+-----------------------------------------------------------------------
+                        1000.00   data required time
+                          -3.07   data arrival time
+-----------------------------------------------------------------------
+                         996.93   slack (MET)
+
+
+RO-END
+==ROCASE sel=2
+RO-GEN
+Warning: /work/data/ro_cases_nom_typ_1p20V_25C.tcl line 25, 'u_ro_gen.u_gate.u_a3/X' is not a valid start point.
+Warning: /work/data/ro_cases_nom_typ_1p20V_25C.tcl line 25, 'u_ro_gen.u_gate.u_a2/A' is not a valid endpoint.
+Startpoint: u_ro_gen.u_gate.u_a3/X (internal pin)
+Endpoint: u_ro_gen.u_gate.u_a2/A (internal path endpoint)
+Path Group: path delay
+Path Type: max
+
+    Cap    Slew   Delay    Time   Description
+-----------------------------------------------------------------------
+   0.01    0.04    0.00    0.00 v u_ro_gen.u_gate.u_a3/X (sg13g2_and2_1)
+   0.02    0.07    0.11    0.11 v fanout87/X (sg13g2_buf_1)
+   0.00    0.03    0.04    0.15 ^ u_ro_gen.u_line.g_inv[0].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    0.18 v u_ro_gen.u_line.g_inv[1].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    0.21 ^ u_ro_gen.u_line.g_inv[2].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    0.24 v u_ro_gen.u_line.g_inv[3].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    0.26 ^ u_ro_gen.u_line.g_inv[4].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.02    0.29 v u_ro_gen.u_line.g_inv[5].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    0.31 ^ u_ro_gen.u_line.g_inv[6].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    0.34 v u_ro_gen.u_line.g_inv[7].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    0.37 ^ u_ro_gen.u_line.g_inv[8].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    0.39 v u_ro_gen.u_line.g_inv[9].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    0.42 ^ u_ro_gen.u_line.g_inv[10].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    0.45 v u_ro_gen.u_line.g_inv[11].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    0.47 ^ u_ro_gen.u_line.g_inv[12].u_inv._cell/Y (sg13g2_inv_1)
+   0.01    0.03    0.03    0.51 v u_ro_gen.u_line.g_inv[13].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    0.54 ^ u_ro_gen.u_line.g_inv[14].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    0.57 v u_ro_gen.u_line.g_inv[15].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    0.60 ^ u_ro_gen.u_line.g_inv[16].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    0.63 v u_ro_gen.u_line.g_inv[17].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    0.66 ^ u_ro_gen.u_line.g_inv[18].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    0.68 v u_ro_gen.u_line.g_inv[19].u_inv._cell/Y (sg13g2_inv_1)
+   0.01    0.03    0.03    0.72 ^ u_ro_gen.u_line.g_inv[20].u_inv._cell/Y (sg13g2_inv_1)
+   0.01    0.02    0.03    0.75 v u_ro_gen.u_line.g_inv[21].u_inv._cell/Y (sg13g2_inv_1)
+   0.01    0.03    0.04    0.79 ^ u_ro_gen.u_line.g_inv[22].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    0.82 v u_ro_gen.u_line.g_inv[23].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.03    0.03    0.85 ^ u_ro_gen.u_line.g_inv[24].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    0.88 v u_ro_gen.u_line.g_inv[25].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    0.90 ^ u_ro_gen.u_line.g_inv[26].u_inv._cell/Y (sg13g2_inv_1)
+   0.01    0.03    0.04    0.94 v u_ro_gen.u_line.g_inv[27].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.04    0.11    1.05 v u_ro_gen.u_line.u_mux.u_m1/X (sg13g2_mux2_1)
+   0.01    0.04    0.12    1.17 v u_ro_gen.u_line.u_mux.u_m2/X (sg13g2_mux2_1)
+   0.01    0.03    0.04    1.21 ^ u_ro_gen.g_tail[0].u_t._cell/Y (sg13g2_inv_1)
+   0.01    0.03    0.04    1.24 v u_ro_gen.g_tail[1].u_t._cell/Y (sg13g2_inv_1)
+   0.01    0.04    0.04    1.29 ^ u_ro_gen.g_tail[2].u_t._cell/Y (sg13g2_inv_1)
+   0.01    0.05    0.06    1.35 v u_ro_gen.g_tail[3].u_t._cell/Y (sg13g2_inv_1)
+   0.01    0.03    0.04    1.39 ^ u_ro_gen.g_tail[4].u_t._cell/Y (sg13g2_inv_1)
+   0.01    0.03    0.04    1.43 v u_ro_gen.g_tail[5].u_t._cell/Y (sg13g2_inv_1)
+   0.01    0.03    0.04    1.47 ^ u_ro_gen.g_tail[6].u_t._cell/Y (sg13g2_inv_1)
+   0.01    0.03    0.04    1.50 v u_ro_gen.g_tail[7].u_t._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    1.53 ^ u_ro_gen.u_close._cell/Y (sg13g2_inv_1)
+           0.02    0.00    1.53 ^ u_ro_gen.u_gate.u_a2/A (sg13g2_and2_1)
+                           1.53   data arrival time
+
+                1000.00 1000.00   max_delay
+                   0.00 1000.00   output external delay
+                        1000.00   data required time
+-----------------------------------------------------------------------
+                        1000.00   data required time
+                          -1.53   data arrival time
+-----------------------------------------------------------------------
+                         998.47   slack (MET)
+
+
+RO-MAT
+Warning: /work/data/ro_cases_nom_typ_1p20V_25C.tcl line 28, 'u_ro_mat.u_gate.u_a3/X' is not a valid start point.
+Warning: /work/data/ro_cases_nom_typ_1p20V_25C.tcl line 28, 'u_ro_mat.u_gate.u_a2/A' is not a valid endpoint.
+Startpoint: u_ro_mat.u_gate.u_a3/X (internal pin)
+Endpoint: u_ro_mat.u_gate.u_a2/A (internal path endpoint)
+Path Group: path delay
+Path Type: max
+
+    Cap    Slew   Delay    Time   Description
+-----------------------------------------------------------------------
+   0.01    0.03    0.00    0.00 v u_ro_mat.u_gate.u_a3/X (sg13g2_and2_1)
+   0.04    0.12    0.14    0.14 v fanout85/X (sg13g2_buf_1)
+   0.02    0.11    0.13    0.27 ^ u_ro_mat.u_line0.g_inv[0].u_inv._cell/Y (sg13g2_inv_1)
+   0.03    0.11    0.14    0.41 v u_ro_mat.u_line0.g_inv[1].u_inv._cell/Y (sg13g2_inv_1)
+   0.02    0.09    0.11    0.52 ^ u_ro_mat.u_line0.g_inv[2].u_inv._cell/Y (sg13g2_inv_1)
+   0.01    0.04    0.06    0.58 v u_ro_mat.u_line0.g_inv[3].u_inv._cell/Y (sg13g2_inv_1)
+   0.02    0.07    0.07    0.65 ^ u_ro_mat.u_line0.g_inv[4].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.03    0.04    0.69 v u_ro_mat.u_line0.g_inv[5].u_inv._cell/Y (sg13g2_inv_1)
+   0.01    0.04    0.04    0.73 ^ u_ro_mat.u_line0.g_inv[6].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    0.76 v u_ro_mat.u_line0.g_inv[7].u_inv._cell/Y (sg13g2_inv_1)
+   0.01    0.03    0.03    0.79 ^ u_ro_mat.u_line0.g_inv[8].u_inv._cell/Y (sg13g2_inv_1)
+   0.01    0.03    0.04    0.83 v u_ro_mat.u_line0.g_inv[9].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    0.86 ^ u_ro_mat.u_line0.g_inv[10].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    0.89 v u_ro_mat.u_line0.g_inv[11].u_inv._cell/Y (sg13g2_inv_1)
+   0.01    0.03    0.03    0.92 ^ u_ro_mat.u_line0.g_inv[12].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    0.95 v u_ro_mat.u_line0.g_inv[13].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    0.98 ^ u_ro_mat.u_line0.g_inv[14].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    1.01 v u_ro_mat.u_line0.g_inv[15].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.03    0.03    1.04 ^ u_ro_mat.u_line0.g_inv[16].u_inv._cell/Y (sg13g2_inv_1)
+   0.02    0.06    0.06    1.10 v u_ro_mat.u_line0.g_inv[17].u_inv._cell/Y (sg13g2_inv_1)
+   0.01    0.07    0.08    1.18 ^ u_ro_mat.u_line0.g_inv[18].u_inv._cell/Y (sg13g2_inv_1)
+   0.01    0.05    0.07    1.25 v u_ro_mat.u_line0.g_inv[19].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.03    0.04    1.29 ^ u_ro_mat.u_line0.g_inv[20].u_inv._cell/Y (sg13g2_inv_1)
+   0.01    0.04    0.04    1.33 v u_ro_mat.u_line0.g_inv[21].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    1.36 ^ u_ro_mat.u_line0.g_inv[22].u_inv._cell/Y (sg13g2_inv_1)
+   0.01    0.03    0.04    1.40 v u_ro_mat.u_line0.g_inv[23].u_inv._cell/Y (sg13g2_inv_1)
+   0.01    0.03    0.04    1.44 ^ u_ro_mat.u_line0.g_inv[24].u_inv._cell/Y (sg13g2_inv_1)
+   0.01    0.05    0.05    1.49 v u_ro_mat.u_line0.g_inv[25].u_inv._cell/Y (sg13g2_inv_1)
+   0.02    0.08    0.08    1.57 ^ u_ro_mat.u_line0.g_inv[26].u_inv._cell/Y (sg13g2_inv_1)
+   0.02    0.07    0.08    1.66 v u_ro_mat.u_line0.g_inv[27].u_inv._cell/Y (sg13g2_inv_1)
+   0.02    0.08    0.08    1.74 ^ u_ro_mat.u_line0.g_inv[28].u_inv._cell/Y (sg13g2_inv_1)
+   0.03    0.12    0.13    1.87 v u_ro_mat.u_line0.g_inv[29].u_inv._cell/Y (sg13g2_inv_1)
+   0.03    0.14    0.16    2.04 ^ u_ro_mat.u_line0.g_inv[30].u_inv._cell/Y (sg13g2_inv_1)
+   0.03    0.12    0.16    2.20 v u_ro_mat.u_line0.g_inv[31].u_inv._cell/Y (sg13g2_inv_1)
+   0.02    0.10    0.12    2.32 ^ u_ro_mat.u_line0.g_inv[32].u_inv._cell/Y (sg13g2_inv_1)
+   0.01    0.04    0.07    2.39 v u_ro_mat.u_line0.g_inv[33].u_inv._cell/Y (sg13g2_inv_1)
+   0.01    0.04    0.05    2.44 ^ u_ro_mat.u_line0.g_inv[34].u_inv._cell/Y (sg13g2_inv_1)
+   0.01    0.03    0.04    2.48 v u_ro_mat.u_line0.g_inv[35].u_inv._cell/Y (sg13g2_inv_1)
+   0.01    0.04    0.04    2.52 ^ u_ro_mat.u_line0.g_inv[36].u_inv._cell/Y (sg13g2_inv_1)
+   0.01    0.05    0.06    2.58 v u_ro_mat.u_line0.g_inv[37].u_inv._cell/Y (sg13g2_inv_1)
+   0.01    0.06    0.06    2.64 ^ u_ro_mat.u_line0.g_inv[38].u_inv._cell/Y (sg13g2_inv_1)
+   0.01    0.03    0.05    2.69 v u_ro_mat.u_line0.g_inv[39].u_inv._cell/Y (sg13g2_inv_1)
+   0.01    0.06    0.06    2.75 ^ u_ro_mat.u_line0.g_inv[40].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.04    2.79 v u_ro_mat.u_line0.g_inv[41].u_inv._cell/Y (sg13g2_inv_1)
+   0.01    0.03    0.04    2.82 ^ u_ro_mat.u_line0.g_inv[42].u_inv._cell/Y (sg13g2_inv_1)
+   0.01    0.05    0.05    2.88 v u_ro_mat.u_line0.g_inv[43].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.04    0.12    2.99 v u_ro_mat.u_line0.u_mux.u_m1/X (sg13g2_mux2_1)
+   0.00    0.04    0.11    3.10 v u_ro_mat.u_line0.u_mux.u_m2/X (sg13g2_mux2_1)
+   0.00    0.02    0.07    3.17 v u_ro_mat.u_f0.u_a2/X (sg13g2_and2_1)
+   0.01    0.04    0.11    3.28 v u_ro_mat.u_f0.u_o1/X (sg13g2_or2_1)
+   0.00    0.03    0.03    3.31 ^ u_ro_mat.u_line1.g_inv[0].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    3.34 v u_ro_mat.u_line1.g_inv[1].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    3.36 ^ u_ro_mat.u_line1.g_inv[2].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    3.39 v u_ro_mat.u_line1.g_inv[3].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    3.42 ^ u_ro_mat.u_line1.g_inv[4].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.02    3.44 v u_ro_mat.u_line1.g_inv[5].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    3.47 ^ u_ro_mat.u_line1.g_inv[6].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    3.50 v u_ro_mat.u_line1.g_inv[7].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    3.53 ^ u_ro_mat.u_line1.g_inv[8].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    3.55 v u_ro_mat.u_line1.g_inv[9].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    3.58 ^ u_ro_mat.u_line1.g_inv[10].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    3.61 v u_ro_mat.u_line1.g_inv[11].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    3.64 ^ u_ro_mat.u_line1.g_inv[12].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    3.66 v u_ro_mat.u_line1.g_inv[13].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    3.69 ^ u_ro_mat.u_line1.g_inv[14].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    3.72 v u_ro_mat.u_line1.g_inv[15].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    3.74 ^ u_ro_mat.u_line1.g_inv[16].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    3.77 v u_ro_mat.u_line1.g_inv[17].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    3.80 ^ u_ro_mat.u_line1.g_inv[18].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    3.82 v u_ro_mat.u_line1.g_inv[19].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    3.85 ^ u_ro_mat.u_line1.g_inv[20].u_inv._cell/Y (sg13g2_inv_1)
+   0.01    0.03    0.04    3.89 v u_ro_mat.u_line1.g_inv[21].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.03    0.03    3.92 ^ u_ro_mat.u_line1.g_inv[22].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    3.95 v u_ro_mat.u_line1.g_inv[23].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    3.98 ^ u_ro_mat.u_line1.g_inv[24].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    4.00 v u_ro_mat.u_line1.g_inv[25].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    4.03 ^ u_ro_mat.u_line1.g_inv[26].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    4.06 v u_ro_mat.u_line1.g_inv[27].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    4.08 ^ u_ro_mat.u_line1.g_inv[28].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    4.11 v u_ro_mat.u_line1.g_inv[29].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    4.13 ^ u_ro_mat.u_line1.g_inv[30].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    4.16 v u_ro_mat.u_line1.g_inv[31].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    4.19 ^ u_ro_mat.u_line1.g_inv[32].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    4.21 v u_ro_mat.u_line1.g_inv[33].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    4.24 ^ u_ro_mat.u_line1.g_inv[34].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    4.27 v u_ro_mat.u_line1.g_inv[35].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    4.30 ^ u_ro_mat.u_line1.g_inv[36].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    4.32 v u_ro_mat.u_line1.g_inv[37].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    4.35 ^ u_ro_mat.u_line1.g_inv[38].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    4.37 v u_ro_mat.u_line1.g_inv[39].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    4.40 ^ u_ro_mat.u_line1.g_inv[40].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    4.43 v u_ro_mat.u_line1.g_inv[41].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    4.46 ^ u_ro_mat.u_line1.g_inv[42].u_inv._cell/Y (sg13g2_inv_1)
+   0.01    0.03    0.04    4.49 v u_ro_mat.u_line1.g_inv[43].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.04    0.11    4.61 v u_ro_mat.u_line1.u_mux.u_m1/X (sg13g2_mux2_1)
+   0.00    0.04    0.11    4.72 v u_ro_mat.u_line1.u_mux.u_m2/X (sg13g2_mux2_1)
+   0.00    0.02    0.07    4.79 v u_ro_mat.u_f1.u_a2/X (sg13g2_and2_1)
+   0.00    0.03    0.10    4.89 v u_ro_mat.u_f1.u_o1/X (sg13g2_or2_1)
+   0.00    0.03    0.03    4.92 ^ u_ro_mat.g_tail[0].u_t._cell/Y (sg13g2_inv_1)
+   0.01    0.03    0.04    4.96 v u_ro_mat.g_tail[1].u_t._cell/Y (sg13g2_inv_1)
+   0.01    0.04    0.04    5.00 ^ u_ro_mat.g_tail[2].u_t._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    5.03 v u_ro_mat.g_tail[3].u_t._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    5.06 ^ u_ro_mat.g_tail[4].u_t._cell/Y (sg13g2_inv_1)
+   0.01    0.03    0.04    5.10 v u_ro_mat.g_tail[5].u_t._cell/Y (sg13g2_inv_1)
+   0.00    0.03    0.04    5.14 ^ u_ro_mat.g_tail[6].u_t._cell/Y (sg13g2_inv_1)
+   0.01    0.04    0.05    5.18 v u_ro_mat.g_tail[7].u_t._cell/Y (sg13g2_inv_1)
+   0.01    0.03    0.04    5.22 ^ u_ro_mat.u_close._cell/Y (sg13g2_inv_1)
+           0.03    0.00    5.22 ^ u_ro_mat.u_gate.u_a2/A (sg13g2_and2_1)
+                           5.22   data arrival time
+
+                1000.00 1000.00   max_delay
+                   0.00 1000.00   output external delay
+                        1000.00   data required time
+-----------------------------------------------------------------------
+                        1000.00   data required time
+                          -5.22   data arrival time
+-----------------------------------------------------------------------
+                         994.78   slack (MET)
+
+
+RO-END
+==ROCASE sel=3
+RO-GEN
+Warning: /work/data/ro_cases_nom_typ_1p20V_25C.tcl line 35, 'u_ro_gen.u_gate.u_a3/X' is not a valid start point.
+Warning: /work/data/ro_cases_nom_typ_1p20V_25C.tcl line 35, 'u_ro_gen.u_gate.u_a2/A' is not a valid endpoint.
+Startpoint: u_ro_gen.u_gate.u_a3/X (internal pin)
+Endpoint: u_ro_gen.u_gate.u_a2/A (internal path endpoint)
+Path Group: path delay
+Path Type: max
+
+    Cap    Slew   Delay    Time   Description
+-----------------------------------------------------------------------
+   0.01    0.04    0.00    0.00 v u_ro_gen.u_gate.u_a3/X (sg13g2_and2_1)
+   0.02    0.07    0.11    0.11 v fanout87/X (sg13g2_buf_1)
+   0.00    0.03    0.04    0.15 ^ u_ro_gen.u_line.g_inv[0].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    0.18 v u_ro_gen.u_line.g_inv[1].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    0.21 ^ u_ro_gen.u_line.g_inv[2].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    0.24 v u_ro_gen.u_line.g_inv[3].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    0.26 ^ u_ro_gen.u_line.g_inv[4].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.02    0.29 v u_ro_gen.u_line.g_inv[5].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    0.31 ^ u_ro_gen.u_line.g_inv[6].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    0.34 v u_ro_gen.u_line.g_inv[7].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    0.37 ^ u_ro_gen.u_line.g_inv[8].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    0.39 v u_ro_gen.u_line.g_inv[9].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    0.42 ^ u_ro_gen.u_line.g_inv[10].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    0.45 v u_ro_gen.u_line.g_inv[11].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    0.47 ^ u_ro_gen.u_line.g_inv[12].u_inv._cell/Y (sg13g2_inv_1)
+   0.01    0.03    0.03    0.51 v u_ro_gen.u_line.g_inv[13].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    0.54 ^ u_ro_gen.u_line.g_inv[14].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    0.57 v u_ro_gen.u_line.g_inv[15].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    0.60 ^ u_ro_gen.u_line.g_inv[16].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    0.63 v u_ro_gen.u_line.g_inv[17].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    0.66 ^ u_ro_gen.u_line.g_inv[18].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    0.68 v u_ro_gen.u_line.g_inv[19].u_inv._cell/Y (sg13g2_inv_1)
+   0.01    0.03    0.03    0.72 ^ u_ro_gen.u_line.g_inv[20].u_inv._cell/Y (sg13g2_inv_1)
+   0.01    0.02    0.03    0.75 v u_ro_gen.u_line.g_inv[21].u_inv._cell/Y (sg13g2_inv_1)
+   0.01    0.03    0.04    0.79 ^ u_ro_gen.u_line.g_inv[22].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    0.82 v u_ro_gen.u_line.g_inv[23].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.03    0.03    0.85 ^ u_ro_gen.u_line.g_inv[24].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    0.88 v u_ro_gen.u_line.g_inv[25].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    0.90 ^ u_ro_gen.u_line.g_inv[26].u_inv._cell/Y (sg13g2_inv_1)
+   0.01    0.03    0.04    0.94 v u_ro_gen.u_line.g_inv[27].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    0.97 ^ u_ro_gen.u_line.g_inv[28].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    0.99 v u_ro_gen.u_line.g_inv[29].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    1.02 ^ u_ro_gen.u_line.g_inv[30].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    1.05 v u_ro_gen.u_line.g_inv[31].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    1.08 ^ u_ro_gen.u_line.g_inv[32].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.02    1.10 v u_ro_gen.u_line.g_inv[33].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    1.13 ^ u_ro_gen.u_line.g_inv[34].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.02    1.15 v u_ro_gen.u_line.g_inv[35].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    1.18 ^ u_ro_gen.u_line.g_inv[36].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    1.20 v u_ro_gen.u_line.g_inv[37].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    1.23 ^ u_ro_gen.u_line.g_inv[38].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    1.26 v u_ro_gen.u_line.g_inv[39].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    1.28 ^ u_ro_gen.u_line.g_inv[40].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    1.31 v u_ro_gen.u_line.g_inv[41].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.04    0.11    1.42 v u_ro_gen.u_line.u_mux.u_m1/X (sg13g2_mux2_1)
+   0.01    0.04    0.12    1.53 v u_ro_gen.u_line.u_mux.u_m2/X (sg13g2_mux2_1)
+   0.01    0.03    0.04    1.58 ^ u_ro_gen.g_tail[0].u_t._cell/Y (sg13g2_inv_1)
+   0.01    0.03    0.04    1.61 v u_ro_gen.g_tail[1].u_t._cell/Y (sg13g2_inv_1)
+   0.01    0.04    0.04    1.66 ^ u_ro_gen.g_tail[2].u_t._cell/Y (sg13g2_inv_1)
+   0.01    0.05    0.06    1.72 v u_ro_gen.g_tail[3].u_t._cell/Y (sg13g2_inv_1)
+   0.01    0.03    0.04    1.76 ^ u_ro_gen.g_tail[4].u_t._cell/Y (sg13g2_inv_1)
+   0.01    0.03    0.04    1.80 v u_ro_gen.g_tail[5].u_t._cell/Y (sg13g2_inv_1)
+   0.01    0.03    0.04    1.84 ^ u_ro_gen.g_tail[6].u_t._cell/Y (sg13g2_inv_1)
+   0.01    0.03    0.04    1.87 v u_ro_gen.g_tail[7].u_t._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    1.90 ^ u_ro_gen.u_close._cell/Y (sg13g2_inv_1)
+           0.02    0.00    1.90 ^ u_ro_gen.u_gate.u_a2/A (sg13g2_and2_1)
+                           1.90   data arrival time
+
+                1000.00 1000.00   max_delay
+                   0.00 1000.00   output external delay
+                        1000.00   data required time
+-----------------------------------------------------------------------
+                        1000.00   data required time
+                          -1.90   data arrival time
+-----------------------------------------------------------------------
+                         998.10   slack (MET)
+
+
+RO-MAT
+Warning: /work/data/ro_cases_nom_typ_1p20V_25C.tcl line 38, 'u_ro_mat.u_gate.u_a3/X' is not a valid start point.
+Warning: /work/data/ro_cases_nom_typ_1p20V_25C.tcl line 38, 'u_ro_mat.u_gate.u_a2/A' is not a valid endpoint.
+Startpoint: u_ro_mat.u_gate.u_a3/X (internal pin)
+Endpoint: u_ro_mat.u_gate.u_a2/A (internal path endpoint)
+Path Group: path delay
+Path Type: max
+
+    Cap    Slew   Delay    Time   Description
+-----------------------------------------------------------------------
+   0.01    0.03    0.00    0.00 v u_ro_mat.u_gate.u_a3/X (sg13g2_and2_1)
+   0.04    0.12    0.14    0.14 v fanout85/X (sg13g2_buf_1)
+   0.02    0.11    0.13    0.27 ^ u_ro_mat.u_line0.g_inv[0].u_inv._cell/Y (sg13g2_inv_1)
+   0.03    0.11    0.14    0.41 v u_ro_mat.u_line0.g_inv[1].u_inv._cell/Y (sg13g2_inv_1)
+   0.02    0.09    0.11    0.52 ^ u_ro_mat.u_line0.g_inv[2].u_inv._cell/Y (sg13g2_inv_1)
+   0.01    0.04    0.06    0.58 v u_ro_mat.u_line0.g_inv[3].u_inv._cell/Y (sg13g2_inv_1)
+   0.02    0.07    0.07    0.65 ^ u_ro_mat.u_line0.g_inv[4].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.03    0.04    0.69 v u_ro_mat.u_line0.g_inv[5].u_inv._cell/Y (sg13g2_inv_1)
+   0.01    0.04    0.04    0.73 ^ u_ro_mat.u_line0.g_inv[6].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    0.76 v u_ro_mat.u_line0.g_inv[7].u_inv._cell/Y (sg13g2_inv_1)
+   0.01    0.03    0.03    0.79 ^ u_ro_mat.u_line0.g_inv[8].u_inv._cell/Y (sg13g2_inv_1)
+   0.01    0.03    0.04    0.83 v u_ro_mat.u_line0.g_inv[9].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    0.86 ^ u_ro_mat.u_line0.g_inv[10].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    0.89 v u_ro_mat.u_line0.g_inv[11].u_inv._cell/Y (sg13g2_inv_1)
+   0.01    0.03    0.03    0.92 ^ u_ro_mat.u_line0.g_inv[12].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    0.95 v u_ro_mat.u_line0.g_inv[13].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    0.98 ^ u_ro_mat.u_line0.g_inv[14].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    1.01 v u_ro_mat.u_line0.g_inv[15].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.03    0.03    1.04 ^ u_ro_mat.u_line0.g_inv[16].u_inv._cell/Y (sg13g2_inv_1)
+   0.02    0.06    0.06    1.10 v u_ro_mat.u_line0.g_inv[17].u_inv._cell/Y (sg13g2_inv_1)
+   0.01    0.07    0.08    1.18 ^ u_ro_mat.u_line0.g_inv[18].u_inv._cell/Y (sg13g2_inv_1)
+   0.01    0.05    0.07    1.25 v u_ro_mat.u_line0.g_inv[19].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.03    0.04    1.29 ^ u_ro_mat.u_line0.g_inv[20].u_inv._cell/Y (sg13g2_inv_1)
+   0.01    0.04    0.04    1.33 v u_ro_mat.u_line0.g_inv[21].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    1.36 ^ u_ro_mat.u_line0.g_inv[22].u_inv._cell/Y (sg13g2_inv_1)
+   0.01    0.03    0.04    1.40 v u_ro_mat.u_line0.g_inv[23].u_inv._cell/Y (sg13g2_inv_1)
+   0.01    0.03    0.04    1.44 ^ u_ro_mat.u_line0.g_inv[24].u_inv._cell/Y (sg13g2_inv_1)
+   0.01    0.05    0.05    1.49 v u_ro_mat.u_line0.g_inv[25].u_inv._cell/Y (sg13g2_inv_1)
+   0.02    0.08    0.08    1.57 ^ u_ro_mat.u_line0.g_inv[26].u_inv._cell/Y (sg13g2_inv_1)
+   0.02    0.07    0.08    1.66 v u_ro_mat.u_line0.g_inv[27].u_inv._cell/Y (sg13g2_inv_1)
+   0.02    0.08    0.08    1.74 ^ u_ro_mat.u_line0.g_inv[28].u_inv._cell/Y (sg13g2_inv_1)
+   0.03    0.12    0.13    1.87 v u_ro_mat.u_line0.g_inv[29].u_inv._cell/Y (sg13g2_inv_1)
+   0.03    0.14    0.16    2.04 ^ u_ro_mat.u_line0.g_inv[30].u_inv._cell/Y (sg13g2_inv_1)
+   0.03    0.12    0.16    2.20 v u_ro_mat.u_line0.g_inv[31].u_inv._cell/Y (sg13g2_inv_1)
+   0.02    0.10    0.12    2.32 ^ u_ro_mat.u_line0.g_inv[32].u_inv._cell/Y (sg13g2_inv_1)
+   0.01    0.04    0.07    2.39 v u_ro_mat.u_line0.g_inv[33].u_inv._cell/Y (sg13g2_inv_1)
+   0.01    0.04    0.05    2.44 ^ u_ro_mat.u_line0.g_inv[34].u_inv._cell/Y (sg13g2_inv_1)
+   0.01    0.03    0.04    2.48 v u_ro_mat.u_line0.g_inv[35].u_inv._cell/Y (sg13g2_inv_1)
+   0.01    0.04    0.04    2.52 ^ u_ro_mat.u_line0.g_inv[36].u_inv._cell/Y (sg13g2_inv_1)
+   0.01    0.05    0.06    2.58 v u_ro_mat.u_line0.g_inv[37].u_inv._cell/Y (sg13g2_inv_1)
+   0.01    0.06    0.06    2.64 ^ u_ro_mat.u_line0.g_inv[38].u_inv._cell/Y (sg13g2_inv_1)
+   0.01    0.03    0.05    2.69 v u_ro_mat.u_line0.g_inv[39].u_inv._cell/Y (sg13g2_inv_1)
+   0.01    0.06    0.06    2.75 ^ u_ro_mat.u_line0.g_inv[40].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.04    2.79 v u_ro_mat.u_line0.g_inv[41].u_inv._cell/Y (sg13g2_inv_1)
+   0.01    0.03    0.04    2.82 ^ u_ro_mat.u_line0.g_inv[42].u_inv._cell/Y (sg13g2_inv_1)
+   0.01    0.05    0.05    2.88 v u_ro_mat.u_line0.g_inv[43].u_inv._cell/Y (sg13g2_inv_1)
+   0.01    0.04    0.04    2.92 ^ u_ro_mat.u_line0.g_inv[44].u_inv._cell/Y (sg13g2_inv_1)
+   0.01    0.04    0.05    2.97 v u_ro_mat.u_line0.g_inv[45].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.03    0.03    3.00 ^ u_ro_mat.u_line0.g_inv[46].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    3.03 v u_ro_mat.u_line0.g_inv[47].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    3.05 ^ u_ro_mat.u_line0.g_inv[48].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.02    3.08 v u_ro_mat.u_line0.g_inv[49].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    3.11 ^ u_ro_mat.u_line0.g_inv[50].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    3.14 v u_ro_mat.u_line0.g_inv[51].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    3.16 ^ u_ro_mat.u_line0.g_inv[52].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    3.19 v u_ro_mat.u_line0.g_inv[53].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    3.22 ^ u_ro_mat.u_line0.g_inv[54].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    3.24 v u_ro_mat.u_line0.g_inv[55].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    3.27 ^ u_ro_mat.u_line0.g_inv[56].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    3.30 v u_ro_mat.u_line0.g_inv[57].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    3.32 ^ u_ro_mat.u_line0.g_inv[58].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    3.35 v u_ro_mat.u_line0.g_inv[59].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    3.38 ^ u_ro_mat.u_line0.g_inv[60].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    3.40 v u_ro_mat.u_line0.g_inv[61].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    3.43 ^ u_ro_mat.u_line0.g_inv[62].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    3.46 v u_ro_mat.u_line0.g_inv[63].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.03    0.03    3.49 ^ u_ro_mat.u_line0.g_inv[64].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    3.52 v u_ro_mat.u_line0.g_inv[65].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.04    0.11    3.63 v u_ro_mat.u_line0.u_mux.u_m1/X (sg13g2_mux2_1)
+   0.00    0.04    0.11    3.74 v u_ro_mat.u_line0.u_mux.u_m2/X (sg13g2_mux2_1)
+   0.00    0.02    0.07    3.81 v u_ro_mat.u_f0.u_a2/X (sg13g2_and2_1)
+   0.01    0.04    0.11    3.91 v u_ro_mat.u_f0.u_o1/X (sg13g2_or2_1)
+   0.00    0.03    0.03    3.95 ^ u_ro_mat.u_line1.g_inv[0].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    3.97 v u_ro_mat.u_line1.g_inv[1].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    4.00 ^ u_ro_mat.u_line1.g_inv[2].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    4.02 v u_ro_mat.u_line1.g_inv[3].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    4.05 ^ u_ro_mat.u_line1.g_inv[4].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.02    4.07 v u_ro_mat.u_line1.g_inv[5].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    4.10 ^ u_ro_mat.u_line1.g_inv[6].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    4.13 v u_ro_mat.u_line1.g_inv[7].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    4.16 ^ u_ro_mat.u_line1.g_inv[8].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    4.19 v u_ro_mat.u_line1.g_inv[9].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    4.21 ^ u_ro_mat.u_line1.g_inv[10].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    4.24 v u_ro_mat.u_line1.g_inv[11].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    4.27 ^ u_ro_mat.u_line1.g_inv[12].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    4.30 v u_ro_mat.u_line1.g_inv[13].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    4.32 ^ u_ro_mat.u_line1.g_inv[14].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    4.35 v u_ro_mat.u_line1.g_inv[15].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    4.38 ^ u_ro_mat.u_line1.g_inv[16].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    4.40 v u_ro_mat.u_line1.g_inv[17].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    4.43 ^ u_ro_mat.u_line1.g_inv[18].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    4.46 v u_ro_mat.u_line1.g_inv[19].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    4.48 ^ u_ro_mat.u_line1.g_inv[20].u_inv._cell/Y (sg13g2_inv_1)
+   0.01    0.03    0.04    4.52 v u_ro_mat.u_line1.g_inv[21].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.03    0.03    4.56 ^ u_ro_mat.u_line1.g_inv[22].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    4.58 v u_ro_mat.u_line1.g_inv[23].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    4.61 ^ u_ro_mat.u_line1.g_inv[24].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    4.64 v u_ro_mat.u_line1.g_inv[25].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    4.66 ^ u_ro_mat.u_line1.g_inv[26].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    4.69 v u_ro_mat.u_line1.g_inv[27].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    4.71 ^ u_ro_mat.u_line1.g_inv[28].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    4.74 v u_ro_mat.u_line1.g_inv[29].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    4.77 ^ u_ro_mat.u_line1.g_inv[30].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    4.79 v u_ro_mat.u_line1.g_inv[31].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    4.82 ^ u_ro_mat.u_line1.g_inv[32].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    4.85 v u_ro_mat.u_line1.g_inv[33].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    4.87 ^ u_ro_mat.u_line1.g_inv[34].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    4.90 v u_ro_mat.u_line1.g_inv[35].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    4.93 ^ u_ro_mat.u_line1.g_inv[36].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    4.95 v u_ro_mat.u_line1.g_inv[37].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    4.98 ^ u_ro_mat.u_line1.g_inv[38].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    5.01 v u_ro_mat.u_line1.g_inv[39].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    5.03 ^ u_ro_mat.u_line1.g_inv[40].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    5.06 v u_ro_mat.u_line1.g_inv[41].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    5.09 ^ u_ro_mat.u_line1.g_inv[42].u_inv._cell/Y (sg13g2_inv_1)
+   0.01    0.03    0.04    5.13 v u_ro_mat.u_line1.g_inv[43].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    5.16 ^ u_ro_mat.u_line1.g_inv[44].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    5.19 v u_ro_mat.u_line1.g_inv[45].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    5.21 ^ u_ro_mat.u_line1.g_inv[46].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    5.24 v u_ro_mat.u_line1.g_inv[47].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    5.27 ^ u_ro_mat.u_line1.g_inv[48].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    5.29 v u_ro_mat.u_line1.g_inv[49].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    5.32 ^ u_ro_mat.u_line1.g_inv[50].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    5.34 v u_ro_mat.u_line1.g_inv[51].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    5.37 ^ u_ro_mat.u_line1.g_inv[52].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    5.40 v u_ro_mat.u_line1.g_inv[53].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    5.42 ^ u_ro_mat.u_line1.g_inv[54].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    5.45 v u_ro_mat.u_line1.g_inv[55].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    5.47 ^ u_ro_mat.u_line1.g_inv[56].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    5.50 v u_ro_mat.u_line1.g_inv[57].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    5.53 ^ u_ro_mat.u_line1.g_inv[58].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    5.55 v u_ro_mat.u_line1.g_inv[59].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    5.58 ^ u_ro_mat.u_line1.g_inv[60].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    5.60 v u_ro_mat.u_line1.g_inv[61].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    5.63 ^ u_ro_mat.u_line1.g_inv[62].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    5.66 v u_ro_mat.u_line1.g_inv[63].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    5.68 ^ u_ro_mat.u_line1.g_inv[64].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    5.71 v u_ro_mat.u_line1.g_inv[65].u_inv._cell/Y (sg13g2_inv_1)
+   0.00    0.04    0.11    5.81 v u_ro_mat.u_line1.u_mux.u_m1/X (sg13g2_mux2_1)
+   0.00    0.04    0.11    5.92 v u_ro_mat.u_line1.u_mux.u_m2/X (sg13g2_mux2_1)
+   0.00    0.02    0.07    6.00 v u_ro_mat.u_f1.u_a2/X (sg13g2_and2_1)
+   0.00    0.03    0.10    6.09 v u_ro_mat.u_f1.u_o1/X (sg13g2_or2_1)
+   0.00    0.03    0.03    6.13 ^ u_ro_mat.g_tail[0].u_t._cell/Y (sg13g2_inv_1)
+   0.01    0.03    0.04    6.16 v u_ro_mat.g_tail[1].u_t._cell/Y (sg13g2_inv_1)
+   0.01    0.04    0.04    6.21 ^ u_ro_mat.g_tail[2].u_t._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    6.24 v u_ro_mat.g_tail[3].u_t._cell/Y (sg13g2_inv_1)
+   0.00    0.02    0.03    6.27 ^ u_ro_mat.g_tail[4].u_t._cell/Y (sg13g2_inv_1)
+   0.01    0.03    0.04    6.31 v u_ro_mat.g_tail[5].u_t._cell/Y (sg13g2_inv_1)
+   0.00    0.03    0.04    6.34 ^ u_ro_mat.g_tail[6].u_t._cell/Y (sg13g2_inv_1)
+   0.01    0.04    0.05    6.39 v u_ro_mat.g_tail[7].u_t._cell/Y (sg13g2_inv_1)
+   0.01    0.03    0.04    6.43 ^ u_ro_mat.u_close._cell/Y (sg13g2_inv_1)
+           0.03    0.00    6.43 ^ u_ro_mat.u_gate.u_a2/A (sg13g2_and2_1)
+                           6.43   data arrival time
+
+                1000.00 1000.00   max_delay
+                   0.00 1000.00   output external delay
+                        1000.00   data required time
+-----------------------------------------------------------------------
+                        1000.00   data required time
+                          -6.43   data arrival time
+-----------------------------------------------------------------------
+                         993.57   slack (MET)
+
+
+RO-END
+
+===STDERR===

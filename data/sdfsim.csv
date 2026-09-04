@@ -1,0 +1,2 @@
+corner,period_ns,freq_mhz,cfg_word,segs,pattern,cansel,winsel,nframes_req,ops,err_cnt,err_rate_per_op,gen_cnt,mat_cnt,cfg_echo,stat,err_dut,sdf,run_id,git_commit,librelane_image,pdk_rev,log
+(zero-delay reference),20,50.0,0x0DFF,3333,worst,3,0,8,,,,,,,,,,33835818836,8bcffc2b30d7dbb3ed86c46f522d9b7113761d03,ghcr.io/librelane/librelane:3.0.5,c4b8b4e5e7a05f375cca3815d51b3a37721fbf5c,run_p20_w0dff_zdelay.log

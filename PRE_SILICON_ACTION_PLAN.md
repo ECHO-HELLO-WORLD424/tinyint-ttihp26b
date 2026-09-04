@@ -4,6 +4,99 @@ Audit date: 2026-09-03
 Branch: `proposal-canary`  
 Audited commit: `206715252bb569430b0d8569393f12997b2a552b`
 
+## Work-in-progress handoff (2026-09-04)
+
+> **Status log for resuming on another machine.** Written while pausing the
+> local pre-silicon tooling runs (the full-chip SDF sweep probe was consuming
+> excessive CPU locally and was aborted; see "In progress" below).
+
+### Done and pushed
+
+| Item | State | Evidence |
+| --- | --- | --- |
+| P0.1 one-shot DUT capture | **Done**, RTL + cocotb test `test_oneshot_capture_holds` (verifed to fail against the old enable) | commit `21d43c6` |
+| P2.3 RTL width warnings | **Done** (10/16-bit compares fixed; superseded by 16-bit counters in `1e31757`) | commit `21d43c6` |
+| 16-bit RO edge counters | **Done** — extracted-RO STA showed both canary counters overflow 10 bits at nominal PVT (gen ~3555, mat ~1954 counts at 1.20V/25C, win0), making the canaries indistinguishable at the calibration point; counters widened to 16 bits (readout bytes 2-5 were already reserved) | commit `1e31757` |
+| Fresh hardening runs | **Done, all green** (gds + precheck + gl_test + viewer) | run `33835818836` (8bcffc2), run `33839023290` (1e31757, final RTL) |
+| P0.2 experiment STA flow | **Done** — `tools/sta/experiment_sta.tcl` + `tools/run_experiment_sta.py`; 96 case-analyzed rows (3 corners x 8 seg-configs x 4 patterns) from `u_pat.lfsr/idx` -> `result_reg`; slow-corner worst: seg3333/worst delay 24.81 ns -> predicted knee 39.6 MHz (inside the 1-50 MHz board range); `data/experiment_sta.csv/.json` + raw reports | run `33835818836` artifacts |
+| P1.3 RO loop-delay prediction | **Done (first pass)** — `tools/ro/ro_predict.tcl` + `tools/run_ro_predict.py`; 24 rows (3 corners x 4 can_sel x 2 canaries); T_loop 0.47-10.24 ns; `data/ro_predict.csv/.json` | same artifacts |
+| P2.1 docs (frame timing, counters) | **Done** for 19-cycle frames + 16-bit counters in `docs/info.md`, RTL header, test comments; remaining doc fixes listed below | commit `1e31757` |
+| Artifact staging | **Done** — `artifacts/run-33835818836/` (final GDS/netlist/SPEF/SDF/SDC/DEF/metrics + post-PnR STA reports, 32 MB) copied from CI into the repo for local tooling and durability | this repo |
+
+### In progress (was running when paused)
+
+**P1.2 full-chip SDF-annotated timing sweep** (`tools/run_sdfsim.py`,
+`tools/sdf/tb_sdfsim.v`, `tools/sdf/make_sdf_lib.py`, `tools/sdf/filter_sdf.py`).
+
+Bring-up state:
+
+- Timing-safe cell library works: `data/sdfsim/sg13g2_stdcell_sdf.v`
+  (timing checks stripped, IOPATH specify arcs kept).
+- Zero-delay reference probe **passes** (commit-level sanity: ops=8, err=0,
+  cfg_echo=ff, gen/mat=0 with FORCE_CAN) — the TB protocol is functional.
+- Full-SDF annotation with `-ginterconnect` **crashes Icarus**
+  (`NULL handle passed to vpi_scan`); without it, unfiltered SDF spews
+  thousands of "Could not find net" errors. Mitigation implemented:
+  `tools/sdf/filter_sdf.py` reduces each corner SDF to per-cell IOPATH
+  delays (`data/sdf_path/<corner>.iopath.sdf`).
+- **Known issue before resuming:** the IOPATH-only probe was still consuming
+  runaway CPU when aborted. Suspected cause: some cell arcs have no matching
+  IOPATH in the annotation (e.g. dropped `ifnone` edge-sensitive paths on
+  flop models), leaving zero-delay paths that livelock the simulator. Before
+  the next run: (a) always wrap vvp in a wall-clock timeout, (b) check the
+  annotation log for unannotated IOPATHs, (c) consider adding
+  `-ginterconnect` + a smaller INTERCONNECT subset, or per-cell delay
+  `defparam`-style annotation as a fallback, or move to the reduced
+  extracted-path testbench variant the plan allows. Run the sweep on the
+  faster machine with `python3 tools/run_sdfsim.py --smoke` first.
+
+### Not started
+
+- P1.1 prediction model + data schema (`tools/predict_model.py` not yet
+  written; inputs `data/experiment_sta.csv` + `data/ro_predict.csv` exist).
+- RO loop-delay model refinement: current measurement excludes the two gate
+  cells at the loop break (u_a2, u_a3 ~2 gate delays); add the
+  `u_a2/A -> u_a3/Y` segment to `tools/run_ro_predict.py` and re-emit.
+- P1.2 documentation of GL-suite scope in `docs/research-proposal.md`.
+- P2.1 remaining doc fixes: research-proposal stale metrics ("2482
+  instances, ~82%" -> use `artifacts/run-*/final/metrics.json`: 2641
+  instances, 1688 stdcell + 953 fill, 79.544% utilization; slow-corner
+  violation claim -> now backed by `data/experiment_sta.csv` case analysis;
+  "16-bit edge counter" statement now true after `1e31757`).
+- P2.2 build manifest (`tools/make_manifest.py` not written) + durable
+  archive of the final submission artifact (final RTL run:
+  `33839023290`; download with `gh run download 33839023290 ...`).
+- P2.3 fanout/disconnected-pin write-up: both max-fanout violations
+  (`clkbuf_0_clk/X` fanout 16, `_1405_/Q` fanout 10, limit 8) have clean
+  max-slew/max-cap checks (0 violations) -> report-only relative to the
+  LibreLane generic limit; disconnected pin = `ena` (intentionally unused,
+  consumed in `_unused`, 0 critical). Document in research-proposal.
+- Regenerate `data/` from the FINAL artifacts (`run-33839023290`,
+  commit `1e31757`) once SDF sim is stable: experiment STA, RO prediction
+  (16-bit counters do not change the loops' delays; STA data identical in
+  structure but should be re-emitted for provenance), SDF sweep.
+- Update the "Current verified baseline" table below with the final run.
+
+### Environment notes for the new machine
+
+- All STA/RO/SDF tooling runs inside `ghcr.io/librelane/librelane:3.0.5`
+  (tool-identical to the CI gds job). Local STA drivers call it via
+  `docker run` (see `tools/common.py::docker_prefix/docker_mount_args`;
+  adjust `amazing_robinson` / mount paths for the new host).
+- The IHP PDK is fetched from the ciel store at the CI revision
+  `c4b8b4e5e7a05f375cca3815d51b3a37721fbf5c`
+  (`ciel fetch --pdk-family ihp-sg13g2 <rev>`; mounted at `/pdk`).
+- Artifacts: `artifacts/run-33835818836/` (committed) and, for the final
+  RTL commit, CI run `33839023290` (download `GDS_logs` artifact, copy
+  `final/{gds,nl,lib,spef,sdf,sdc,def,metrics.json,commit_id.json}` +
+  `54-openroad-stapostpnr` + `resolved.json` into
+  `artifacts/run-33839023290/`).
+- Cocotb RTL regression runs in the devcontainer (`cd test && make`;
+  10/10 pass at `1e31757`). No cocotb is needed for tools/.
+- `data/` currently holds results from the `8bcffc2` hardening run
+  (provenance columns inside each CSV identify the run); regenerate for
+  the final commit before freezing the prediction package.
+
 ## Executive conclusion
 
 The project is **physically tapeout-capable, but the repository does not yet contain
