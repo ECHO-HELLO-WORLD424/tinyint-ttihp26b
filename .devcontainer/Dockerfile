@@ -6,8 +6,8 @@ ENV PDK_ROOT=/home/vscode/ttsetup/pdk
 ENV PDK=ihp-sg13g2
 ARG TT_SUPPORT_TOOLS_BRANCH=main
 
-RUN apt update
-RUN apt install -y iverilog gtkwave python3 python3-pip python3-venv python3-tk python-is-python3 libcairo2 verilator libpng-dev libqhull-dev
+RUN apt-get update
+RUN apt-get install -y -o Acquire::Retries=10 iverilog gtkwave python3 python3-pip python3-venv python3-tk python-is-python3 libcairo2 verilator libpng-dev libqhull-dev
 
 # Clone tt-support-tools
 RUN mkdir -p /ttsetup
@@ -25,7 +25,8 @@ RUN /ttsetup/venv/bin/python -m pip install --upgrade pip setuptools wheel && \
 
 # Install verible (for formatting)
 RUN umask 022 && \
-    curl -L https://github.com/chipsalliance/verible/releases/download/v0.0-4023-gc1271a00/verible-v0.0-4023-gc1271a00-linux-static-x86_64.tar.gz | \
+    curl -L --retry 10 --retry-delay 5 --retry-all-errors --continue-at - \
+    https://github.com/chipsalliance/verible/releases/download/v0.0-4023-gc1271a00/verible-v0.0-4023-gc1271a00-linux-static-x86_64.tar.gz | \
     tar zxf - -C /usr/local --strip-components=1 && \
     chmod 755 /usr/local/bin
 

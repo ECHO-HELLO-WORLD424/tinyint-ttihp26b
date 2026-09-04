@@ -1,0 +1,26 @@
+{
+  "DESIGN_NAME": "tt_um_echoworld424_tpv",
+  "VERILOG_FILES": [
+    "dir::tt_um_echoworld424_tpv.v",
+    "dir::tpv_cells.v",
+    "dir::tpv_delay_line.v",
+    "dir::tpv_rca16.v",
+    "dir::tpv_checker.v",
+    "dir::tpv_pattern_gen.v",
+    "dir::tpv_ro_canary.v"
+  ],
+  "DIE_AREA": "0 0 202.08 154.98",
+  "FP_DEF_TEMPLATE": "dir::../tt/tech/ihp-sg13g2/def/tt_block_1x1_pgvdd.def",
+  "VDD_PIN": "VPWR",
+  "GND_PIN": "VGND",
+  "RT_MAX_LAYER": "TopMetal1",
+  "MAX_FANOUT_CONSTRAINTS": 400,
+  "PL_TARGET_DENSITY_PCT": 82,
+  "PNR_SDC_FILE": "dir::pnr.sdc",
+  "SIGNOFF_SDC_FILE": "dir::pnr.sdc",
+  "RUN_POST_CTS_RESIZER_TIMING": false,
+  "HOLD_VIOLATION_CORNERS": [
+    "*typ*",
+    "*slow*"
+  ]
+}

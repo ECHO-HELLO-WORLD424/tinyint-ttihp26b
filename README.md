@@ -3,6 +3,22 @@
 # Tiny Tapeout Verilog Project Template
 
 - [Read the documentation for project](docs/info.md)
+- [Research proposal](docs/research-proposal.md)
+
+## Project: Timing-Prediction Test Vehicle
+
+A self-checking arithmetic timing-failure experiment for the IHP SG13G2 open PDK:
+
+- **DUT** — a 16-bit ripple-carry adder whose segment carries pass through
+  programmable inverter-pair delay banks, giving selectable critical-path lengths
+  around the 50 MHz test ceiling, with operand-dependent worst-case carry propagation.
+- **Oracle** — a bit-serial reference adder makes the chip fully self-checking.
+- **Canaries** — a generic inverter RO and a structure-matched RO, each with a
+  windowed edge counter, provide continuous delay telemetry for comparing
+  pre-silicon timing predictions (STA) against post-silicon first-failure boundaries.
+
+See [docs/info.md](docs/info.md) for the datasheet and operating protocol, and
+[docs/research-proposal.md](docs/research-proposal.md) for the underlying study.
 
 ## What is Tiny Tapeout?
 
