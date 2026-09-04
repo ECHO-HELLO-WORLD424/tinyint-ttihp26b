@@ -43,7 +43,7 @@ Both positive and negative results are publishable (technical report / workshop 
      delay-bank + full-adder composition as a DUT segment, margin tuned by config.
    Each drives a 16-bit edge counter over a configurable measurement window
    (2^8..2^14 clk cycles), giving continuous delay telemetry, not just a binary flag.
-4. **Measurement block**: frame-based operation (1 timed op per 18 cycles, operands
+4. **Measurement block**: frame-based operation (1 timed op per 19-cycle frame, operands
    registered per frame), 16-bit DUT error counter, 16-bit op counter, first-error
    operand/result capture, serial byte readout with auto-incrementing pointer,
    global freeze input for quiescent readout, and FORCE_ERR/FORCE_CAN DFT bits so the
@@ -56,11 +56,28 @@ frequency up then down, run a known op count, freeze, read counters. Record erro
 vs. frequency (`err_cnt/ops`), RO counts, first-error signatures. Define failure by
 error-rate thresholds (first error, 1e-6, 1e-4, 1e-2 per op), not a single point.
 Pattern classes: PRBS, worst-case carry, carry-free alternating, static hold — the
-operand-dependence of the first-failure boundary is a primary measurement.
+operand-dependence of the first-failure boundary is a primary measurement. The
+frozen operating procedure (instruments, sweep steps, op counts per error-rate
+threshold, uncertainty budget, raw-data format) is `docs/post-silicon-protocol.md`.
 
 Pre-silicon hierarchy: RTL sim -> post-synth STA -> post-route extracted STA across
 corners -> SDF gate-level sim with sensitizing vectors -> SPICE on selected paths ->
 fitted canary-vs-DUT calibration model.
+
+### Pre-silicon prediction package
+
+The prediction protocol is frozen pre-silicon in `docs/prediction-model.md`
+(model `tpv-predict-1.0.1`): predictor definitions (per-corner case-analyzed
+STA knee; nominal-STA-ladder x canary-count-ratio maps for the generic and
+matched RO), one-point calibration equations, and the post-silicon evaluation
+metrics (boundary error, missed-failure probability, false-warning rate,
+guardband cost). Field units, RTL mirrors, and frame/counter conventions are
+in `docs/data-dictionary.md`. The generated package lives in `data/predict/`
+(`predictions.csv/.json`, `summary.md`, plots): per-corner knee ladders, both
+canary count predictors at the predeclared readout (can_sel 3, win0), the
+STA-vs-SDF boundary cross-check for seg3333/worst, and placeholder one-point
+calibration rows (`cal_k = 1.0`) into which the post-silicon run substitutes
+measured values only.
 
 ## Key risks and countermeasures
 
@@ -95,24 +112,51 @@ quantified proxy-prediction accuracy and one-point calibration benefit.
 The RTL is implemented and verified, and the 1x1 tile has been hardened with the
 IHP SG13G2 LibreLane flow (matching the Tiny Tapeout GDS CI):
 
-- Cocotb RTL suite: 9/9 tests pass (config/echo, functional zero-error across all
+- Cocotb RTL suite: 10/10 tests pass (config/echo, functional zero-error across all
   pattern classes and delay configurations, forced-error accounting with exact
-  counter values and first-error capture, canary window counts, freeze semantics,
-  mid-run reconfiguration, frame pacing).
-- Gate-level suite: 8/9 pass, 1 skipped by design (the RO loops are stripped from
-  zero-delay GL simulation; their counters are asserted at zero instead). The GL
-  run caught two real pre-tapeout bugs: a synthesis-unsafe config-shadow register
-  (async data load mis-mapped by Yosys, which would have left the chip
+  counter values and first-error capture, one-shot capture semantics, canary window
+  counts, freeze semantics, mid-run reconfiguration, frame pacing).
+- Gate-level suite (zero-delay functional; specify blocks stripped, RO loop cells
+  removed, no SDF): 8/10 pass, 2 skipped by design — the RO counters are stripped
+  with the loops (their zero counts are asserted instead), and the one-shot capture
+  monitor reads hierarchical RTL state that the flattened netlist does not expose.
+  This suite validates synthesized configuration, control, counters, and readout
+  only; it is NOT evidence of post-layout failure frequency or RO behavior.
+  Timing evidence comes from a separate SDF-annotated full-chip suite
+  (`tools/run_sdfsim.py`, IOPATH-annotated, boundary sweep in `data/sdfsim.csv`)
+  and case-analyzed extracted STA (`data/experiment_sta.csv`).
+  The GL run caught two real pre-tapeout bugs: a synthesis-unsafe config-shadow
+  register (async data load mis-mapped by Yosys, which would have left the chip
   unconfigurable) and a config commit race when rst_n release coincides with a
   clock edge.
-- Hardening results: 2482 instances, ~82% placement utilization, zero routing DRC
-  errors, zero antenna violations, LVS clean. Hold slack positive at all corners
-  (+0.13/+0.22/+0.39 ns fast/typ/slow). Setup slack +8.8/+3.7 ns fast/typ; the
-  -5.5 ns setup violation at the slow corner is the deliberately slow DUT carry
-  path (the measured experiment boundary, by design). The fast-corner hold check
-  is scoped to typ/slow corners in `src/pnr.sdc` (the flow's zero-tolerance
-  checker includes 250 ps of clock-uncertainty padding); raw hold slack at the
-  fast corner is positive and the corner is unreachable on the demo board.
+- Hardening (final run [33839023290](https://github.com/ECHO-HELLO-WORLD424/tinyint-ttihp26b/actions/runs/33839023290),
+  commit `1e31757`, artifacts staged in `artifacts/run-33839023290/` with manifest):
+  2610 instances (1747 standard cells + 863 fillers), 82.9% final design
+  utilization, zero routing DRC / Magic DRC / antenna / LVS / power-grid
+  violations. Hold slack positive at all corners (+0.14/+0.23/+0.39 ns
+  fast/typ/slow). Setup slack +8.57/+3.32 ns fast/typ.
+- The global slow-corner setup violation (-6.07 ns worst, 5 paths, TNS -10.38 ns)
+  starts at the static configuration register (`cfg[8]`), which does not change
+  during measurement — it is a conservative signoff artifact, not the experiment
+  boundary, and it is left unhidden in the tapeout constraints. The experiment
+  boundary is established by a separate case-analyzed, runtime-sensitizable STA
+  flow (`tools/run_experiment_sta.py`): paths from the pattern-generator registers
+  (`u_pat.lfsr`/`idx`) to the one-shot `result_reg` capture, case-analyzed over
+  all 8 segment configurations and 4 patterns at 3 corners (96-row table,
+  `data/experiment_sta.csv`). Predicted first-failure knees span 39.3-112 MHz at
+  the slow corner (seg3333/worst = 39.3 MHz), placing the measured boundary
+  inside the 1-50 MHz board range for the longest configurations. The SDF sweep
+  brackets the STA knee for seg3333/worst (fails at 22 ns, passes at 24 ns slow;
+  fails 14 ns, passes 16 ns typ; STA conservative by +1.3/+2.4 ns, consistent
+  with IOPATH-only annotation).
+- Physical-only checker findings, report-only relative to the LibreLane generic
+  limits: one max-fanout violation (`clkbuf_0_clk/X` fanout 16 vs limit 8) with
+  clean max-slew (0) and max-cap (0) checks; four unannotated parasitic drivers
+  (`ena` — intentionally unused and consumed in `_unused`, plus the three
+  `clkload*` clock-load inverters).
 - Canary loops are preserved through synthesis by pre-mapping them to library
   cells (plain dont_touch/keep attributes were insufficient: ABC merged inverter
   pairs into buffers and cut the loops).
+- Post-silicon measurement protocol (instruments, sweep procedure, uncertainty
+  budget, raw-data format) is frozen in `docs/post-silicon-protocol.md`,
+  written before silicon data exists.
