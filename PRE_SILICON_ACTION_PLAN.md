@@ -18,8 +18,8 @@ Audited commit: `206715252bb569430b0d8569393f12997b2a552b`
 | P2.3 RTL width warnings | **Done** (10/16-bit compares fixed; superseded by 16-bit counters in `1e31757`) | commit `21d43c6` |
 | 16-bit RO edge counters | **Done** — extracted-RO STA showed both canary counters overflow 10 bits at nominal PVT (gen ~3555, mat ~1954 counts at 1.20V/25C, win0), making the canaries indistinguishable at the calibration point; counters widened to 16 bits (readout bytes 2-5 were already reserved) | commit `1e31757` |
 | Fresh hardening runs | **Done, all green** (gds + precheck + gl_test + viewer) | run `33835818836` (8bcffc2), run `33839023290` (1e31757, final RTL) |
-| P0.2 experiment STA flow | **Done** — `tools/sta/experiment_sta.tcl` + `tools/run_experiment_sta.py`; 96 case-analyzed rows (3 corners x 8 seg-configs x 4 patterns) from `u_pat.lfsr/idx` -> `result_reg`; slow-corner worst: seg3333/worst delay 24.81 ns -> predicted knee 39.6 MHz (inside the 1-50 MHz board range); `data/experiment_sta.csv/.json` + raw reports | run `33835818836` artifacts |
-| P1.3 RO loop-delay prediction | **Done (first pass)** — `tools/ro/ro_predict.tcl` + `tools/run_ro_predict.py`; 24 rows (3 corners x 4 can_sel x 2 canaries); T_loop 0.47-10.24 ns; `data/ro_predict.csv/.json` | same artifacts |
+| P0.2 experiment STA flow | **Done** — `tools/sta/experiment_sta.tcl` + `tools/run_experiment_sta.py`; 96 case-analyzed rows (3 corners x 8 seg-configs x 4 patterns) from `u_pat.lfsr/idx` -> `result_reg`; slow-corner worst: seg3333/worst delay 24.96 ns -> predicted knee 39.3 MHz (inside the 1-50 MHz board range); `data/experiment_sta.csv/.json` + raw reports | run `33839023290` artifacts (regenerated from the earlier `33835818836` pass) |
+| P1.3 RO loop-delay prediction | **Done** — `tools/ro/ro_predict.tcl` + `tools/run_ro_predict.py`; 24 rows (3 corners x 4 can_sel x 2 canaries); full loop = line + gate segment (u_a2/u_a3 loop-closure cells included); T_loop 0.55-3.10 ns (gen) / 1.00-10.64 ns (mat); every can_sel+corner usable at win0/win1; `data/ro_predict.csv/.json` + per-corner `ro_cases/ro_report` raw provenance | run `33839023290` artifacts |
 | P2.1 docs (frame timing, counters) | **Done** for 19-cycle frames + 16-bit counters in `docs/info.md`, RTL header, test comments; remaining doc fixes listed below | commit `1e31757` |
 | Artifact staging | **Done** — `artifacts/run-33835818836/` (final GDS/netlist/SPEF/SDF/SDC/DEF/metrics + post-PnR STA reports, 32 MB) copied from CI into the repo for local tooling and durability | this repo |
 
@@ -283,23 +283,26 @@ Current audited artifact hashes:
 
 ## Current verified baseline
 
+Final hardening run `33839023290` (commit `1e31757`, all CI jobs green), unless noted:
+
 | Item | Audited result | Interpretation |
 | --- | --- | --- |
-| RTL cocotb | 9/9 pass locally | Functional regression healthy, but does not expose recapture bug |
-| Gate-level functional | 8 pass, 1 intentionally skipped | Synthesized digital control/readout healthy; no SDF/RO timing evidence |
+| RTL cocotb | 10/10 pass locally at `1e31757` | Functional regression healthy, incl. one-shot capture semantics |
+| Gate-level functional (zero-delay) | 8 pass, 2 intentionally skipped (run `33839023290` gl_test) | Synthesized digital control/readout healthy; RO loops stripped, oneshot monitor is RTL-only; no SDF timing evidence |
+| SDF-annotated sweep | seg3333/worst: slow fails 22 ns / passes 24 ns; typ fails 14 ns / passes 16 ns | First-failure boundary measured in timing sim; brackets STA knees with documented IOPATH-only optimism |
 | Precheck | 10/10 pass | Tiny Tapeout packaging checks healthy |
 | DRC / Magic DRC | 0 / 0 | Clean |
 | LVS | 0 errors | Clean |
 | Antenna | 0 violations | Clean |
 | Power grid | 0 violations | Clean |
-| Post-route hold slack | fast +0.134 ns; typ +0.223 ns; slow +0.384 ns | Positive at all reported corners |
-| Post-route setup slack | fast +8.720 ns; typ +3.556 ns; slow -5.645 ns | Slow violation exists, but current startpoint is static config |
-| Slow-corner TNS | -8.040 ns, five paths | Requires runtime case-analysis before research interpretation |
-| Final design utilization | 79.544% | Fits 1x1 tile |
-| Standard cells | 1688 plus 953 fill cells | Use these definitions when reporting area |
+| Post-route hold slack | fast +0.135 ns; typ +0.226 ns; slow +0.389 ns | Positive at all reported corners |
+| Post-route setup slack | fast +8.571 ns; typ +3.319 ns; slow -6.074 ns (TNS -10.380, 5 paths) | Slow violation exists, but global worst path starts at static config; experiment boundary from case-analyzed STA |
+| Experiment STA knee (seg3333/worst) | slow 39.3 MHz; typ 61.5 MHz; fast 89.5 MHz | Runtime-sensitizable boundary inside/near the 1-50 MHz board range |
+| Max fanout / slew / cap | 1 report-only fanout violation (clkbuf_0_clk/X 16 vs generic limit 8); 0 slew; 0 cap | Report-only; no timing impact found |
+| Final design utilization | 82.9% (2610 instances: 1747 stdcell + 863 fill) | Fits 1x1 tile |
 
-Current GDS workflow:
-<https://github.com/ECHO-HELLO-WORLD424/tinyint-ttihp26b/actions/runs/33827632705>
+Final GDS workflow:
+<https://github.com/ECHO-HELLO-WORLD424/tinyint-ttihp26b/actions/runs/33839023290>
 
 ## Research risks and concrete countermeasures
 
@@ -351,34 +354,83 @@ The pre-silicon phase is complete when all of the following are true:
       green; artifacts downloadable, not yet staged locally.)
 - [x] Experiment-specific, case-analyzed STA identifies runtime-sensitizable paths.
       (`data/experiment_sta.csv`, 96 rows: 3 corners x 8 seg configs x 4 patterns;
-      worst runtime path `u_pat.lfsr/idx -> result_reg`, slow-corner knee 39.6 MHz
-      at seg3333/worst, 61.8 MHz typ, 89.9 MHz fast; HOLD has no runtime path.
-      Generated from run `33835818836` artifacts; regenerate on `1e31757` for the
-      record — the operand→capture path structure is unchanged by the counter fix.)
+      worst runtime path `u_pat.lfsr/idx -> result_reg`, slow-corner knee 39.3 MHz
+      at seg3333/worst, 61.5 MHz typ, 89.5 MHz fast; HOLD has no runtime path.
+      Regenerated against the final-RTL run `33839023290` artifacts.)
 - [x] Selected configurations place predicted timing knees inside the accessible clock
       range with margin for model error.
-      (Slow-corner knee ladder 39.6/57.7/58.3/68.8/76.2/76.2/109.9/50.1 MHz spans the
-      1–50 MHz board range; `seg2222` lands at the 50 MHz ceiling.)
-- [ ] Sensitizing sequences are confirmed in SDF simulation or reduced extracted timing
-      simulation. **IN PROGRESS — see handoff below (paused on this machine).**
+      (Slow-corner knee ladder 112.0/69.3/50.3/39.3/76.6/77.0/57.9/58.3 MHz in
+      `SEG_CONFIGS` order spans the 1–50 MHz board range; `seg2222` lands at the
+      50 MHz ceiling.)
+- [x] Sensitizing sequences are confirmed in SDF simulation or reduced extracted timing
+      simulation. (Full-chip SDF-annotated sweep, `data/sdfsim.csv`: seg3333/worst
+      slow corner fails at 22 ns (49/200 err) and passes at 24 ns; typ fails at
+      14 ns, passes at 16 ns — bracketing the STA knees (25.42/16.27 ns) with the
+      documented IOPATH-only optimism; zero-delay reference error-free. Escaped
+      instance-name binding fixed via `tools/sdf/rename_netlist.py` +
+      `tools/sdf/sdfnames.py`; RO cross-check row diagnosed as invalid
+      (`docs/ro-sdf-crosscheck-diagnosis.md`) and its counts blanked.)
 - [x] Extracted RO simulations produce usable count ranges for both canaries.
-      (Broken-loop extracted STA, `data/ro_predict.csv` (24 rows); drove the 16-bit
-      counter fix `1e31757`. Transient SPICE extraction remains an optional refinement;
-      no SPICE engine in the pinned tool image. Two gate delays of the loop (u_a2/u_a3)
-      are not yet included in the measured loop delay — add the a2/A→a3/Y segment and
-      sum before the final table.)
-- [ ] Prediction scripts, tables, plots, data schema, and calibration procedure are
-      committed and reproducible. (STA + RO tables and flows committed; prediction
-      model, plots, data schema and one-point calibration procedure still to write.)
-- [ ] The post-silicon sweep protocol, instrument requirements, uncertainty, and raw-data
-      format are written before seeing silicon results.
-- [ ] Documentation uses consistent 19-cycle frame timing and final build metrics.
-      (RTL header + info.md updated; research-proposal.md still carries the stale
-      2482-instance/82% utilization text and the unqualified slow-corner violation
-      claim.)
-- [ ] The exact final submission artifact and manifest are archived outside temporary CI
-      storage. (`artifacts/run-33835818836` is staged in-repo; the `1e31757` run and a
-      manifest file are pending.)
+      (Broken-loop extracted STA, `data/ro_predict.csv` (24 rows, run `33839023290`);
+      drove the 16-bit counter fix `1e31757`. The measured loop is closed through the
+      two gate cells: T_loop = line segment (nand_out -> line -> tail -> u_close ->
+      u_a2/A) + gate segment (u_a2/A -> u_a2/X -> u_a3/X), each physical arc counted
+      exactly once. Transient SPICE extraction remains an optional refinement; no
+      SPICE engine in the pinned tool image.)
+- [x] Prediction scripts, tables, plots, data schema, and calibration procedure are
+      committed and reproducible. (`tools/predict_model.py` + `data/predict/`
+      (288-row predictions.csv/json, summary.md, plots, STA-vs-SDF cross-check,
+      placeholder cal_k=1.0 rows); `docs/data-dictionary.md` (all CSV fields +
+      conventions); `docs/prediction-model.md` (frozen protocol
+      `tpv-predict-1.0.1`: predictor definitions, one-point calibration with
+      predeclared anchor fallback A' + censoring contingency, scored thresholds
+      first-error/1e-6/1e-4/1e-2, evaluation metrics).)
+- [x] The post-silicon sweep protocol, instrument requirements, uncertainty, and raw-data
+      format are written before seeing silicon results. (`docs/post-silicon-protocol.md`:
+      predeclared measurement matrix, knee-anchored frequency sweep, per-threshold op
+      counts with frame arithmetic, repeat policy, uncertainty budget, immutable raw-CSV
+      schema, pre-silicon freeze checklist.)
+- [x] Documentation uses consistent 19-cycle frame timing and final build metrics.
+      (info.md byte map corrected (byte 8 = seg-tap echo, byte 9 flags, wrap-not-
+      saturate canary counters); research-proposal.md updated to final-run metrics
+      2610 instances / 82.9% utilization, runtime-sensitizable STA boundary vs
+      global static-config signoff violation distinguished, zero-delay GL scope +
+      SDF suite stated, report-only fanout/unannotated findings documented.)
+- [x] The exact final submission artifact and manifest are archived outside temporary CI
+      storage. (`artifacts/run-33839023290/` staged in-repo: GDS/netlist/SPEF/SDF/
+      SDC/DEF/metrics + post-PnR STA + `manifest.json`/`MANIFEST.md` generated by
+      `tools/make_manifest.py` — 90 files hashed; headline hashes: GDS
+      74b47cc7…, netlist 771567b6…, nominal SPEF b472b58a….)
+
+## Session log and handoff — 2026-09-05 (pre-silicon package completed)
+
+All P0/P1/P2 items are now closed; the "Definition of pre-silicon complete"
+checklist above is fully checked. Summary of this session's work (all
+uncommitted until the final commit):
+
+1. Environment recreated on the new machine (LibreLane image pulled, PDK
+   fetched at the pinned ciel revision); final-run artifacts
+   (`33839023290`) downloaded and staged into `artifacts/run-33839023290/`.
+2. P1.2 SDF sweep unblocked and completed: escaped-identifier renaming
+   (`tools/sdf/sdfnames.py`, `tools/sdf/rename_netlist.py`, filter_sdf
+   INSTANCE renaming) fixes the Icarus "Cannot find u_dut" SDF binding
+   error; boundary sweep + zero-delay reference in `data/sdfsim.csv` with
+   vvp wall-clock timeout and annotation-warning surfacing.
+3. SDF RO cross-check diagnosed as structurally invalid (zero-annotated RO
+   cells from disabled timing arcs) — `docs/ro-sdf-crosscheck-diagnosis.md`;
+   counts blanked in `data/sdfsim.csv` with an explicit `ro_note` column.
+4. STA + RO datasets regenerated against the final run; RO loop model now
+   includes the u_a2/u_a3 gate segment; raw provenance files restored.
+5. P1.1 prediction package written (`tools/predict_model.py`,
+   `data/predict/`, `docs/data-dictionary.md`, `docs/prediction-model.md`
+   v1.0.1) and idempotent.
+6. P2.1/P2.3 doc fixes landed (info.md byte map, research-proposal final-run
+   metrics/scope/fanout); P2.2 manifest tool + archive
+   (`tools/make_manifest.py`, `artifacts/run-33839023290/manifest.json`).
+7. P2.1 post-silicon protocol frozen pre-silicon
+   (`docs/post-silicon-protocol.md`); found-and-fixed doc/RTL mismatches
+   (canary counters wrap mod 65536 — no RTL saturation flag; byte 8 is the
+   seg-tap echo, not a full config echo).
 
 ## Session log and handoff — 2026-09-04 (paused: move to a faster machine)
 
@@ -454,8 +506,28 @@ RO cross-check counts should land within a few percent of `data/ro_predict.csv`
    research-proposal doc fixes, build manifest (`tools/make_manifest.py` does
    not exist yet), and the final submission-artifact archive.
 
-Provenance pinned for all datasets produced so far: CI run `33835818836`
-(commit `8bcffc2b30d7dbb3ed86c46f522d9b7113761d03`), LibreLane image
+### 2026-09-04 follow-up: regeneration against the final artifacts + RO cross-check diagnosis
+
+- `data/experiment_sta.*` and `data/ro_predict.*` were regenerated against the
+  final-RTL run `33839023290` artifacts (resume-checklist items 2-3 complete).
+  The RO model now closes the loop through the gate cells (line + gate segment
+  sum; see the P1.3 checklist entry). `tools/run_ro_predict.py` writes the
+  per-corner raw provenance as `data/ro_cases_<corner>.tcl` (one case script,
+  segment pins chosen from `ES_RO_MODE` at sta runtime) and
+  `data/ro_report_<corner>.txt` (both raw segment reports, mode-marked).
+- The SDF-sim RO cross-check row (`gen_cnt=6`, `mat_cnt=0` vs predicted
+  825/240) is diagnosed: the RO loop cells are SDF-annotated with hard zero
+  IOPATH delays (OpenROAD writes zeros for the `set_disable_timing`-excluded
+  RO trees in `src/pnr.sdc`), so the loops "oscillate" at ~0.4 ns period and
+  the (correctly annotated) counters race. Confirmed by a patched-SDF rerun:
+  setting the 217 `u_ro_*` CELL blocks' zero triples to 0.1 ns gives
+  `gen_cnt=448`/`mat_cnt=168`, exactly matching the probed loop-node edges.
+  Evidence and fix scope: `docs/ro-sdf-crosscheck-diagnosis.md`.
+
+Provenance pinned for all datasets produced so far: CI runs `33835818836`
+(commit `8bcffc2b30d7dbb3ed86c46f522d9b7113761d03`, superseded STA/RO pass) and
+`33839023290` (commit `1e31757e50080b19fa7642b8b9cd6822f64b1d11`, final RTL;
+source of the current `data/*.csv` datasets), LibreLane image
 `ghcr.io/librelane/librelane:3.0.5` (openroad 2026-02-17, OpenSTA 2.7.0,
 iverilog s20250103), PDK ciel revision
 `c4b8b4e5e7a05f375cca3815d51b3a37721fbf5c`. Every CSV carries these columns.

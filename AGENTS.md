@@ -115,13 +115,20 @@ therefore do not yet meet this standard.
 
 ## Current blocking work
 
-As of audited commit `206715252bb569430b0d8569393f12997b2a552b`, the project has two
-research-blocking issues:
+Both research-blocking issues from the original audit (commit
+`206715252bb569430b0d8569393f12997b2a552b`) are resolved: `result_reg` is a
+one-shot capture gated by `chk_start` (commit `21d43c6`, regression-tested),
+and the experiment-specific STA flow case-analyzes static configuration and
+reports runtime-sensitizable `u_pat.lfsr/idx -> result_reg` paths
+(`data/experiment_sta.csv`, run `33839023290`). The full pre-silicon
+prediction package (SDF boundary sweep, RO loop model, prediction model and
+calibration protocol, post-silicon protocol, final-build manifest) is
+complete — see `PRE_SILICON_ACTION_PLAN.md` for the audited state and the
+definition-of-complete checklist.
 
-1. `result_reg` is enabled by `update_en` on every clock. It must become a one-shot DUT
-   capture, likely using `chk_start`, and hold until comparison.
-2. A separate experiment-specific STA analysis must case-analyze static configuration
-   and report runtime-sensitizable operand/pattern-state-to-result paths.
+The remaining pre-silicon work is package maintenance only: re-run the STA/RO/
+SDF/prediction tooling after any RTL or constraint change, and keep
+`artifacts/run-*/manifest.json` regenerated for the final submitted build.
 
 The prioritized fixes, required prediction artifacts, accepted baseline, risks, and
 definition of pre-silicon completion are in `PRE_SILICON_ACTION_PLAN.md`. Update that
