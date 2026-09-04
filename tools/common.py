@@ -17,24 +17,38 @@ REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DATA = os.path.join(REPO, "data")
 ARTIFACTS = os.path.join(REPO, "artifacts")
 
-# The audited fresh hardening run (commit 8bcffc2..., CI run 33835818836).
-RUN_DIR = os.path.join(ARTIFACTS, "run-33835818836")
-RUN_ID = "33835818836"
-GIT_COMMIT = "8bcffc2b30d7dbb3ed86c46f522d9b7113761d03"
+# The final hardening run (commit 1e31757..., CI run 33839023290).
+RUN_DIR = os.path.join(ARTIFACTS, "run-33839023290")
+RUN_ID = "33839023290"
+GIT_COMMIT = "1e31757e50080b19fa7642b8b9cd6822f64b1d11"
 
 LL_IMAGE = "ghcr.io/librelane/librelane:3.0.5"  # tool-identical to CI gds job
 CIEL_PDK_REV = "c4b8b4e5e7a05f375cca3815d51b3a37721fbf5c"
 
 # The devcontainer's docker (docker-in-docker) daemon is reached directly
-# from inside the container; from the macOS host we go through docker exec.
+# from inside the container; from the host we go through docker exec into
+# the devcontainer (auto-discovered by its image name, which starts with
+# "vsc-<repo>-").
 _DOCKER_ENV = None
+
+
+def _devcontainer_name():
+    import subprocess
+    out = subprocess.run(
+        ["docker", "ps", "--format", "{{.Names}} {{.Image}}"],
+        capture_output=True, text=True).stdout
+    for line in out.splitlines():
+        name, image = (line.split(None, 1) + [""])[:2]
+        if image.startswith("vsc-tinyint-ttihp26b-"):
+            return name
+    return None
 
 
 def docker_prefix():
     global _DOCKER_ENV
     if _DOCKER_ENV is None:
-        _DOCKER_ENV = [] if os.path.exists("/.dockerenv") else \
-            ["docker", "exec", "amazing_robinson"]
+        dc = None if os.path.exists("/.dockerenv") else _devcontainer_name()
+        _DOCKER_ENV = ["docker", "exec", dc] if dc else []
     return _DOCKER_ENV
 
 
@@ -212,7 +226,7 @@ RPT_ARRIVAL = re.compile(r"^\s+([\d.]+)\s+data arrival time", re.M)
 RPT_REQUIRED = re.compile(r"^\s+([\d.]+)\s+data required time", re.M)
 RPT_SLACK = re.compile(r"^\s+([-\d.]+)\s+slack \((MET|VIOLATED)\)", re.M)
 RPT_CELLROW = re.compile(
-    r"^\s+[\d.]+\s+[\d.]+\s+[\d.]+\s+([\d.]+)\s+([\d.]+)\s+(\S)\s+(\S+)\s+\((\S+)\)",
+    r"^\s+(?:[\d.]+\s+){2,4}([\d.]+)\s+([\d.]+)\s+(\S)\s+(\S+)\s+\((\S+)\)",
     re.M,
 )
 FLOAT_RE = re.compile(r"[-\d.]+")

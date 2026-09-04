@@ -1,0 +1,568 @@
+{
+  "schema": {
+    "name": "tpv-final-build-manifest",
+    "version": 1,
+    "generated_at": "2026-09-04T16:47:22Z",
+    "notes": "Final submission build identity for PRE_SILICON_ACTION_PLAN item P2.2; hashes cover the staged run-33839023290 artifacts only."
+  },
+  "git": {
+    "git_commit": "7d5b5764d0a822f52fb472b7c71182aabe5160cf",
+    "branch": "proposal-canary",
+    "git_dirty": true,
+    "staged_run_commit": "1e31757e50080b19fa7642b8b9cd6822f64b1d11"
+  },
+  "ci": {
+    "run_id": "33839023290",
+    "run_url": "https://github.com/ECHO-HELLO-WORLD424/tinyint-ttihp26b/actions/runs/33839023290",
+    "workflow": "gds.yaml",
+    "ci_runner": "GitHub Actions, TinyTapeout/tt-gds-action@ttihp26b (ihp-sg13g2 PDK)",
+    "commit_id_json": {
+      "app": "Tiny Tapeout main 01d5d281",
+      "repo": "https://github.com/ECHO-HELLO-WORLD424/tinyint-ttihp26b",
+      "commit": "1e31757e50080b19fa7642b8b9cd6822f64b1d11",
+      "workflow_url": "https://github.com/ECHO-HELLO-WORLD424/tinyint-ttihp26b/actions/runs/33839023290"
+    },
+    "tool_image": "ghcr.io/librelane/librelane:3.0.5",
+    "librelane_version": "3.0.5",
+    "sta_step": "54-openroad-stapostpnr",
+    "sta_step_runtime": "00:00:02.273",
+    "pdk": "ihp-sg13g2",
+    "pdk_ciel_rev": "c4b8b4e5e7a05f375cca3815d51b3a37721fbf5c",
+    "pdk_ciel_rev_source": "resolved.json PDK_ROOT (== tools/common.py)"
+  },
+  "config": {
+    "PDK": "ihp-sg13g2",
+    "DESIGN_NAME": "tt_um_echoworld424_tpv",
+    "CLOCK_PERIOD": 20,
+    "CLOCK_PORT": "clk",
+    "VDD_PIN": "VPWR",
+    "GND_PIN": "VGND",
+    "DIE_AREA": [
+      0,
+      0,
+      202.08,
+      154.98
+    ],
+    "FP_SIZING": "absolute",
+    "FP_CORE_UTIL": 50,
+    "PL_TARGET_DENSITY_PCT": 82,
+    "PL_TIMING_DRIVEN": false,
+    "PL_ROUTABILITY_DRIVEN": true,
+    "GRT_ADJUSTMENT": 0.3,
+    "GRT_LAYER_ADJUSTMENTS": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "GRT_RESIZER_SETUP_SLACK_MARGIN": 0.025,
+    "GRT_RESIZER_HOLD_SLACK_MARGIN": 0.05,
+    "SYNTH_STRATEGY": "AREA 0",
+    "SYNTH_HIERARCHY_MODE": "flatten",
+    "SYNTH_ADDER_TYPE": "YOSYS",
+    "SYNTH_SIZING": false,
+    "SYNTH_DRIVING_CELL": "sg13g2_buf_4/X",
+    "SYNTH_TIE_UNDEFINED": "low",
+    "SYNTH_PARAMETERS": null,
+    "USE_SLANG": false,
+    "RT_MIN_LAYER": "Metal2",
+    "RT_MAX_LAYER": "TopMetal1",
+    "MAX_FANOUT_CONSTRAINT": 10,
+    "MAX_TRANSITION_CONSTRAINT": null,
+    "MAX_CAPACITANCE_CONSTRAINT": null,
+    "CLOCK_UNCERTAINTY_CONSTRAINT": 0.25,
+    "CLOCK_TRANSITION_CONSTRAINT": 0.15,
+    "TIME_DERATING_CONSTRAINT": 5,
+    "IO_DELAY_CONSTRAINT": 20,
+    "DRT_OPT_ITERS": 64,
+    "GRT_OVERFLOW_ITERS": 50,
+    "RUN_TAP_ENDCAP_INSERTION": true,
+    "STA_CORNERS": [
+      "nom_fast_1p32V_m40C",
+      "nom_slow_1p08V_125C",
+      "nom_typ_1p20V_25C"
+    ],
+    "DEFAULT_CORNER": "nom_typ_1p20V_25C",
+    "HOLD_VIOLATION_CORNERS": [
+      "*typ*",
+      "*slow*"
+    ],
+    "SIGNOFF_SDC_FILE": "/home/runner/work/tinyint-ttihp26b/tinyint-ttihp26b/src/pnr.sdc",
+    "VERILOG_FILES": [
+      "tt_um_echoworld424_tpv.v",
+      "tpv_cells.v",
+      "tpv_delay_line.v",
+      "tpv_rca16.v",
+      "tpv_checker.v",
+      "tpv_pattern_gen.v",
+      "tpv_ro_canary.v"
+    ],
+    "SDC_FILE": "src/pnr.sdc",
+    "librelane_meta": {
+      "version": 1,
+      "flow": null,
+      "substituting_steps": null,
+      "step": null,
+      "librelane_version": "3.0.5"
+    }
+  },
+  "signoff": {
+    "corners": {
+      "nom_fast_1p32V_m40C": {
+        "setup_worst_slack_ns": 8.570908669831764,
+        "setup_worst_slack_r2r_ns": 8.570909,
+        "setup_tns_ns": 0,
+        "setup_violations": 0,
+        "hold_worst_slack_ns": 0.13531007253198246,
+        "hold_worst_slack_r2r_ns": 0.13531,
+        "hold_tns_ns": 0,
+        "hold_violations": 0,
+        "max_slew_violations": 0,
+        "max_fanout_violations": 1,
+        "max_cap_violations": 0
+      },
+      "nom_typ_1p20V_25C": {
+        "setup_worst_slack_ns": 3.3189718579549536,
+        "setup_worst_slack_r2r_ns": 3.318972,
+        "setup_tns_ns": 0,
+        "setup_violations": 0,
+        "hold_worst_slack_ns": 0.22604244116289648,
+        "hold_worst_slack_r2r_ns": 0.226042,
+        "hold_tns_ns": 0,
+        "hold_violations": 0,
+        "max_slew_violations": 0,
+        "max_fanout_violations": 1,
+        "max_cap_violations": 0
+      },
+      "nom_slow_1p08V_125C": {
+        "setup_worst_slack_ns": -6.0741848825589395,
+        "setup_worst_slack_r2r_ns": -6.074185,
+        "setup_tns_ns": -10.380189446241834,
+        "setup_violations": 5,
+        "hold_worst_slack_ns": 0.3892545840277316,
+        "hold_worst_slack_r2r_ns": 0.389255,
+        "hold_tns_ns": 0,
+        "hold_violations": 0,
+        "max_slew_violations": 0,
+        "max_fanout_violations": 1,
+        "max_cap_violations": 0
+      }
+    },
+    "instances": {
+      "total": 2610,
+      "stdcell": 1747,
+      "fill": 863,
+      "total_area_um2": 28941.5,
+      "stdcell_area_um2": 23980.9
+    },
+    "utilization": {
+      "design": 0.8286,
+      "stdcell": 0.8286
+    },
+    "drc_lvs_antenna": {
+      "magic_drc_errors": 0,
+      "magic_illegal_overlaps": 0,
+      "route_drc_errors": 0,
+      "lvs_errors": 0,
+      "lvs_device_differences": 0,
+      "lvs_net_differences": 0,
+      "lvs_property_fails": 0,
+      "antenna_violating_nets": 0,
+      "antenna_violating_pins": 0,
+      "route_antenna_violations": 0,
+      "power_grid_violations": 0,
+      "note": "all checks clean per staged metrics.json; the DRC/LVS/antenna report files themselves are recorded-in-CI-only at https://github.com/ECHO-HELLO-WORLD424/tinyint-ttihp26b/actions/runs/33839023290",
+      "source": "artifacts/run-33839023290/metrics.json (staged subset)"
+    },
+    "lint": {
+      "errors": 0,
+      "warnings": 106,
+      "inferred_latches": 0
+    },
+    "power_total_w": 0.0012554380809888244
+  },
+  "files": {
+    "54-openroad-stapostpnr/COMMANDS": {
+      "size": 3609,
+      "sha256": "8feb3a35cc5d87a2ea6796a2b5b946abc320b43f781db7fe04f62ec3ba3679c4"
+    },
+    "54-openroad-stapostpnr/config.json": {
+      "size": 8536,
+      "sha256": "c020e30a0bb2c05a863e3c7d02ab672498a965197a7988f244c73cba4d003c5b"
+    },
+    "54-openroad-stapostpnr/nom_fast_1p32V_m40C/_env_ThreadPoolExecutor-4_0.tcl": {
+      "size": 6990,
+      "sha256": "1a3cf5bc7e7515c7ebc36fefe2503d812ef933124a8046da6a279dcc391d2b34"
+    },
+    "54-openroad-stapostpnr/nom_fast_1p32V_m40C/checks.rpt": {
+      "size": 151970,
+      "sha256": "866bf251bf6e4715daab3f9c1b99f6bf38addf12d0ae5395ca0b513653eede0c"
+    },
+    "54-openroad-stapostpnr/nom_fast_1p32V_m40C/clock.rpt": {
+      "size": 1248,
+      "sha256": "327d51622d7e1a119f93c843ba9907f9795c6fbe236e852b5d25a17865c57896"
+    },
+    "54-openroad-stapostpnr/nom_fast_1p32V_m40C/filter_unannotated.log": {
+      "size": 447,
+      "sha256": "09c1413b97311d908829a01f430ad7483d24d425e22d85555090fc9d0ac41d2f"
+    },
+    "54-openroad-stapostpnr/nom_fast_1p32V_m40C/filter_unannotated.process_stats.json": {
+      "size": 502,
+      "sha256": "ba65ac513b8ce6cf8c0f95097a9895ba9be4e0134423d8f07964a6bb12d77e58"
+    },
+    "54-openroad-stapostpnr/nom_fast_1p32V_m40C/filter_unannotated_metrics.json": {
+      "size": 271,
+      "sha256": "70c5283ba235f86499245176334935a9ded02f5161dc74e094320e183dcb0c87"
+    },
+    "54-openroad-stapostpnr/nom_fast_1p32V_m40C/max.rpt": {
+      "size": 2203597,
+      "sha256": "61e1e47c5867128f8bf5865a2a0b43bb7aab63b98f20403649f384cebe958f75"
+    },
+    "54-openroad-stapostpnr/nom_fast_1p32V_m40C/min.rpt": {
+      "size": 1279700,
+      "sha256": "0a2ec27132a77019caa41228bbff66c0c34a01c6b1c96efe197c66085a6d5886"
+    },
+    "54-openroad-stapostpnr/nom_fast_1p32V_m40C/power.rpt": {
+      "size": 1097,
+      "sha256": "f3d96e3b01edb06327a02bccd772f1ff909a99e1cee3c4e3317daee39c6f455d"
+    },
+    "54-openroad-stapostpnr/nom_fast_1p32V_m40C/skew.max.rpt": {
+      "size": 423,
+      "sha256": "755912d55d1e7e0a9c8b5841e0b9f1f21188972550c25a772af1558a805686b2"
+    },
+    "54-openroad-stapostpnr/nom_fast_1p32V_m40C/skew.min.rpt": {
+      "size": 423,
+      "sha256": "079eecd280331795856c3bf247e4baab0f61a377e1ba06ed653d50e85c60b921"
+    },
+    "54-openroad-stapostpnr/nom_fast_1p32V_m40C/sta.log": {
+      "size": 3643481,
+      "sha256": "626af86cfebdf5589fe97ee7b439abc2fcb9b7fb37988206aec318f27779f6af"
+    },
+    "54-openroad-stapostpnr/nom_fast_1p32V_m40C/sta.process_stats.json": {
+      "size": 500,
+      "sha256": "ccd6f7c8375ea51b6493c0079045c5cbfd7e4ad67b62e9bd4e86f73f9b4df3a3"
+    },
+    "54-openroad-stapostpnr/nom_fast_1p32V_m40C/tns.max.rpt": {
+      "size": 208,
+      "sha256": "37bdc0909494acda2c807ba42abf7b15de60738b88c250577dc3a47bf696ffe2"
+    },
+    "54-openroad-stapostpnr/nom_fast_1p32V_m40C/tns.min.rpt": {
+      "size": 207,
+      "sha256": "e5656e1f43125ef6ff54e853735a1c06c0ba8f6dee85e92b13b9e6334096ece4"
+    },
+    "54-openroad-stapostpnr/nom_fast_1p32V_m40C/tt_um_echoworld424_tpv__nom_fast_1p32V_m40C.lib": {
+      "size": 35308,
+      "sha256": "f7e9ac4067f5d2dfc5837010a5743c17e821ea2fdd9dd1c2e6373beca4481178"
+    },
+    "54-openroad-stapostpnr/nom_fast_1p32V_m40C/tt_um_echoworld424_tpv__nom_fast_1p32V_m40C.sdf": {
+      "size": 922205,
+      "sha256": "0babe1329469a491f5a424f1c1c0e21fcaca7a6d0a434f12fa8dab7f167cfa79"
+    },
+    "54-openroad-stapostpnr/nom_fast_1p32V_m40C/unpropagated.rpt": {
+      "size": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "54-openroad-stapostpnr/nom_fast_1p32V_m40C/violator_list.rpt": {
+      "size": 168,
+      "sha256": "ad509148993d884e4fbf3729f30640d97ff8d99713fef0ad5813096f1f83b9d7"
+    },
+    "54-openroad-stapostpnr/nom_fast_1p32V_m40C/wns.max.rpt": {
+      "size": 208,
+      "sha256": "37e951be5261239870df97551a4786abe41efeac6719ad6f99e91d0591d4df69"
+    },
+    "54-openroad-stapostpnr/nom_fast_1p32V_m40C/wns.min.rpt": {
+      "size": 205,
+      "sha256": "3440103d68e23237bfbcd6f33796011b014f6986efd9b38891a5b2da82f78bd6"
+    },
+    "54-openroad-stapostpnr/nom_fast_1p32V_m40C/ws.max.rpt": {
+      "size": 213,
+      "sha256": "e00428d646d853cc108142a9c4b3712d14ae8d6e033b5f71f9c059c248ed2d47"
+    },
+    "54-openroad-stapostpnr/nom_fast_1p32V_m40C/ws.min.rpt": {
+      "size": 214,
+      "sha256": "e2c06974890623fc4ac777d260f9cd4b2087d6fa282d1659c11cdc44b5fde2a4"
+    },
+    "54-openroad-stapostpnr/nom_slow_1p08V_125C/_env_ThreadPoolExecutor-4_1.tcl": {
+      "size": 6990,
+      "sha256": "1a3cf5bc7e7515c7ebc36fefe2503d812ef933124a8046da6a279dcc391d2b34"
+    },
+    "54-openroad-stapostpnr/nom_slow_1p08V_125C/checks.rpt": {
+      "size": 297267,
+      "sha256": "897f8021af6f3c3de91afc2e8e039d6bdd95a4b33f49c46ecbd1bdf565d30292"
+    },
+    "54-openroad-stapostpnr/nom_slow_1p08V_125C/clock.rpt": {
+      "size": 1248,
+      "sha256": "07b3a5539c5ba3a2771ab8ecc715b04e5dfe73ac74c8f32d28d773b8f8adfad1"
+    },
+    "54-openroad-stapostpnr/nom_slow_1p08V_125C/filter_unannotated.log": {
+      "size": 447,
+      "sha256": "09c1413b97311d908829a01f430ad7483d24d425e22d85555090fc9d0ac41d2f"
+    },
+    "54-openroad-stapostpnr/nom_slow_1p08V_125C/filter_unannotated.process_stats.json": {
+      "size": 503,
+      "sha256": "fa7d0be3f3136143cdc0c14640916e3b9cf86a1419a9ca048010adea79e380f6"
+    },
+    "54-openroad-stapostpnr/nom_slow_1p08V_125C/filter_unannotated_metrics.json": {
+      "size": 271,
+      "sha256": "0673957ce624600f0841f48361d7a2ab3befe59490b49be17e19a7064673e5fb"
+    },
+    "54-openroad-stapostpnr/nom_slow_1p08V_125C/max.rpt": {
+      "size": 2357565,
+      "sha256": "cd548ac4f14931ed12650e1e076c8fa574093e9e14f5d6e225c22f66f3fb643c"
+    },
+    "54-openroad-stapostpnr/nom_slow_1p08V_125C/min.rpt": {
+      "size": 1279702,
+      "sha256": "64c4b1500e658574587f16c5162b5f24a7fa41500a45088cf52d70a32827af22"
+    },
+    "54-openroad-stapostpnr/nom_slow_1p08V_125C/power.rpt": {
+      "size": 1097,
+      "sha256": "384a13d0cacb9ab6f5880c99be951522d6554fd9af6dead0387fd66edcb744b9"
+    },
+    "54-openroad-stapostpnr/nom_slow_1p08V_125C/skew.max.rpt": {
+      "size": 423,
+      "sha256": "892865bced49e848c6e529ef704a3e86b3a35e9091239da4e3460cb24723356d"
+    },
+    "54-openroad-stapostpnr/nom_slow_1p08V_125C/skew.min.rpt": {
+      "size": 423,
+      "sha256": "5c3f421b9ca3aedbfaba0e2882a18ca3cf2f8466fb114bdaaf2b3b29500498e1"
+    },
+    "54-openroad-stapostpnr/nom_slow_1p08V_125C/sta.log": {
+      "size": 3943061,
+      "sha256": "08a57765eb89b7802a56499aede06c20a093d1672791ae3708cc608d9767481a"
+    },
+    "54-openroad-stapostpnr/nom_slow_1p08V_125C/sta.process_stats.json": {
+      "size": 500,
+      "sha256": "82eea53a7801d3365c0b3390f2486e252b3eefdc8158b9d6bf060ee77a82d245"
+    },
+    "54-openroad-stapostpnr/nom_slow_1p08V_125C/tns.max.rpt": {
+      "size": 224,
+      "sha256": "68c76f62af632e045655395a140cde069eb82c9ac3865f0481193f812fd83bf8"
+    },
+    "54-openroad-stapostpnr/nom_slow_1p08V_125C/tns.min.rpt": {
+      "size": 207,
+      "sha256": "69f1377a158760b68030e7daa27495bdfd21cac95ddb63942d3bb7baa085118d"
+    },
+    "54-openroad-stapostpnr/nom_slow_1p08V_125C/tt_um_echoworld424_tpv__nom_slow_1p08V_125C.lib": {
+      "size": 35293,
+      "sha256": "51e0facae6e5d02d0f3d609eef5e1d2688402e90a058041f1ba2d4e72defda6c"
+    },
+    "54-openroad-stapostpnr/nom_slow_1p08V_125C/tt_um_echoworld424_tpv__nom_slow_1p08V_125C.sdf": {
+      "size": 922156,
+      "sha256": "d985aa357250e4568a66acce534044418475ad9c331a7d403e84731ad5760240"
+    },
+    "54-openroad-stapostpnr/nom_slow_1p08V_125C/unpropagated.rpt": {
+      "size": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "54-openroad-stapostpnr/nom_slow_1p08V_125C/violator_list.rpt": {
+      "size": 413,
+      "sha256": "32d391bb059ad3f7c24c8b0bd4ef413b0548c3de9b244e9bf23931173be16e8e"
+    },
+    "54-openroad-stapostpnr/nom_slow_1p08V_125C/wns.max.rpt": {
+      "size": 224,
+      "sha256": "2af8e18d57b137d4c6c146f92ea0f852ebd9f6fce74be28edd6b5e67974ab8e1"
+    },
+    "54-openroad-stapostpnr/nom_slow_1p08V_125C/wns.min.rpt": {
+      "size": 205,
+      "sha256": "7fc691e74801f4e2e8d44f71368230d31da5c20de6fd4218dfe92b84f875a993"
+    },
+    "54-openroad-stapostpnr/nom_slow_1p08V_125C/ws.max.rpt": {
+      "size": 215,
+      "sha256": "7b4cb897d1f650a0f5bec4bc1882d45406ca7c6d4dd222b8fe889f009ffc025d"
+    },
+    "54-openroad-stapostpnr/nom_slow_1p08V_125C/ws.min.rpt": {
+      "size": 213,
+      "sha256": "c656f0ec2a2ef5bd3f6e6a34bfeb56a5498d4ca34fcda0c96f5e347e92c2a8ad"
+    },
+    "54-openroad-stapostpnr/nom_typ_1p20V_25C/_env_ThreadPoolExecutor-4_2.tcl": {
+      "size": 6990,
+      "sha256": "1a3cf5bc7e7515c7ebc36fefe2503d812ef933124a8046da6a279dcc391d2b34"
+    },
+    "54-openroad-stapostpnr/nom_typ_1p20V_25C/checks.rpt": {
+      "size": 151964,
+      "sha256": "9315b22fdaf419135d111e338e3cdc45d87281059f8eeb11dd4c456b42151da3"
+    },
+    "54-openroad-stapostpnr/nom_typ_1p20V_25C/clock.rpt": {
+      "size": 1248,
+      "sha256": "53bd9a26d415b346ba528ab375071d24ee34f32f872aa7d7d8daafb47ae395ed"
+    },
+    "54-openroad-stapostpnr/nom_typ_1p20V_25C/filter_unannotated.log": {
+      "size": 447,
+      "sha256": "09c1413b97311d908829a01f430ad7483d24d425e22d85555090fc9d0ac41d2f"
+    },
+    "54-openroad-stapostpnr/nom_typ_1p20V_25C/filter_unannotated.process_stats.json": {
+      "size": 503,
+      "sha256": "f2c690452601510e2b8209ba4ea53b77de69aaa4b07eff75a1a9fc0b687fb1e9"
+    },
+    "54-openroad-stapostpnr/nom_typ_1p20V_25C/filter_unannotated_metrics.json": {
+      "size": 267,
+      "sha256": "8740d8d07584bb29694dd523247a8be9ec42c5faf53956a0d8115c3d77bcccf8"
+    },
+    "54-openroad-stapostpnr/nom_typ_1p20V_25C/max.rpt": {
+      "size": 2357538,
+      "sha256": "d45995620c9824a3d5a176a9fdbbbaa1a2e629b1206a7bcbab4d87168b4b4377"
+    },
+    "54-openroad-stapostpnr/nom_typ_1p20V_25C/min.rpt": {
+      "size": 1279697,
+      "sha256": "ea52c4d5bae16ee95213be493bae087ddc8a7cf54088415dae6f7b3d5510acc7"
+    },
+    "54-openroad-stapostpnr/nom_typ_1p20V_25C/power.rpt": {
+      "size": 1095,
+      "sha256": "f88cff0dc04eeccb82470c4765b30b02907dcd5bd0fffe87ddcfd4fdda7bea6e"
+    },
+    "54-openroad-stapostpnr/nom_typ_1p20V_25C/skew.max.rpt": {
+      "size": 421,
+      "sha256": "0c725d693c27a44c46cfb1cdf9935a566e27f2effb6b048fb701cfd34aac95d4"
+    },
+    "54-openroad-stapostpnr/nom_typ_1p20V_25C/skew.min.rpt": {
+      "size": 421,
+      "sha256": "c219be4028b9fd693911d768412207ba4b4ef12fa46256413976a932cf89336a"
+    },
+    "54-openroad-stapostpnr/nom_typ_1p20V_25C/sta.log": {
+      "size": 3797343,
+      "sha256": "ff0aefc30894abd08d6680f5bb9c3729e861c27607acf7877d463b99d0d432b3"
+    },
+    "54-openroad-stapostpnr/nom_typ_1p20V_25C/sta.process_stats.json": {
+      "size": 499,
+      "sha256": "0eebed60b98233dfe0e4b01372459495fc1071577e70ad4528201881e1641317"
+    },
+    "54-openroad-stapostpnr/nom_typ_1p20V_25C/tns.max.rpt": {
+      "size": 206,
+      "sha256": "32a2dba6973bb9efb8782220996c2a6fe9d1804ae57aeff4854474c4e0acc032"
+    },
+    "54-openroad-stapostpnr/nom_typ_1p20V_25C/tns.min.rpt": {
+      "size": 205,
+      "sha256": "5589e786bd8336380434f23b9d1bd04a0db8275692c7416278782fa5b4d9fe51"
+    },
+    "54-openroad-stapostpnr/nom_typ_1p20V_25C/tt_um_echoworld424_tpv__nom_typ_1p20V_25C.lib": {
+      "size": 35302,
+      "sha256": "afb991b8949af75cf26c01dc453b47f46fa02c509fb1a2c81bb93aa6acfb9178"
+    },
+    "54-openroad-stapostpnr/nom_typ_1p20V_25C/tt_um_echoworld424_tpv__nom_typ_1p20V_25C.sdf": {
+      "size": 922203,
+      "sha256": "9844cbbd1f2ed7da742e3f28e6b815e8ceb5c4ccb0572bc0a2504a3d7d3cbf83"
+    },
+    "54-openroad-stapostpnr/nom_typ_1p20V_25C/unpropagated.rpt": {
+      "size": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "54-openroad-stapostpnr/nom_typ_1p20V_25C/violator_list.rpt": {
+      "size": 168,
+      "sha256": "ad509148993d884e4fbf3729f30640d97ff8d99713fef0ad5813096f1f83b9d7"
+    },
+    "54-openroad-stapostpnr/nom_typ_1p20V_25C/wns.max.rpt": {
+      "size": 206,
+      "sha256": "91904e5490ecf3b353ddc3d11aef8f788438717768fd06c68c20f6e439899090"
+    },
+    "54-openroad-stapostpnr/nom_typ_1p20V_25C/wns.min.rpt": {
+      "size": 203,
+      "sha256": "22f976f87e5735f4c3f6eed9daf443e69514a656c82ba88cfdda80894b0e3d3f"
+    },
+    "54-openroad-stapostpnr/nom_typ_1p20V_25C/ws.max.rpt": {
+      "size": 212,
+      "sha256": "b2f3557504de61dac482b4069432130f18ed173dab45110d0e433556a7c7da5d"
+    },
+    "54-openroad-stapostpnr/nom_typ_1p20V_25C/ws.min.rpt": {
+      "size": 212,
+      "sha256": "c62b7f8633a423822f0236a54fea3d6d604a9b794c16454bbf2e59bf7bdb0194"
+    },
+    "54-openroad-stapostpnr/runtime.txt": {
+      "size": 12,
+      "sha256": "03b691437af305b505c6117280006d57e530e9a050ca7c907f03622e7da91f65"
+    },
+    "54-openroad-stapostpnr/state_in.json": {
+      "size": 10043,
+      "sha256": "b408085d56c23ed776421b261cd3b37f010a2b3cb7fc43e93a16758b11caa6cf"
+    },
+    "54-openroad-stapostpnr/state_out.json": {
+      "size": 11376,
+      "sha256": "56762cdb6e1359ba9bacc7a0a874c2161d8e2cac7ff7a2cb6818ca1c107de893"
+    },
+    "54-openroad-stapostpnr/summary.rpt": {
+      "size": 2770,
+      "sha256": "46132c3396db487fe154ba3f77d0b78ad2a2178ed6f165b8690ec95a9642e0b7"
+    },
+    "commit_id.json": {
+      "size": 269,
+      "sha256": "84317997a2beedf063582709b9ab2066e324528ca7c2aa735ba51c7300e30e54"
+    },
+    "def/tt_um_echoworld424_tpv.def": {
+      "size": 1458866,
+      "sha256": "49180f9495587df7850119ba10c80af26768430a118b5406a298eabd12ae7867"
+    },
+    "gds/tt_um_echoworld424_tpv.gds": {
+      "size": 2331080,
+      "sha256": "74b47cc721163b918da79a57efab4792155b3bffe9e3c85c9e726fbf9f9982f9"
+    },
+    "lib/nom_fast_1p32V_m40C/tt_um_echoworld424_tpv__nom_fast_1p32V_m40C.lib": {
+      "size": 35308,
+      "sha256": "f7e9ac4067f5d2dfc5837010a5743c17e821ea2fdd9dd1c2e6373beca4481178"
+    },
+    "lib/nom_slow_1p08V_125C/tt_um_echoworld424_tpv__nom_slow_1p08V_125C.lib": {
+      "size": 35293,
+      "sha256": "51e0facae6e5d02d0f3d609eef5e1d2688402e90a058041f1ba2d4e72defda6c"
+    },
+    "lib/nom_typ_1p20V_25C/tt_um_echoworld424_tpv__nom_typ_1p20V_25C.lib": {
+      "size": 35302,
+      "sha256": "afb991b8949af75cf26c01dc453b47f46fa02c509fb1a2c81bb93aa6acfb9178"
+    },
+    "metrics.csv": {
+      "size": 8687,
+      "sha256": "f42f784f94708267b61f49fb61b9e40980ac1997311b42f262f90aefa592c4a4"
+    },
+    "metrics.json": {
+      "size": 9807,
+      "sha256": "1a26c8da73e3f3f2a4e5a0c0acae921195c7d8f69ea7c98254fe7ed69a44137b"
+    },
+    "nl/tt_um_echoworld424_tpv.nl.v": {
+      "size": 260009,
+      "sha256": "771567b69ed1a68f092aeb3adb4d472b80102a7ec450460f2d88673464d7f28b"
+    },
+    "resolved.json": {
+      "size": 22189,
+      "sha256": "a4b2398205f921d3bd64fee9949dd881425e1622b7d764c546eeb2d43100a38f"
+    },
+    "sdc/tt_um_echoworld424_tpv.sdc": {
+      "size": 23667,
+      "sha256": "1a25f66029fe5c4608f7271ed9cee84d73454e01bb51c7c8b3b81510da4779f1"
+    },
+    "sdf/nom_fast_1p32V_m40C/tt_um_echoworld424_tpv__nom_fast_1p32V_m40C.sdf": {
+      "size": 922205,
+      "sha256": "0babe1329469a491f5a424f1c1c0e21fcaca7a6d0a434f12fa8dab7f167cfa79"
+    },
+    "sdf/nom_slow_1p08V_125C/tt_um_echoworld424_tpv__nom_slow_1p08V_125C.sdf": {
+      "size": 922156,
+      "sha256": "d985aa357250e4568a66acce534044418475ad9c331a7d403e84731ad5760240"
+    },
+    "sdf/nom_typ_1p20V_25C/tt_um_echoworld424_tpv__nom_typ_1p20V_25C.sdf": {
+      "size": 922203,
+      "sha256": "9844cbbd1f2ed7da742e3f28e6b815e8ceb5c4ccb0572bc0a2504a3d7d3cbf83"
+    },
+    "spef/nom/tt_um_echoworld424_tpv.nom.spef": {
+      "size": 1249495,
+      "sha256": "b472b58af73cef716c90716b9a3fd4f1ceed0546d8162cb985752387bcd68263"
+    }
+  },
+  "reproduce": [
+    "# RTL regression (devcontainer; /ttsetup/venv active):",
+    "cd test && make clean && make   # inspect test/results.xml",
+    "# Functional gate-level test with the staged final netlist:",
+    "cp artifacts/run-33839023290/nl/tt_um_echoworld424_tpv.nl.v test/gate_level_netlist.v",
+    "cd test && make clean && make GATES=yes",
+    "# Hardening (canonical path): push to proposal-canary; GitHub Actions runs",
+    "# TinyTapeout/tt-gds-action@ttihp26b with the ihp-sg13g2 PDK (gds +",
+    "# precheck + GL tests + viewer). Redownload the archived artifact with:",
+    "gh run download 33839023290 --repo ECHO-HELLO-WORLD424/tinyint-ttihp26b --name GDS --dir /tmp/gds-33839023290",
+    "# Experiment-specific case-analyzed STA (extracted, SPEF):",
+    "python3 tools/run_experiment_sta.py",
+    "# RO canary loop-delay prediction (broken-loop STA, SPEF):",
+    "python3 tools/run_ro_predict.py",
+    "# SDF back-annotated sweep (host-side docker wrapper):",
+    "python3 tools/run_sdfsim.py",
+    "# Rebuild this manifest:",
+    "python3 tools/make_manifest.py"
+  ]
+}
