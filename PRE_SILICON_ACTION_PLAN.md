@@ -1,5 +1,21 @@
 # Pre-Silicon Readiness Audit and Action Plan
 
+## 2026-09-06 feasibility qualification — reachable laboratory boundary
+
+The archived build/prediction package below is complete as an artifact package,
+but **observable timing failure at reachable laboratory PVT is not established**.
+The slow-library point combines slow process, 1.08 V and 125 °C; heating a typical
+die does not reproduce it. Nominal seg3333/worst STA predicts 61.463 MHz, above
+the planned 50 MHz ceiling. The protocol plans ambient/about 85 °C, not a
+mandatory 125 °C test. Final active utilization is 82.86%; reaching 60% in the
+same core requires about 27.59% less active-cell area.
+
+See [area/temperature feasibility audit](docs/area-temperature-feasibility-audit.md)
+and `data/feasibility_audit.json` for evidence, alternatives and new acceptance
+gates. Half-cycle capture plus control/storage area optimization is a proposed
+candidate, not implemented or validated. Historical completion statements below
+do not supersede this qualification. The archived build remains unchanged.
+
 Audit date: 2026-09-03  
 Branch: `proposal-canary`  
 Audited commit: `206715252bb569430b0d8569393f12997b2a552b`
@@ -357,9 +373,11 @@ The pre-silicon phase is complete when all of the following are true:
       worst runtime path `u_pat.lfsr/idx -> result_reg`, slow-corner knee 39.3 MHz
       at seg3333/worst, 61.5 MHz typ, 89.5 MHz fast; HOLD has no runtime path.
       Regenerated against the final-RTL run `33839023290` artifacts.)
-- [x] Selected configurations place predicted timing knees inside the accessible clock
+- [ ] Selected configurations place predicted timing knees inside the accessible clock
       range with margin for model error.
-      (Slow-corner knee ladder 112.0/69.3/50.3/39.3/76.6/77.0/57.9/58.3 MHz in
+      (Reopened 2026-09-06: the slow corner is not established as reachable on
+      the delivered die/board, and nominal knees exceed the clock ceiling.
+      Slow-corner knee ladder 112.0/69.3/50.3/39.3/76.6/77.0/57.9/58.3 MHz in
       `SEG_CONFIGS` order spans the 1–50 MHz board range; `seg2222` lands at the
       50 MHz ceiling.)
 - [x] Sensitizing sequences are confirmed in SDF simulation or reduced extracted timing
@@ -542,4 +560,3 @@ iverilog s20250103), PDK ciel revision
 5. Simulate both RO canaries and build the pre-silicon prediction/calibration model.
 6. Freeze the research protocol and data schema.
 7. Update proposal/status documentation and archive the final build manifest.
-

@@ -1,0 +1,67 @@
+{
+  "active_area_um2": 23980.9,
+  "area_targets": [
+    {
+      "required_active_area_reduction_pct": 15.52,
+      "required_saving_um2": 3721.85,
+      "target_pct": 70
+    },
+    {
+      "required_active_area_reduction_pct": 21.554,
+      "required_saving_um2": 5168.925,
+      "target_pct": 65
+    },
+    {
+      "required_active_area_reduction_pct": 27.589,
+      "required_saving_um2": 6616.0,
+      "target_pct": 60
+    }
+  ],
+  "build_commit": "1e31757e50080b19fa7642b8b9cd6822f64b1d11",
+  "core_area_um2": 28941.5,
+  "estimate_caveat": "Half-cycle values assume unchanged delays and exactly 50% duty; not new STA or simulation; falling-edge setup, CTS and duty distortion omitted.",
+  "liberty_total_area_um2_including_fill": 28939.3776,
+  "pdk_revision": "c4b8b4e5e7a05f375cca3815d51b3a37721fbf5c",
+  "preserved_blocks": {
+    "u_dut.": {
+      "area_um2": 3207.8592,
+      "instances": 476,
+      "scope": "preserved named instances only; flattened counters/control excluded"
+    },
+    "u_ro_gen.": {
+      "area_um2": 364.6944,
+      "instances": 58,
+      "scope": "preserved named instances only; flattened counters/control excluded"
+    },
+    "u_ro_mat.": {
+      "area_um2": 1050.5376,
+      "instances": 167,
+      "scope": "preserved named instances only; flattened counters/control excluded"
+    }
+  },
+  "reported_utilization_pct": 82.86,
+  "run_id": "33839023290",
+  "seg3333_worst_knees": [
+    {
+      "corner": "nom_fast_1p32V_m40C",
+      "existing_full_cycle_sta_mhz": 89.526,
+      "hypothetical_half_cycle_estimate_mhz": 44.763
+    },
+    {
+      "corner": "nom_typ_1p20V_25C",
+      "existing_full_cycle_sta_mhz": 61.463,
+      "hypothetical_half_cycle_estimate_mhz": 30.7315
+    },
+    {
+      "corner": "nom_slow_1p08V_125C",
+      "existing_full_cycle_sta_mhz": 39.339,
+      "hypothetical_half_cycle_estimate_mhz": 19.6695
+    }
+  ],
+  "sha256": {
+    "/home/vscode/ttsetup/pdk/ciel/ihp-sg13g2/versions/c4b8b4e5e7a05f375cca3815d51b3a37721fbf5c/ihp-sg13g2/libs.ref/sg13g2_stdcell/lib/sg13g2_stdcell_typ_1p20V_25C.lib": "968b0cfdcefc49a88d9a5c48874769eaad9aba3509e1240b5e14a821bb07a3c4",
+    "artifacts/run-33839023290/metrics.json": "1a26c8da73e3f3f2a4e5a0c0acae921195c7d8f69ea7c98254fe7ed69a44137b",
+    "artifacts/run-33839023290/nl/tt_um_echoworld424_tpv.nl.v": "771567b69ed1a68f092aeb3adb4d472b80102a7ec450460f2d88673464d7f28b",
+    "data/experiment_sta.csv": "f8188db25c6a921d9a78a43d1f46e2f833d63306434041f96efc03b9852f76e1"
+  }
+}

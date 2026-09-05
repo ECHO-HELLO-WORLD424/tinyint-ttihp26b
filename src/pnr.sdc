@@ -5,7 +5,9 @@ current_design tt_um_echoworld424_tpv
 ###############################################################################
 # Timing Constraints
 ###############################################################################
-create_clock -name clk -period 20.0000 [get_ports {clk}]
+# Nominal 50% duty; DUT capture uses the falling edge (10 ns aperture).
+# No multicycle/false-path exception hides intentional DUT setup failures.
+create_clock -name clk -period 20.0000 -waveform {0.0000 10.0000} [get_ports {clk}]
 set_clock_transition 0.1500 [get_clocks {clk}]
 set_clock_uncertainty -setup 0.2500 clk
 set_clock_uncertainty -hold 0.0500 clk

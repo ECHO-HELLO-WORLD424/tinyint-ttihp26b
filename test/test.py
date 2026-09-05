@@ -5,7 +5,7 @@
 #
 # Coverage:
 #   - reset/config latch, uio direction switching, config echo
-#   - functional correctness of DUT + bit-serial oracle across all pattern
+#   - functional correctness of DUT + independent oracle across all pattern
 #     classes and several delay-bank configurations (zero errors required)
 #   - exact error accounting via FORCE_ERR (counter values, first-error
 #     capture, op counter) including known expected operands (PRBS + WORST)
@@ -231,51 +231,83 @@ async def test_canary_window_counts(dut):
 
 @cocotb.test(skip=GL)
 async def test_oneshot_capture_holds(dut):
-    """P0.1 acceptance: result_reg is a one-shot DUT timing capture.
+    """A rising-edge launch has exactly one immediately following falling capture.
 
-    Monitors every clock edge over six frames and asserts:
-      - result_reg changes ONLY on edges whose preceding cycle had chk_start
-        high (the single capture strobe per 19-cycle frame, right after the
-        operand load) -- a timing-failed first sample can never be overwritten;
-      - each captured value equals the DUT combinational result present at
-        the capture edge XOR the FORCE_ERR mask (first sample, not a later
-        repaired sample);
-      - the captured value then holds until the next capture edge, i.e.
-        through the frame-boundary comparison.
-
-    RTL-only: relies on hierarchical access to internal state.
+    Also freeze inside the aperture: the accepted launch must finish capture,
+    then hold through arbitrarily many frozen clocks and resume without repair.
     """
     up = dut.user_project
-    word = cfg_word(seg=(3, 3, 3, 3), pat=1, cansel=0, winsel=0, force_err=1)
-    await configure(dut, word)
-
-    n_changes = 0
+    await configure(dut, cfg_word(seg=(3, 3, 3, 3), pat=1, force_can=1, force_err=1))
+    captures = 0
     for _ in range(6 * FRAME):
-        dut.clk.value = 0
-        await Timer(CLK_HALF, "ns")
-        cs = int(up.chk_start.value)      # capture strobe (mid-cycle level)
         pre = int(up.result_reg.value)
-        fe = int(up.force_err.value)
-        cout = int(up.rca_cout.value)
-        summ = int(up.rca_sum.value)
-        expect = (((cout << 16) | summ) ^ (0x1FFFF if fe else 0)) & 0x1FFFF
         dut.clk.value = 1
         await Timer(CLK_HALF, "ns")
-        post = int(up.result_reg.value)
-        if post != pre:
-            assert cs == 1, (
-                f"result_reg changed on a non-capture edge: "
-                f"{pre:#05x} -> {post:#05x}"
-            )
-            assert post == expect, f"capture mismatch: {post:#05x} != {expect:#05x}"
-            n_changes += 1
-    assert n_changes >= 3, n_changes  # one capture per frame, values differ
+        assert int(up.result_reg.value) == pre, "DUT captured on rising edge"
+        pending = int(up.capture_pending.value)
+        expect = ((int(up.rca_cout.value) << 16) | int(up.rca_sum.value)) ^ 0x1FFFF
+        dut.clk.value = 0
+        await Timer(CLK_HALF, "ns")
+        assert int(up.result_reg.value) == (expect if pending else pre)
+        captures += pending
+    assert captures == 6
 
+    # Align just before a launch and freeze AFTER the launch rising edge.
+    while not int(up.frame_boundary.value):
+        await cyc(dut)
+    dut.clk.value = 1
+    await Timer(CLK_HALF / 2, "ns")
+    assert int(up.capture_pending.value) == 1
+    expect = ((int(up.rca_cout.value) << 16) | int(up.rca_sum.value)) ^ 0x1FFFF
+    dut.ui_in.value = 0x80
+    await Timer(CLK_HALF / 2, "ns")
+    dut.clk.value = 0
+    await Timer(CLK_HALF, "ns")
+    assert int(up.result_reg.value) == expect, "freeze deferred the timing capture"
+    await cyc(dut, 25)
+    assert int(up.result_reg.value) == expect
+    assert int(up.capture_pending.value) == 0
+    dut.ui_in.value = 0
+    await cyc(dut, FRAME - 1)
+    assert int(up.result_reg.value) == expect, "resume overwrote first sample"
+
+
+@cocotb.test()
+async def test_freeze_resume_every_phase(dut):
+    """External-interface regression: mid-high freeze at every frame phase."""
+    for force_err in (0, 1):
+        for phase in range(FRAME):
+            await configure(dut, cfg_word(pat=1, force_can=1, force_err=force_err))
+            await cyc(dut, 3 * FRAME + phase)
+            dut.clk.value = 1
+            await Timer(CLK_HALF / 2, "ns")
+            dut.ui_in.value = 0x80
+            await Timer(CLK_HALF / 2, "ns")
+            dut.clk.value = 0
+            await Timer(CLK_HALF, "ns")
+            await cyc(dut, 3)
+            frozen = await read_status(dut)
+            await cyc(dut, 7)
+            assert await read_status(dut) == frozen
+            dut.ui_in.value = 0
+            await cyc(dut, 3 * FRAME)
+            await freeze(dut, True)
+            status = await read_status(dut)
+            expected = status["ops"] - 1 if force_err else 0
+            assert status["err_cnt"] == expected, (phase, force_err, status)
+
+
+@cocotb.test(skip=GL)
+async def test_counter_saturation(dut):
+    """Exercise the real increment logic at the wrap boundary, without long warmup."""
+    await configure(dut, cfg_word(pat=1, force_can=1, force_err=1))
+    await cyc(dut, 3 * FRAME)
+    dut.user_project.ops_cnt.value = 65534
+    dut.user_project.err_cnt.value = 65534
+    await cyc(dut, 4 * FRAME)
     await freeze(dut, True)
     s = await read_status(dut)
-    await freeze(dut, False)
-    assert s["ops"] >= 6, s["ops"]
-    assert s["err_cnt"] >= n_changes, (s["err_cnt"], n_changes)
+    assert s["ops"] == 65535 and s["err_cnt"] == 65535, s
 
 
 @cocotb.test()
