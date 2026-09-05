@@ -19,7 +19,7 @@ If matplotlib is importable (devcontainer /ttsetup/venv), plots.png/plots.pdf
 replace the two SVGs. The SVGs are hand-rolled XML, so matplotlib is optional.
 
 Predictors (frozen; protocol in docs/prediction-model.md):
-  sta     per-corner extracted-STA knee, T_fail = T_clk - slack
+  sta     per-corner extracted-STA knee, T_fail = T_clk - slack / duty
   ro_gen  nominal STA ladder scaled by generic-RO count ratio N(c)/N(nom)
   ro_mat  nominal STA ladder scaled by matched-RO count ratio N(c)/N(nom)
 
@@ -46,14 +46,14 @@ from datetime import datetime, timezone
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import common as C  # noqa: E402
 
-MODEL_VERSION = "tpv-predict-1.0.1"  # keep in sync with docs/prediction-model.md
+MODEL_VERSION = "tpv-predict-2.0.0"  # keep in sync with docs/prediction-model.md
 PREDICTORS = ["sta", "ro_gen", "ro_mat"]
 CANARIES = ["ro_gen", "ro_mat"]
 NOMINAL_CORNER = "nom_typ_1p20V_25C"  # 1.20 V / 25 C calibration anchor corner
 READOUT_CAN_SEL = 3                   # predeclared canary readout config
 READOUT_WIN = 0                       # win0 = 256 clk cycles
 WINS = [0, 1, 2, 3]
-COUNTER_MAX = 65535                   # 16-bit edge counters saturate here
+COUNTER_MAX = 65535                   # largest count before modulo-65536 wrap
 CAL_K_PLACEHOLDER = 1.0
 BOARD_FMAX_MHZ = 50.0                 # 20 ns Tiny Tapeout board clock ceiling
 ANCHOR_SEGS = (3, 3, 3, 3)            # calibration anchor config
@@ -155,7 +155,7 @@ def load_sta(rows):
                     fail("experiment_sta.csv: missing case %r"
                          % ((corner, segs, pat),))
     # hold = static operands: must have no runtime path; every other pattern
-    # must carry a finite knee consistent with T_fail = T_clk - slack.
+    # must carry a finite knee consistent with T_fail = T_clk - slack / duty.
     for key, r in idx.items():
         f = r["predicted_fmax_mhz"].strip()
         if r["pat_name"] == "hold" or f == "":
@@ -166,7 +166,7 @@ def load_sta(rows):
         v = float(f)
         if not math.isfinite(v) or v <= 0:
             fail("experiment_sta.csv: bad predicted_fmax_mhz %r at %r" % (f, key))
-        t_fail = float(r["clk_period_ns"]) - float(r["slack_ns"])
+        t_fail = float(r["clk_period_ns"]) - float(r["slack_ns"]) / float(r["capture_duty"])
         if abs(1e3 / v - t_fail) > 0.05:
             fail("experiment_sta.csv: predicted_fmax inconsistent with slack "
                  "at %r" % (key,))
@@ -348,7 +348,7 @@ def sta_vs_sdf(sta_idx, bounds):
             continue
         b = bounds[corner]
         r = sta_idx[(corner, ANCHOR_SEGS, ANCHOR_PATTERN)]
-        t_sta = float(r["clk_period_ns"]) - float(r["slack_ns"])
+        t_sta = float(r["clk_period_ns"]) - float(r["slack_ns"]) / float(r["capture_duty"])
         f_sta = float(r["predicted_fmax_mhz"])
         mid = b["mid_ns"]
         out.append({
@@ -454,8 +454,8 @@ def write_summary(path, prov, n_in, cross, ro_idx, ratios, lut, sta_idx,
     L.append("")
     L.append("## Canary readout at can_sel=%d (predeclared)" % READOUT_CAN_SEL)
     L.append("")
-    L.append("Counts are predicted edges per window (16-bit counters saturate "
-             "at %d; `*` marks a saturated window). `gen/mat` is the canary "
+    L.append("Counts are predicted edges per window (16-bit counters wrap "
+             "at %d; `*` marks a predicted overflow). `gen/mat` is the canary "
              "distinguishability ratio at win%d."
              % (COUNTER_MAX, READOUT_WIN))
     L.append("")
@@ -474,7 +474,7 @@ def write_summary(path, prov, n_in, cross, ro_idx, ratios, lut, sta_idx,
         L.append("| %s | %s |" % (CORNER_SHORT[corner], " | ".join(cells)))
     L.append("")
     L.append("win%d (%d cycles) counts fit 16 bits at every corner for both "
-             "canaries: **yes**. win2 also fits everywhere; win3 saturates for "
+             "canaries: **yes**. win2 also fits everywhere; win3 overflows for "
              "ro_gen at the fast/typ corners (sat flag in `ro_predict.csv`) "
              "and is not a usable readout window there."
              % (READOUT_WIN, C.WINDOW_CYCLES[READOUT_WIN]))
@@ -524,7 +524,7 @@ def write_summary(path, prov, n_in, cross, ro_idx, ratios, lut, sta_idx,
     L.append("## Notes")
     L.append("")
     for note in (
-        "The `sdfsim.csv` RO cross-check row (FORCE_CAN off) is INVALID for "
+        "A FORCE_CAN-off SDF RO cross-check would be INVALID for "
         "model purposes: the RO loop cells are annotated with hard 0.000 SDF "
         "delays because `src/pnr.sdc` disables RO timing arcs, so its "
         "gen_cnt/mat_cnt are simulator race artifacts "
@@ -532,7 +532,7 @@ def write_summary(path, prov, n_in, cross, ro_idx, ratios, lut, sta_idx,
         "package; the DUT-boundary rows (FORCE_CAN on) are unaffected.",
         "The zero-delay reference row (ops=%d, err=0) validates the testbench "
         "protocol, not timing." % sdf_ref_ops,
-        "The STA knee is a linear slack translation (T_fail = T_clk - slack, "
+        "The STA knee is a linear slack translation (T_fail = T_clk - slack / duty, "
         "clock tree/uncertainty held at the corner); validity degrades far "
         "from the analyzed 20 ns point.",
         "Frame = %d clk cycles (frame_cnt 0..18); one timed DUT operation per "
@@ -666,10 +666,10 @@ def plots_svg(outdir, rows, ro_idx, footer):
         series.append((CORNER_SHORT[corner], vals))
     svg_bars(os.path.join(outdir, "knee_ladder.svg"),
              "STA-predicted first-failure frequency ladder (pattern = worst)",
-             "model %s | extracted case-analyzed STA | T_fail = T_clk - slack"
+             "model %s | extracted case-analyzed STA | T_fail = T_clk - slack / duty"
              % MODEL_VERSION,
              "predicted Fmax (MHz)", SEG_LABELS, series,
-             ref=(BOARD_FMAX_MHZ, "50 MHz board ceiling"), footer=footer)
+             ref=(BOARD_FMAX_MHZ, "50 MHz measurement limit"), footer=footer)
     cats = [CORNER_SHORT[c] for c in C.CORNER_NAMES]
     series = []
     for can in CANARIES:
@@ -678,7 +678,7 @@ def plots_svg(outdir, rows, ro_idx, footer):
         series.append((can, vals))
     svg_bars(os.path.join(outdir, "canary_counts.svg"),
              "Canary edge counts vs PVT corner",
-             "can_sel=%d, win%d (%d clk cycles); 16-bit counters saturate at %d"
+             "can_sel=%d, win%d (%d clk cycles); 16-bit counters wrap at %d"
              % (READOUT_CAN_SEL, READOUT_WIN, C.WINDOW_CYCLES[READOUT_WIN],
                 COUNTER_MAX),
              "edges per window", cats, series, footer=footer)
@@ -698,7 +698,7 @@ def plots_matplotlib(outdir, rows, ro_idx, footer):
         xs = [i + (si - 1) * width for i in range(len(SEG_LABELS))]
         ax.bar(xs, vals, width=width, label=CORNER_SHORT[corner])
     ax.axhline(BOARD_FMAX_MHZ, color="crimson", ls="--", lw=1)
-    ax.text(0.02, BOARD_FMAX_MHZ + 12, "50 MHz board ceiling",
+    ax.text(0.02, BOARD_FMAX_MHZ + 12, "50 MHz measurement limit",
             color="crimson", fontsize=8)
     ax.set_xticks(range(len(SEG_LABELS)))
     ax.set_xticklabels(SEG_LABELS)
@@ -771,7 +771,7 @@ def main():
         "generated_utc": datetime.now(timezone.utc).strftime(
             "%Y-%m-%dT%H:%M:%SZ"),
         "provenance": dict(prov, clk_period_ns=C.CLK_PERIOD_NS,
-                           frame_cycles=C.FRAME_CYCLES,
+                           frame_cycles=C.FRAME_CYCLES, capture_duty=C.CAPTURE_DUTY,
                            nominal_corner=NOMINAL_CORNER,
                            readout={"can_sel": READOUT_CAN_SEL,
                                     "win": READOUT_WIN,
@@ -780,7 +780,7 @@ def main():
                            counter_bits=16, counter_max=COUNTER_MAX),
         "predictors": {
             "sta": "per-corner case-analyzed extracted STA: T_fail = T_clk - "
-                   "slack; f = 1e3/T_fail MHz (docs/prediction-model.md)",
+                   "slack / duty; f = 1e3/T_fail MHz (docs/prediction-model.md)",
             "ro_gen": "nominal STA ladder scaled by ro_gen count ratio "
                       "N(corner)/N(nom) at can_sel=%d, win%d"
                       % (READOUT_CAN_SEL, READOUT_WIN),
@@ -799,15 +799,15 @@ def main():
         "notes": [
             "Frame = 19 clk cycles (frame_cnt 0..18); one timed DUT operation "
             "per frame.",
-            "Canary counters are 16-bit and saturate at 65535 with a sat flag; "
+            "Canary counters wrap modulo 65536; sat_win fields are MODEL overflow flags, not silicon flags; "
             "win0 = 256 clk cycles.",
-            "The sdfsim.csv RO cross-check row (FORCE_CAN off) is INVALID for "
+            "A FORCE_CAN-off SDF RO cross-check would be INVALID for "
             "model purposes: RO loop cells carry hard 0.000 SDF delays because "
             "src/pnr.sdc disables RO timing arcs "
             "(docs/ro-sdf-crosscheck-diagnosis.md); its gen_cnt/mat_cnt are "
             "excluded.",
             "The SDF boundary is IOPATH-only annotated (no wire interconnect): "
-            "the sim boundary is optimistic; positive err_sta_minus_mid_ns = "
+            "the boundary may differ in either direction; positive err_sta_minus_mid_ns = "
             "STA more conservative than sim.",
         ],
         "sanity": {
@@ -858,7 +858,7 @@ def main():
     print("  plots: %s" % plot_mode)
     print("  spot-checks:")
     print("    anchor (nom, seg3333, worst) STA knee = %s MHz; "
-          "slow-corner STA knee = %s MHz (source 39.339)"
+          "slow-corner STA knee = %s MHz"
           % (anchor["predicted_fmax_mhz"],
              lut[("nom_slow_1p08V_125C", ANCHOR_SEGS, ANCHOR_PATTERN, "sta")]))
     print("    canary win0 counts (can_sel=%d): %s"

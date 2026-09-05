@@ -68,6 +68,9 @@ async def configure(dut, word, settle=8):
     dut.uio_in.value = (word >> 8) & 0xFF
     await cyc(dut, 4)
     dut.rst_n.value = 1
+    # Deassert reset during the low phase, before the first counted edge.
+    # Coincident reset/clock changes race through zero-delay GL clock trees.
+    await Timer(CLK_HALF / 2, "ns")
     await cyc(dut, 3)  # boot window: cfg commits at the boot==2 edge
     dut.ui_in.value = 0  # release config pins (ui[7] = freeze must be low)
     dut.uio_in.value = 0  # board model: host switches uio to inputs

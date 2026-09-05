@@ -1,0 +1,14 @@
+SDF annotating /work/data/halfcycle/sdf_path/nom_typ_1p20V_25C.iopath.sdf
+RESULT period_ns=30.000000
+RESULT high_time_ns=15.000000
+RESULT segs=ff pat=1 winsel=0
+RESULT ops=200
+RESULT err_cnt=49
+RESULT gen_cnt=0
+RESULT mat_cnt=0
+RESULT cfg_echo=ff
+RESULT stat=fc
+RESULT err_dut=00
+/work/tools/sdf/tb_sdfsim.v:144: $finish called at 115020000 (1ps)
+
+===STDERR===

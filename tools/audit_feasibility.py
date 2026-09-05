@@ -10,7 +10,12 @@ import json
 from pathlib import Path
 import re
 
-from common import CIEL_PDK_REV, GIT_COMMIT, RUN_DIR, RUN_ID
+from common import CIEL_PDK_REV
+
+# This audit intentionally inventories the original full-cycle baseline.
+RUN_ID = "33839023290"
+GIT_COMMIT = "1e31757e50080b19fa7642b8b9cd6822f64b1d11"
+RUN_DIR = Path(__file__).resolve().parents[1] / "artifacts" / ("run-" + RUN_ID)
 
 
 def main():

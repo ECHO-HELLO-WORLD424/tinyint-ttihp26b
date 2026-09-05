@@ -389,4 +389,8 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    if C.RUN_ID.startswith("local-"):
+        import runpy
+        runpy.run_path(os.path.join(C.REPO, "tools", "make_local_manifest.py"), run_name="__main__")
+    else:
+        main()

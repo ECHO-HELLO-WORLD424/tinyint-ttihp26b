@@ -20,3 +20,11 @@ data/sdfsim/sg13g2_stdcell_sdf.v
 data/sdfsim/netlist_sim.v
 data/sdf_path/*.iopath.sdf
 __pycache__/
+
+data/halfcycle/sdfsim/*.vvp
+data/halfcycle/sdfsim/sg13g2_stdcell_sdf.v
+data/halfcycle/sdfsim/netlist_sim.v
+data/halfcycle/sdf_path/*.iopath.sdf
+data/halfcycle/sta_stdout_*.log
+data/halfcycle/*.stdout.log
+data/halfcycle/verification/*.stdout.log

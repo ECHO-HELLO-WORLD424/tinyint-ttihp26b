@@ -1,0 +1,473 @@
+{
+  "kind": "local development experiment; not a submitted/green CI build",
+  "run_id": "local-dev-halfcycle-final",
+  "build_commit": "041c1906a276211a62263dc30ce0da13b01c00ed",
+  "analysis_head": "041c1906a276211a62263dc30ce0da13b01c00ed",
+  "branch": "proposal-canary-dev",
+  "analysis_worktree_dirty": true,
+  "source_files_verified_equal_to_build_commit": {
+    "src/tpv_cells.v": {
+      "sha256": "20933c253718c8888fa43cdf506bd965fb321a8b16141f2824e8e691a4ce77c8",
+      "bytes": 3563
+    },
+    "src/tpv_checker.v": {
+      "sha256": "9d9b7e15279b812b5336c90984167e90e0af8e2c8c3ad7fbd71dc6f4f0d675c8",
+      "bytes": 615
+    },
+    "src/tpv_delay_line.v": {
+      "sha256": "aae9b5530bd07a95afc980393bda141a9460c6cee127bd8a224eda5f7d91d320",
+      "bytes": 1044
+    },
+    "src/tpv_pattern_gen.v": {
+      "sha256": "9314fe1ae12cb743c4630c207404f1fdb83629b1354187ed32b97af8edb080c9",
+      "bytes": 2646
+    },
+    "src/tpv_rca16.v": {
+      "sha256": "c5a266b9fd6bba20087fa3e09a53d3eaf102c981fb85f2f8001d29df6b8e90d0",
+      "bytes": 1741
+    },
+    "src/tpv_ro_canary.v": {
+      "sha256": "2d41df15e7247130e2cd2f45a6d76564b705eeff0b07592dfb9e9fbd76ab6f7b",
+      "bytes": 5687
+    },
+    "src/tt_um_echoworld424_tpv.v": {
+      "sha256": "240406721683fa963020a6e4a99f5e71183a2f726368de8e6f87595b5588750b",
+      "bytes": 9836
+    },
+    "src/config.json": {
+      "sha256": "509e018e695884d2d742ba82c321d8d5c9d3c1c3cbfeba4f63879f766045d2dd",
+      "bytes": 1745
+    },
+    "src/pnr.sdc": {
+      "sha256": "6c2e81fdf40c2ccc5dd43656228e08cee05bcf0ab0a614310444d0d2d369157b",
+      "bytes": 8796
+    },
+    "src/user_config.json": {
+      "sha256": "4f67f52bcdbd2a4a10ccb6efc3d6f5179e1a9e6d13ed1fdb5784c127d6cd5847",
+      "bytes": 454
+    }
+  },
+  "tool_image": "ghcr.io/librelane/librelane:3.0.5",
+  "image_id": "sha256:ecabd075d0ddf6a2bd1cd4a32109c7dbb861ec007f7e4e423a9a081f8d23b8e2",
+  "image_repo_digests": [
+    "ghcr.io/librelane/librelane@sha256:ecabd075d0ddf6a2bd1cd4a32109c7dbb861ec007f7e4e423a9a081f8d23b8e2"
+  ],
+  "pdk_revision": "c4b8b4e5e7a05f375cca3815d51b3a37721fbf5c",
+  "support_tools_commit": "01d5d2814fa9dd61e9d211e0b235a4a592a9316a",
+  "devcontainer_python_packages": {
+    "cocotb": "2.0.1",
+    "gdstk": "0.9.60",
+    "klayout": "0.29.12",
+    "PyYAML": "6.0.2"
+  },
+  "tests": {
+    "rtl-results.xml": {
+      "passed": 13,
+      "skipped": 0,
+      "failures": 0
+    },
+    "gl-results.xml": {
+      "passed": 9,
+      "skipped": 4,
+      "failures": 0
+    },
+    "precheck-results.xml": {
+      "passed": 10,
+      "skipped": 0,
+      "failures": 0
+    }
+  },
+  "active_area_um2": 20990.8,
+  "utilization_pct": 72.5284,
+  "physical_metrics": {
+    "design__lint_error__count": 0,
+    "design__lint_timing_construct__count": 0,
+    "design__lint_warning__count": 106,
+    "design__inferred_latch__count": 0,
+    "design__instance__count": 2809,
+    "design__instance__area": 28941.5,
+    "design__instance_unmapped__count": 0,
+    "synthesis__check_error__count": 0,
+    "design__max_slew_violation__count__corner:nom_fast_1p32V_m40C": 0,
+    "design__max_fanout_violation__count__corner:nom_fast_1p32V_m40C": 1,
+    "design__max_cap_violation__count__corner:nom_fast_1p32V_m40C": 0,
+    "power__internal__total": 0.0008228780934587121,
+    "power__switching__total": 0.00027827141457237303,
+    "power__leakage__total": 6.647642862844805e-07,
+    "power__total": 0.0011018142104148865,
+    "clock__skew__worst_hold__corner:nom_fast_1p32V_m40C": -0.07104465133944526,
+    "clock__skew__worst_setup__corner:nom_fast_1p32V_m40C": 0.27566741336568673,
+    "timing__hold__ws__corner:nom_fast_1p32V_m40C": 0.13145901406197422,
+    "timing__setup__ws__corner:nom_fast_1p32V_m40C": -1.1844019433788462,
+    "timing__hold__tns__corner:nom_fast_1p32V_m40C": 0,
+    "timing__setup__tns__corner:nom_fast_1p32V_m40C": -1.1844019433788462,
+    "timing__hold__wns__corner:nom_fast_1p32V_m40C": 0,
+    "timing__setup__wns__corner:nom_fast_1p32V_m40C": -1.1844019433788462,
+    "timing__hold_vio__count__corner:nom_fast_1p32V_m40C": 0,
+    "timing__hold_r2r__ws__corner:nom_fast_1p32V_m40C": 0.131459,
+    "timing__hold_r2r_vio__count__corner:nom_fast_1p32V_m40C": 0,
+    "timing__setup_vio__count__corner:nom_fast_1p32V_m40C": 1,
+    "timing__setup_r2r__ws__corner:nom_fast_1p32V_m40C": -1.184402,
+    "timing__setup_r2r_vio__count__corner:nom_fast_1p32V_m40C": 1,
+    "design__max_slew_violation__count__corner:nom_slow_1p08V_125C": 0,
+    "design__max_fanout_violation__count__corner:nom_slow_1p08V_125C": 1,
+    "design__max_cap_violation__count__corner:nom_slow_1p08V_125C": 0,
+    "clock__skew__worst_hold__corner:nom_slow_1p08V_125C": -0.0912689880061493,
+    "clock__skew__worst_setup__corner:nom_slow_1p08V_125C": 0.29593603405453794,
+    "timing__hold__ws__corner:nom_slow_1p08V_125C": 0.3769267782359422,
+    "timing__setup__ws__corner:nom_slow_1p08V_125C": -15.397562771734032,
+    "timing__hold__tns__corner:nom_slow_1p08V_125C": 0,
+    "timing__setup__tns__corner:nom_slow_1p08V_125C": -77.1767240848126,
+    "timing__hold__wns__corner:nom_slow_1p08V_125C": 0,
+    "timing__setup__wns__corner:nom_slow_1p08V_125C": -15.397562771734032,
+    "timing__hold_vio__count__corner:nom_slow_1p08V_125C": 0,
+    "timing__hold_r2r__ws__corner:nom_slow_1p08V_125C": 0.376927,
+    "timing__hold_r2r_vio__count__corner:nom_slow_1p08V_125C": 0,
+    "timing__setup_vio__count__corner:nom_slow_1p08V_125C": 9,
+    "timing__setup_r2r__ws__corner:nom_slow_1p08V_125C": -15.397563,
+    "timing__setup_r2r_vio__count__corner:nom_slow_1p08V_125C": 9,
+    "design__max_slew_violation__count__corner:nom_typ_1p20V_25C": 0,
+    "design__max_fanout_violation__count__corner:nom_typ_1p20V_25C": 1,
+    "design__max_cap_violation__count__corner:nom_typ_1p20V_25C": 0,
+    "clock__skew__worst_hold__corner:nom_typ_1p20V_25C": -0.0797436236836779,
+    "clock__skew__worst_setup__corner:nom_typ_1p20V_25C": 0.2844912164147811,
+    "timing__hold__ws__corner:nom_typ_1p20V_25C": 0.21888186327403225,
+    "timing__setup__ws__corner:nom_typ_1p20V_25C": -6.285852904992995,
+    "timing__hold__tns__corner:nom_typ_1p20V_25C": 0,
+    "timing__setup__tns__corner:nom_typ_1p20V_25C": -18.913234180792497,
+    "timing__hold__wns__corner:nom_typ_1p20V_25C": 0,
+    "timing__setup__wns__corner:nom_typ_1p20V_25C": -6.285852904992995,
+    "timing__hold_vio__count__corner:nom_typ_1p20V_25C": 0,
+    "timing__hold_r2r__ws__corner:nom_typ_1p20V_25C": 0.218882,
+    "timing__hold_r2r_vio__count__corner:nom_typ_1p20V_25C": 0,
+    "timing__setup_vio__count__corner:nom_typ_1p20V_25C": 5,
+    "timing__setup_r2r__ws__corner:nom_typ_1p20V_25C": -6.285853,
+    "timing__setup_r2r_vio__count__corner:nom_typ_1p20V_25C": 5,
+    "design__max_slew_violation__count": 0,
+    "design__max_fanout_violation__count": 1,
+    "design__max_cap_violation__count": 0,
+    "clock__skew__worst_hold": -0.07104465133944526,
+    "clock__skew__worst_setup": 0.27566741336568673,
+    "timing__hold__ws": 0.13145901406197422,
+    "timing__setup__ws": -15.397562771734032,
+    "timing__hold__tns": 0,
+    "timing__setup__tns": -77.1767240848126,
+    "timing__hold__wns": 0,
+    "timing__setup__wns": -15.397562771734032,
+    "timing__hold_vio__count": 0,
+    "timing__hold_r2r__ws": 0.131459,
+    "timing__hold_r2r_vio__count": 0,
+    "timing__setup_vio__count": 15,
+    "timing__setup_r2r__ws": -15.397563,
+    "timing__setup_r2r_vio__count": 15,
+    "design__die__bbox": "0.0 0.0 202.08 154.98",
+    "design__core__bbox": "2.88 3.78 199.2 151.2",
+    "design__io": 45,
+    "design__die__area": 31318.4,
+    "design__core__area": 28941.5,
+    "design__instance__count__stdcell": 1637,
+    "design__instance__area__stdcell": 20990.8,
+    "design__instance__count__macros": 0,
+    "design__instance__area__macros": 0,
+    "design__instance__count__padcells": 0,
+    "design__instance__area__padcells": 0,
+    "design__instance__count__cover": 0,
+    "design__instance__area__cover": 0,
+    "design__instance__utilization": 0.725284,
+    "design__instance__utilization__stdcell": 0.725284,
+    "design__rows": 39,
+    "design__rows:CoreSite": 39,
+    "design__sites": 15951,
+    "design__sites:CoreSite": 15951,
+    "design__instance__count__class:buffer": 12,
+    "design__instance__area__class:buffer": 87.0912,
+    "design__instance__count__class:inverter": 667,
+    "design__instance__area__class:inverter": 3630.61,
+    "design__instance__count__class:sequential_cell": 152,
+    "design__instance__area__class:sequential_cell": 7446.3,
+    "design__instance__count__class:multi_input_combinational_cell": 661,
+    "design__instance__area__class:multi_input_combinational_cell": 7304.77,
+    "flow__warnings__count": 1,
+    "flow__errors__count": 0,
+    "flow__warnings__type_count": 1,
+    "flow__warnings__count:ORD-0039": 1,
+    "design__power_grid_violation__count__net:VGND": 0,
+    "design__power_grid_violation__count__net:VPWR": 0,
+    "design__power_grid_violation__count": 0,
+    "timing__drv__floating__nets": 0,
+    "timing__drv__floating__pins": 0,
+    "design__instance__displacement__total": 1659.89,
+    "design__instance__displacement__mean": 1.013,
+    "design__instance__displacement__max": 28.02,
+    "route__wirelength__estimated": 28358.8,
+    "design__violations": 0,
+    "design__instance__count__class:timing_repair_buffer": 69,
+    "design__instance__area__class:timing_repair_buffer": 500.774,
+    "design__instance__count__class:clock_buffer": 49,
+    "design__instance__area__class:clock_buffer": 1874.28,
+    "design__instance__count__class:clock_inverter": 27,
+    "design__instance__area__class:clock_inverter": 146.966,
+    "flow__warnings__count:CTS-0041": 17,
+    "global_route__vias": 8139,
+    "global_route__wirelength": 48600,
+    "antenna__violating__nets": 0,
+    "antenna__violating__pins": 0,
+    "route__antenna_violation__count": 0,
+    "antenna_diodes_count": 0,
+    "route__net": 1646,
+    "route__net__special": 2,
+    "route__drc_errors__iter:0": 397,
+    "route__wirelength__iter:0": 31408,
+    "route__drc_errors__iter:1": 144,
+    "route__wirelength__iter:1": 31178,
+    "route__drc_errors__iter:2": 118,
+    "route__wirelength__iter:2": 31080,
+    "route__drc_errors__iter:3": 3,
+    "route__wirelength__iter:3": 31052,
+    "route__drc_errors__iter:4": 3,
+    "route__wirelength__iter:4": 31052,
+    "route__drc_errors__iter:5": 0,
+    "route__wirelength__iter:5": 31045,
+    "route__drc_errors": 0,
+    "route__wirelength": 31045,
+    "route__vias": 8317,
+    "route__vias__singlecut": 8317,
+    "route__vias__multicut": 0,
+    "flow__warnings__count:DRT-0349": 10,
+    "design__disconnected_pin__count": 1,
+    "design__critical_disconnected_pin__count": 0,
+    "route__wirelength__max": 425.18,
+    "design__instance__count__class:fill_cell": 1172,
+    "design__instance__area__class:fill_cell": 7950.7,
+    "timing__unannotated_net__count__corner:nom_fast_1p32V_m40C": 11,
+    "timing__unannotated_net_filtered__count__corner:nom_fast_1p32V_m40C": 0,
+    "timing__unannotated_net__count__corner:nom_slow_1p08V_125C": 11,
+    "timing__unannotated_net_filtered__count__corner:nom_slow_1p08V_125C": 0,
+    "timing__unannotated_net__count__corner:nom_typ_1p20V_25C": 11,
+    "timing__unannotated_net_filtered__count__corner:nom_typ_1p20V_25C": 0,
+    "timing__unannotated_net__count": 11,
+    "timing__unannotated_net_filtered__count": 0,
+    "design_powergrid__voltage__worst__net:VPWR__corner:nom_typ_1p20V_25C": 1.19945,
+    "design_powergrid__drop__average__net:VPWR__corner:nom_typ_1p20V_25C": 1.19995,
+    "design_powergrid__drop__worst__net:VPWR__corner:nom_typ_1p20V_25C": 0.000553397,
+    "design_powergrid__voltage__worst__net:VGND__corner:nom_typ_1p20V_25C": 0.000322949,
+    "design_powergrid__drop__average__net:VGND__corner:nom_typ_1p20V_25C": 3.95816e-05,
+    "design_powergrid__drop__worst__net:VGND__corner:nom_typ_1p20V_25C": 0.000322949,
+    "design_powergrid__voltage__worst": 0.000322949,
+    "design_powergrid__voltage__worst__net:VPWR": 1.19945,
+    "design_powergrid__drop__worst": 0.000553397,
+    "design_powergrid__drop__worst__net:VPWR": 0.000553397,
+    "design_powergrid__voltage__worst__net:VGND": 0.000322949,
+    "design_powergrid__drop__worst__net:VGND": 0.000322949,
+    "ir__voltage__worst": 1.2,
+    "ir__drop__avg": 4.8e-05,
+    "ir__drop__worst": 0.000553,
+    "magic__drc_error__count": 0,
+    "magic__illegal_overlap__count": 0,
+    "design__lvs_device_difference__count": 0,
+    "design__lvs_net_difference__count": 0,
+    "design__lvs_property_fail__count": 0,
+    "design__lvs_error__count": 0,
+    "design__lvs_unmatched_device__count": 0,
+    "design__lvs_unmatched_net__count": 0,
+    "design__lvs_unmatched_pin__count": 0
+  },
+  "hardening_exit_status": 1,
+  "hardening_failure": "Unchanged 20 ns/50% duty setup signoff fails in typical corner; intentional DUT aperture violations. Not waived.",
+  "remaining": [
+    "60% utilization target not met",
+    "submission setup policy unresolved",
+    "RO frequencies are broken-loop STA models, not transient-validated",
+    "actual board duty/voltage/thermal limits unverified"
+  ],
+  "analysis_source_files": {
+    "tools/audit_feasibility.py": {
+      "sha256": "1965e16a05f0bf99ef376768cbfec4e3cb497e0a7f81df092333966ff35d6623",
+      "bytes": 4049
+    },
+    "tools/common.py": {
+      "sha256": "4e0f90c5d4f1d8ecafe245b0f347519c0c1a9eed01720ca6f24e197b03d86705",
+      "bytes": 13011
+    },
+    "tools/make_local_manifest.py": {
+      "sha256": "a69b0565a490dd6ba42a6aa81481efd4f499489deaeb1641d8ed7a1206f6dfb6",
+      "bytes": 4040
+    },
+    "tools/make_manifest.py": {
+      "sha256": "2f17a15e0df5c12a2a931aa9de1bf7757ee6bd3070d861c1a008b45e3e027551",
+      "bytes": 16375
+    },
+    "tools/predict_model.py": {
+      "sha256": "1ea83db2a52ecf3b5987111b01ca80a89f2d685c4d4a2bc8a9445947e234d276",
+      "bytes": 40239
+    },
+    "tools/ro/ro_predict.tcl": {
+      "sha256": "632d2f8190467730d2f4668bdcff1c4a4d68a9c74dec94498709f0714c5442db",
+      "bytes": 4302
+    },
+    "tools/run_experiment_sta.py": {
+      "sha256": "1924c5604b153fc6828a1439001329df07e03a0bacb875069dc4c5d6c42aa3c9",
+      "bytes": 11816
+    },
+    "tools/run_local_precheck.py": {
+      "sha256": "b168112029c6f290de79a37b5c63da0e8a904e8e06db31f3d4330e122d63298b",
+      "bytes": 1682
+    },
+    "tools/run_ro_predict.py": {
+      "sha256": "8077174e8a423203134d210bd1f94bc56e2c0a7dd842a7c47ca65fdb02ebe2f6",
+      "bytes": 8704
+    },
+    "tools/run_sdfsim.py": {
+      "sha256": "5c6017e6cecfce6f9c52b0ccc6cb43e7e04f964ef896d6c391f8e9c9378b0a63",
+      "bytes": 10376
+    },
+    "tools/sdf/filter_sdf.py": {
+      "sha256": "dc85187be3ce6fa48f5ec41167ba947f3f93fe343c42ca83e04e5cc9b08037fd",
+      "bytes": 6494
+    },
+    "tools/sdf/make_sdf_lib.py": {
+      "sha256": "61c67316d50459ca46c8d8afe97bf2f1157960c782e7c491db6357848fbcc44d",
+      "bytes": 2549
+    },
+    "tools/sdf/rename_netlist.py": {
+      "sha256": "79ed0a7e9b423f1d5e571e6b79848defa6d7176a8425be9243e17cd7db41856c",
+      "bytes": 776
+    },
+    "tools/sdf/sdfnames.py": {
+      "sha256": "425cac82cd8051ef0863cf599b48b9155f1870b5e623bb4abb6bd0d7e840ba60",
+      "bytes": 1827
+    },
+    "tools/sdf/tb_sdfsim.v": {
+      "sha256": "7d63842c0e56f79267f1995e78dc5b989bedc01ddb1cdb69cab961882b27a529",
+      "bytes": 4522
+    },
+    "tools/sta/experiment_sta.tcl": {
+      "sha256": "2bf5bfec78ab26a2c55e03a608c1e26da018010befd74327b2533707e1393b6f",
+      "bytes": 4861
+    },
+    "tools/verify_halfcycle.py": {
+      "sha256": "be9ca252815ded4db2acc91c8409ea09b3107bca2177df2266c2bfa1d854ac21",
+      "bytes": 2643
+    },
+    "tools/verify_halfcycle_structure.py": {
+      "sha256": "a3ad318a58ddbe71246e2716a3cd15636154de9940fdb0069dd6caf089ab56aa",
+      "bytes": 3973
+    }
+  },
+  "verification_source_files": {
+    "test/test.py": {
+      "sha256": "981333a99aa348cfba5c7a168724ac160cc2fdc3dd034a6b4203fa8cb1faad5f",
+      "bytes": 15727
+    },
+    "test/Makefile": {
+      "sha256": "0dc09b94aef2eee114e8ea8bdae5b548ade838985f65c48baf562caf9ecebb2b",
+      "bytes": 2604
+    }
+  },
+  "local_view_files": {
+    "src/runs/dev-halfcycle-final/final/def/tt_um_echoworld424_tpv.def": {
+      "sha256": "d343f1920694668dd179ca247288b3b56c453d3272e47a1f01b39ec588a353e9",
+      "bytes": 1323954
+    },
+    "src/runs/dev-halfcycle-final/final/gds/tt_um_echoworld424_tpv.gds": {
+      "sha256": "306a4e65af11b3390c273ed579a578360c4ba107ff4994410b113fc9ce459e56",
+      "bytes": 2111186
+    },
+    "src/runs/dev-halfcycle-final/final/gds/tt_um_echoworld424_tpv.v": {
+      "sha256": "bd73969aa5746d6a12c6453e9a6e4b125eb02f2eb6c58c6b806ad803ed4c6931",
+      "bytes": 261634
+    },
+    "src/runs/dev-halfcycle-final/final/json_h/tt_um_echoworld424_tpv.h.json": {
+      "sha256": "ee350f82f373be36146fe23f89585d7e34ff00e506bd794875a437c36b237012",
+      "bytes": 801400
+    },
+    "src/runs/dev-halfcycle-final/final/klayout_gds/tt_um_echoworld424_tpv.klayout.gds": {
+      "sha256": "66883450770736e505e4c5b0e237f6fc442e88f3d93641b0cb2d6fa494d9ad3d",
+      "bytes": 1204230
+    },
+    "src/runs/dev-halfcycle-final/final/lef/tt_um_echoworld424_tpv.lef": {
+      "sha256": "9577a4419f9523d7a7129d627737a5be80eda7f4dd4304d960c041dd20a5d3b7",
+      "bytes": 11740
+    },
+    "src/runs/dev-halfcycle-final/final/lib/nom_fast_1p32V_m40C/tt_um_echoworld424_tpv__nom_fast_1p32V_m40C.lib": {
+      "sha256": "6fe4c9c98dd5bcd3706a6c0b8847cbbd3ca17d43ea1414bd8910e9d25cf38ae9",
+      "bytes": 36910
+    },
+    "src/runs/dev-halfcycle-final/final/lib/nom_slow_1p08V_125C/tt_um_echoworld424_tpv__nom_slow_1p08V_125C.lib": {
+      "sha256": "d09da5ebdbfec3191cfce814d0c23a8d4663fb601b7b23f357c55fb68d403035",
+      "bytes": 36906
+    },
+    "src/runs/dev-halfcycle-final/final/lib/nom_typ_1p20V_25C/tt_um_echoworld424_tpv__nom_typ_1p20V_25C.lib": {
+      "sha256": "aa9b5777a32427bec5251fd5b7cc40a3107926c6cc864e76739da2faa014f704",
+      "bytes": 36905
+    },
+    "src/runs/dev-halfcycle-final/final/mag/tt_um_echoworld424_tpv.mag": {
+      "sha256": "2487eba071e0637fecabb8cca85eddfe9a98c847f00bc4ef100e46098ccfa065",
+      "bytes": 2325030
+    },
+    "src/runs/dev-halfcycle-final/final/mag_gds/tt_um_echoworld424_tpv.magic.gds": {
+      "sha256": "306a4e65af11b3390c273ed579a578360c4ba107ff4994410b113fc9ce459e56",
+      "bytes": 2111186
+    },
+    "src/runs/dev-halfcycle-final/final/metrics.csv": {
+      "sha256": "8e6e84e138dd3bd1607338286ef0e493e6d6e3308d42461aa36f97f2ab390d81",
+      "bytes": 8856
+    },
+    "src/runs/dev-halfcycle-final/final/metrics.json": {
+      "sha256": "de06dbde7b372683cde34911990093ea8c32b0bff216ad551a9c7efbaa1850b5",
+      "bytes": 10009
+    },
+    "src/runs/dev-halfcycle-final/final/nl/tt_um_echoworld424_tpv.nl.v": {
+      "sha256": "bd73969aa5746d6a12c6453e9a6e4b125eb02f2eb6c58c6b806ad803ed4c6931",
+      "bytes": 261634
+    },
+    "src/runs/dev-halfcycle-final/final/odb/tt_um_echoworld424_tpv.odb": {
+      "sha256": "1e7a429da83d604625f03e5f0749fa1ff3dc86927052d11df41ba934fbd818f3",
+      "bytes": 2683956
+    },
+    "src/runs/dev-halfcycle-final/final/pnl/tt_um_echoworld424_tpv.pnl.v": {
+      "sha256": "3ccdaa7939008820af03e2f09adf956a25fb491ecfb90734559df283bb5ca89c",
+      "bytes": 344536
+    },
+    "src/runs/dev-halfcycle-final/final/render/tt_um_echoworld424_tpv.png": {
+      "sha256": "d261380819662d4be981c3c98e37aff4135cc2cf0265c267ec72afe9f46962ee",
+      "bytes": 360349
+    },
+    "src/runs/dev-halfcycle-final/final/sdc/tt_um_echoworld424_tpv.sdc": {
+      "sha256": "1c8b063304c155d6383568b327f08cd00ee26ab38ca5dab3cad092714368f3f6",
+      "bytes": 23662
+    },
+    "src/runs/dev-halfcycle-final/final/sdf/nom_fast_1p32V_m40C/tt_um_echoworld424_tpv__nom_fast_1p32V_m40C.sdf": {
+      "sha256": "22b7be3fdca34c5a3f7c11bba9dd4767dc5f8abfb0f2c44c1502727440c3f5c9",
+      "bytes": 828971
+    },
+    "src/runs/dev-halfcycle-final/final/sdf/nom_slow_1p08V_125C/tt_um_echoworld424_tpv__nom_slow_1p08V_125C.sdf": {
+      "sha256": "e95f47768f3ca89a59491942ac787f849130c93ae99255d2ccd20057ce83f30b",
+      "bytes": 828971
+    },
+    "src/runs/dev-halfcycle-final/final/sdf/nom_typ_1p20V_25C/tt_um_echoworld424_tpv__nom_typ_1p20V_25C.sdf": {
+      "sha256": "96131274403d9de532d7f645280584f96c0b404ff2a49b3f5fcb096545bcdaf0",
+      "bytes": 828969
+    },
+    "src/runs/dev-halfcycle-final/final/spef/nom/tt_um_echoworld424_tpv.nom.spef": {
+      "sha256": "56dfde63df271b03db772e569a941b34888d3ce2e94bb1daa9af19849e5095d8",
+      "bytes": 1069423
+    },
+    "src/runs/dev-halfcycle-final/final/spice/tt_um_echoworld424_tpv.spice": {
+      "sha256": "4a1557205d65cf25e9d21612ad88ec9328bd3e1a7d1a3b0f86224398220a2c76",
+      "bytes": 222464
+    },
+    "src/runs/dev-halfcycle-final/final/vh/tt_um_echoworld424_tpv.vh": {
+      "sha256": "a183f772920c822209a1bd3d300e9e447b69c728e26c8d25d590bfa508f6c8b8",
+      "bytes": 280
+    },
+    "src/runs/dev-halfcycle-final/resolved.json": {
+      "sha256": "a492f7bcfe34e49c071ccf0dc75d1bda16c7a2969aeb28ec79665b2eacc12a17",
+      "bytes": 21207
+    },
+    "src/runs/dev-halfcycle-final/54-openroad-stapostpnr/summary.rpt": {
+      "sha256": "0457e8c4002654cf0188d97cbd2e27e069b6f309cbbc99f4d4a771f651f63a4c",
+      "bytes": 2770
+    }
+  }
+}

@@ -1,5 +1,23 @@
 # Pre-Silicon Readiness Audit and Action Plan
 
+## Development candidate implemented — proposal-canary-dev
+
+See [half-cycle development validation](docs/halfcycle-development-validation.md)
+for current results. Local physical build `041c190` implements falling-edge
+one-shot capture, combinational oracle and storage/counter reductions. It has
+13 passing RTL tests, 9 passing GL tests (4 intentional skips), and 10 passing
+Tiny Tapeout prechecks. Utilization is **72.53%** versus 82.86%; nominal
+seg3333/worst extracted STA predicts **31.0 MHz**, with IOPATH SDF failing at
+32 ns and passing at 34 ns. Equal-aperture duty sweeps confirm half-cycle behavior.
+
+This supersedes the earlier candidate-only status below. The current branch is
+**not submission-ready**: the unchanged 50 MHz setup signoff fails as expected
+for the intentional DUT boundary, and the 60% area objective remains unmet.
+Physical DRC/LVS/antenna/hold checks are clean; case-analyzed control slack remains
+positive. Transient RO validation and real board operating limits remain open.
+`data/halfcycle/` is the v2 package; original root-level data is the v1 baseline.
+
+
 ## 2026-09-06 feasibility qualification — reachable laboratory boundary
 
 The archived build/prediction package below is complete as an artifact package,

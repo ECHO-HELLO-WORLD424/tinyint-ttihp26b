@@ -1,3 +1,26 @@
+# Development v2 additions
+
+The active half-cycle package is `data/halfcycle/`, model `tpv-predict-2.0.0`.
+The original root-level datasets and the definitions below remain historical
+full-cycle baseline evidence. V2 retains their common fields and adds:
+
+| Field | Meaning |
+| --- | --- |
+| `capture_duty` | Nominal clock-high fraction used by STA/SDF (0.5 in main tables) |
+| `high_time_ns` | SDF clock high time; the DUT measurement aperture |
+| `control_startpoint`, `control_endpoint`, `control_slack_ns` | Worst case-analyzed synchronous path ending outside the 17 DUT capture flops |
+| `n_compared` | Completed comparisons, max(unsaturated launch counter − 1, 0) |
+| `run_id` beginning `local-` | Local build identifier; not a GitHub Actions run |
+| `git_commit` | Physical build's source commit; not necessarily the analysis commit |
+| `sat_win*` | Model predicts a count beyond 65535; hardware wraps and has no saturation flag |
+
+For v2, `predicted_fmax_mhz = 1000 / (clk_period_ns − slack_ns/capture_duty)`.
+Canonical period/high-time units are ns; frequency MHz; voltage V; temperature °C.
+See `post-silicon-protocol.md` for the new raw silicon schema, including measured
+high time, duty, uncertainty, build/analysis commit and batch comparison count.
+
+---
+
 # Data dictionary — pre-silicon prediction package
 
 Scope: field-by-field definitions for the pinned input tables

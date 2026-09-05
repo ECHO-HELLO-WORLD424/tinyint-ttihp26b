@@ -5,7 +5,7 @@
 
 For every (segment-delay configuration, pattern class) in the predeclared
 measurement matrix and every PVT corner, this flow case-analyzes the static
-configuration state (cfg word, boot, oe_cnt, started, freeze, rst_n, ena) and
+configuration state (cfg word, boot, started, freeze, rst_n, ena) and
 reports the setup path from the runtime pattern-generator registers
 (u_pat.lfsr/idx) to the one-shot DUT capture registers (result_reg).
 
@@ -91,17 +91,24 @@ def gen_cases_tcl(path, segs_list, pats):
                 f"-fields {{{REPORT_FIELDS['full']}}} "
                 "-format full_clock_expanded -corner nom")
             lines.append('puts "ES-END"')
+            lines.append('puts "CONTROL-MAX"')
+            lines.append("report_checks -to $control_epins -path_delay max "
+                         "-group_path_count 1 -format full_clock_expanded -corner nom")
+            lines.append('puts "CONTROL-END"')
     with open(path, "w") as f:
         f.write("\n".join(lines) + "\n")
     return len(segs_list) * len(pats)
 
 
-def run_sta(corner, cases_tcl, report_out, smoke=False):
+def run_sta(corner, cases_tcl, report_out, smoke=False,
+            period_ns=C.CLK_PERIOD_NS, duty=C.CAPTURE_DUTY):
     """Run OpenSTA inside the LibreLane image (tool-identical to CI)."""
     libs = " ".join(
         C.PDK_INNER + "/" + rel for rel in C.CORNER_LIBS[corner])
     env = {
         "ES_LIBS": libs,
+        "ES_PERIOD_NS": str(period_ns),
+        "ES_DUTY": str(duty),
         "ES_NETLIST": C.netlist_path().replace(C.REPO, "/work"),
         "ES_SPEF": C.spef_path().replace(C.REPO, "/work"),
         "ES_SDC": "/work/src/pnr.sdc",
@@ -120,7 +127,7 @@ def run_sta(corner, cases_tcl, report_out, smoke=False):
     res = subprocess.run(cmd, capture_output=True, text=True)
     # OpenSTA prints the case reports on stdout (delimited by ES markers);
     # keep both streams on disk for provenance/debugging.
-    open(os.path.join(C.DATA, f"sta_stdout_{corner}.log"), "w").write(
+    open(report_out + ".stdout.log", "w").write(
         res.stdout + "\n===STDERR===\n" + res.stderr)
     if res.returncode != 0:
         print(res.stdout[-4000:])
@@ -158,8 +165,15 @@ def main():
         open(report_out, "w").write(text)
         cases = C.parse_case_report(text)
         if len(cases) != n_cases:
-            print(f"  WARNING: parsed {len(cases)}/{n_cases} cases")
-        for key, reps in cases.items():
+            raise RuntimeError(f"parsed {len(cases)}/{n_cases} cases")
+        import re
+        if re.search(r"(?:^Error:|ES WARNING)", text, re.M):
+            raise RuntimeError("STA reported errors or missing static case nets; inspect raw report")
+        controls = [C.parse_path_block(b) for b in
+                    re.findall(r"CONTROL-MAX\n(.*?)CONTROL-END", text, re.S)]
+        if len(controls) != n_cases or any(c is None for c in controls):
+            raise RuntimeError("missing control timing reports")
+        for case_index, (key, reps) in enumerate(cases.items()):
             seg_part, pat_part = key.split("-pat")
             segs = tuple(int(x) for x in seg_part[len("seg"):])
             pat = int(pat_part)
@@ -176,6 +190,7 @@ def main():
                 "seg3": segs[3],
                 "cfg_word": f"0x{word:04X}",
                 "clk_period_ns": C.CLK_PERIOD_NS,
+                "capture_duty": C.CAPTURE_DUTY,
             }
             if r2r and r2r.get("startpoint"):
                 sp_net = qmap.get(r2r["startpoint"].lstrip("\\"), "?")
@@ -226,7 +241,11 @@ def main():
                     "global_slack_ns": glob.get("slack_ns", ""),
                     "global_path_delay_ns": glob.get("path_delay_ns", ""),
                 })
+            control = controls[case_index]
             row.update({
+                "control_startpoint": control["startpoint"],
+                "control_endpoint": control["endpoint"],
+                "control_slack_ns": control["slack_ns"],
                 "run_id": C.RUN_ID,
                 "git_commit": C.GIT_COMMIT,
                 "librelane_image": C.LL_IMAGE,
@@ -246,6 +265,7 @@ def main():
             "run_id": C.RUN_ID, "git_commit": C.GIT_COMMIT,
             "librelane_image": C.LL_IMAGE, "pdk_rev": C.CIEL_PDK_REV,
             "clk_period_ns": C.CLK_PERIOD_NS,
+                "capture_duty": C.CAPTURE_DUTY,
         }, "rows": rows}, f, indent=1)
     print(f"wrote {csv_path} ({len(rows)} rows) and {json_path}")
 

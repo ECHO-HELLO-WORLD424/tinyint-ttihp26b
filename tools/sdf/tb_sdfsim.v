@@ -8,8 +8,8 @@
  * RO loops removed), this testbench:
  *   - compiles with -gspecify against a timing-safe stdcell library
  *     (tools/sdf/make_sdf_lib.py: IOPATH arcs kept, timing checks removed),
- *   - annotates the LibreLane-generated corner SDF (INTERCONNECT + IOPATH),
- *   - keeps the ring-oscillator loops live, so their counters tick.
+ *   - annotates filtered LibreLane corner SDF (IOPATH only; no INTERCONNECT),
+ *   - masks RO loops for valid DUT timing runs (their SDF arcs are disabled).
  *
  * Protocol (same as the cocotb suite / datasheet): config while rst_n low,
  * hold until 3 cycles after release, run N frames, freeze, read 16 bytes.
@@ -38,7 +38,8 @@ module tb_sdfsim ();
 
   localparam FRAME = 19;
 
-  integer period_ns = 20;
+  real period_ns = 20.0;
+  real duty = 0.5;
   integer nframes = 50;
   reg [15:0] word = 0;
   reg [1023:0] sdf_path = 0;
@@ -56,7 +57,8 @@ module tb_sdfsim ();
   );
 
   initial begin
-    if ($value$plusargs("period=%d", period_ns)) ;
+    if ($value$plusargs("period=%f", period_ns)) ;
+    if ($value$plusargs("duty=%f", duty)) ;
     if ($value$plusargs("nframes=%d", nframes)) ;
     if ($value$plusargs("segs=%h", tmp8)) word[7:0] = tmp8;
     if ($value$plusargs("pat=%d", tmp2a)) word[9:8] = tmp2a;
@@ -76,8 +78,8 @@ module tb_sdfsim ();
     integer i;
     begin
       for (i = 0; i < n; i = i + 1) begin
-        #(period_ns / 2.0) clk = 1;
-        #(period_ns - period_ns / 2.0) clk = 0;
+        #(period_ns * (1.0 - duty)) clk = 1;
+        #(period_ns * duty) clk = 0;
       end
     end
   endtask
@@ -129,7 +131,8 @@ module tb_sdfsim ();
     stat = vals[9];
     err_dut = vals[10];
 
-    $display("RESULT period_ns=%0d", period_ns);
+    $display("RESULT period_ns=%0f", period_ns);
+    $display("RESULT high_time_ns=%0f", period_ns * duty);
     $display("RESULT segs=%h pat=%0d winsel=%0d", word[7:0], word[9:8], word[13:12]);
     $display("RESULT ops=%0d", ops_cnt);
     $display("RESULT err_cnt=%0d", err_cnt);

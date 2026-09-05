@@ -1,3 +1,15 @@
+> **Development revision 2 (proposal-canary-dev):** the active implementation now
+> launches on a rising edge and captures the DUT on the immediately following
+> falling edge. Clock high time is the timing aperture. The independent oracle is
+> combinational; RO counters are true ripple counters. The 19-cycle frame, pins,
+> configuration word and byte map are retained. See
+> [development validation](halfcycle-development-validation.md) for the selected
+> local build and measured area/timing evidence, and
+> [prediction protocol v2](prediction-model.md) / [test protocol v2](post-silicon-protocol.md).
+> Numerical build results and full-cycle/serial-checker descriptions below are
+> retained as historical proposal-baseline evidence; they are not results for v2.
+> V2 targets nominal-voltage ambient observability; heating to 125 °C is not required.
+
 # Research Proposal — Timing-Prediction Test Vehicle on IHP SG13G2 (ttihp26b)
 
 Status: RTL implemented in this repository (`src/`), validated with the cocotb suite in

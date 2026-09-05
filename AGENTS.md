@@ -52,7 +52,7 @@ The design contains four coupled measurement components:
 
 1. `tpv_rca16`: a 16-bit ripple-carry DUT split into four 4-bit segments. Configurable
    inverter-pair delay banks are inserted between segments and after the final carry.
-2. `tpv_checker`: a short-path, bit-serial 17-bit reference adder used as the oracle.
+2. `tpv_checker`: an independent combinational 17-bit reference adder used as the oracle.
 3. `tpv_ro_gen`: a generic inverter-line ring oscillator with a windowed edge counter.
 4. `tpv_ro_match`: a ring oscillator intended to resemble the DUT's delay-bank and
    full-adder structure.
@@ -115,6 +115,17 @@ therefore do not yet meet this standard.
 
 ## Current blocking work
 
+**Development branch `proposal-canary-dev`:** the active DUT capture is on the
+falling edge immediately after an accepted rising-edge launch. `capture_pending`
+clears on every rising edge, including freeze. Pending capture completes even if
+FREEZE arrives during the aperture. The checker is combinational, RO counters are
+true ripple counters, and the public 19-cycle protocol is retained. See
+`docs/halfcycle-development-validation.md` and `data/halfcycle/` for current local
+verification. The historical full-cycle completion statements below apply only
+to the archived original branch. V2 is not submission-ready: conservative 50 MHz
+setup checks intentionally fail, and 72.53% utilization still exceeds 60%.
+
+
 Both research-blocking issues from the original audit (commit
 `206715252bb569430b0d8569393f12997b2a552b`) are resolved: `result_reg` is a
 one-shot capture gated by `chk_start` (commit `21d43c6`, regression-tested),
@@ -142,7 +153,7 @@ document when a checklist item is genuinely completed.
 | `src/tpv_rca16.v` | Deliberately slow arithmetic DUT |
 | `src/tpv_delay_line.v` | Selectable DUT delay banks |
 | `src/tpv_cells.v` | Preserved SG13G2/simulation cell wrappers |
-| `src/tpv_checker.v` | Bit-serial oracle |
+| `src/tpv_checker.v` | Independent combinational oracle |
 | `src/tpv_pattern_gen.v` | Workload/pattern generation |
 | `src/tpv_ro_canary.v` | Generic and matched RO canaries/counters |
 | `src/config.json` | Project-specific LibreLane overrides |

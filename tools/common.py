@@ -14,13 +14,13 @@ import re
 # --- Build/artifact identity -------------------------------------------------
 
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-DATA = os.path.join(REPO, "data")
+DATA = os.path.join(REPO, "data", "halfcycle")
 ARTIFACTS = os.path.join(REPO, "artifacts")
 
-# The final hardening run (commit 1e31757..., CI run 33839023290).
-RUN_DIR = os.path.join(ARTIFACTS, "run-33839023290")
-RUN_ID = "33839023290"
-GIT_COMMIT = "1e31757e50080b19fa7642b8b9cd6822f64b1d11"
+# Development build: local LibreLane 3.0.5, never presented as a CI run.
+RUN_DIR = os.path.join(REPO, "src", "runs", "dev-halfcycle-final", "final")
+RUN_ID = "local-dev-halfcycle-final"
+GIT_COMMIT = "041c1906a276211a62263dc30ce0da13b01c00ed"
 
 LL_IMAGE = "ghcr.io/librelane/librelane:3.0.5"  # tool-identical to CI gds job
 CIEL_PDK_REV = "c4b8b4e5e7a05f375cca3815d51b3a37721fbf5c"
@@ -107,7 +107,8 @@ def sdc_path():
 # --- Protocol constants (mirror RTL) -----------------------------------------
 
 FRAME_CYCLES = 19          # FRAME_LAST = 18 -> cycles 0..18 per operation
-CAPTURE_CYCLE = 0          # result_reg captures on the chk_start edge
+CAPTURE_CYCLE = 0          # falling edge immediately after operand launch
+CAPTURE_DUTY = 0.5        # nominal clock-high fraction (actual aperture must be measured)
 CLK_PERIOD_NS = 20.0       # 50 MHz board ceiling (pnr.sdc create_clock)
 
 # Measurement matrix (predeclared before silicon): segment delay-bank taps
@@ -318,10 +319,10 @@ def parse_case_report(text):
     return {k: {kk: parse_path_block(vv) for kk, vv in v.items()}
             for k, v in cases.items()}
 
-def predicted_fmax_mhz(slack_ns, clk_period_ns=CLK_PERIOD_NS):
+def predicted_fmax_mhz(slack_ns, clk_period_ns=CLK_PERIOD_NS, duty=CAPTURE_DUTY):
     """Clock period at which the case-analyzed capture path first fails setup,
     holding clock-tree delays, setup and uncertainty at the analyzed corner:
-    T_fail = T_clk - slack (linear translation of slack to period)."""
+    T_fail = T_clk - slack / duty (rising launch -> falling capture)."""
     if slack_ns is None:
         return None
-    return 1e3 / (clk_period_ns - slack_ns)
+    return 1e3 / (clk_period_ns - slack_ns / duty)

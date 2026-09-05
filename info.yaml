@@ -3,7 +3,7 @@ project:
   title:        "Timing-Prediction Test Vehicle"
   author:       "ECHO-HELLO-WORLD424"
   discord:      ""
-  description:  "Self-checking arithmetic timing-failure test vehicle with ring-oscillator delay canaries (pre/post-silicon timing-prediction study on IHP SG13G2)"
+  description:  "Half-cycle self-checking arithmetic timing-failure test vehicle with ring-oscillator delay canaries (pre/post-silicon timing-prediction study on IHP SG13G2)"
   language:     "Verilog" # other examples include SystemVerilog, Amaranth, VHDL, etc
   clock_hz:     50000000
 

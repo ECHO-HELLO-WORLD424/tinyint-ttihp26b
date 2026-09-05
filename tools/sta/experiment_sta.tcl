@@ -5,7 +5,7 @@
 # measurement configuration (cfg word case-analyzed), what is the delay of the
 # runtime-sensitizable path from the pattern-generator registers (lfsr/idx,
 # which change at every frame boundary) to the one-shot DUT capture registers
-# (result_reg, clock-enabled by chk_start)?
+# (result_reg, falling-edge capture gated by capture_pending)?
 #
 # Inputs (environment):
 #   ES_LIB        per-corner merged Liberty (artifacts/run-*/lib/<corner>/*.lib)
@@ -28,6 +28,11 @@ read_verilog $::env(ES_NETLIST)
 link_design tt_um_echoworld424_tpv
 read_spef $::env(ES_SPEF)
 read_sdc $::env(ES_SDC)
+# Experiment-only clock waveform override; signoff constraints are unchanged.
+if {[info exists ::env(ES_PERIOD_NS)]} {
+  set t $::env(ES_PERIOD_NS)
+  create_clock -name clk -period $t -waveform [list 0 [expr {$t * $::env(ES_DUTY)}]] [get_ports clk]
+}
 
 # RO loops: free-running oscillators, not synchronous STA objects.
 set_disable_timing [get_cells -hierarchical {*u_ro_gen*}]
@@ -50,6 +55,12 @@ foreach net [get_nets *result_reg*] {
   }
 }
 puts "ES endpoints ([llength $epins]): [llength $epins] pins"
+if {[llength $epins] != 17} { error "Expected 17 DUT capture endpoints" }
+# Keep every other register endpoint in the oracle/control safety check.
+set control_epins {}
+foreach p [all_registers -data_pins] {
+  if {[lsearch -exact $epins $p] < 0} { lappend control_epins $p }
+}
 
 # -------------------------------------------------------------- startpoints --
 # Pattern-generator runtime registers (lfsr/idx change at every frame load).
@@ -97,8 +108,6 @@ es_case_pins 0 [get_ports {ui_in[7]}]  ;# freeze low while measuring
 # Saturated boot/status registers (constant after the first few cycles).
 es_case_net 1 {boot[1]}
 es_case_net 1 {boot[0]}
-es_case_net 1 {oe_cnt[1]}
-es_case_net 0 {oe_cnt[0]}
 es_case_net 1 {started}
 
 # ------------------------------------------------------------------ reports --

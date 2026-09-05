@@ -37,7 +37,7 @@ NETLIST_SIM = os.path.join(SIMDIR, "netlist_sim.v")
 
 # Wall-clock guard for vvp runs (annotation problems show up as runaway
 # simulation, not as a hang on I/O).
-VVP_TIMEOUT_S = 1800
+VVP_TIMEOUT_S = 180
 
 RESULT_RE = re.compile(r"RESULT (\w+)=(\S+)")
 
@@ -50,8 +50,7 @@ def sdf_path(corner):
     unfiltered file spews thousands of 'Could not find net' errors, so the
     corner SDF is reduced to per-cell IOPATH delays with
     tools/sdf/filter_sdf.py. Wire (interconnect) delays are therefore not
-    annotated; the recorded first-failure boundary is accordingly a small
-    optimistic offset (~1 ns at the slow corner) from the STA prediction.
+    annotated; the recorded first-failure boundary is accordingly an approximation whose offset from STA can have either sign.
     """
     return os.path.join(C.DATA, "sdf_path", f"{corner}.iopath.sdf")
 
@@ -59,8 +58,8 @@ def sdf_path(corner):
 def filter_sdf(corner):
     outdir = os.path.join(C.DATA, "sdf_path")
     os.makedirs(outdir, exist_ok=True)
-    src = ("/work/artifacts/run-%s/sdf/%s/"
-           % (C.RUN_ID, corner) + "tt_um_echoworld424_tpv__%s.sdf" % corner)
+    src = _inner(os.path.join(C.RUN_DIR, "sdf", corner,
+                 "tt_um_echoworld424_tpv__%s.sdf" % corner))
     dst = "/work/" + os.path.relpath(sdf_path(corner), C.REPO)
     cmd = (C.docker_prefix() + ["docker", "run", "--rm"]
            + C.docker_mount_args() + ["-w", "/work", C.LL_IMAGE, "python3",
@@ -112,7 +111,7 @@ def compile_tb():
     print("compiled", vvp)
 
 
-def run_point(period_ns, word, nframes, corner=None, forcecan=None):
+def run_point(period_ns, word, nframes, corner=None, forcecan=None, duty=0.5):
     """word: 16-bit cfg word; returns dict of RESULT fields.
 
     forcecan: None = keep word bits; 0/1 = override FORCE_CAN (word[14]).
@@ -126,7 +125,8 @@ def run_point(period_ns, word, nframes, corner=None, forcecan=None):
     else:
         word = word & ~(1 << 14)
     args = [
-        "+period=%d" % period_ns,
+        "+period=%g" % period_ns,
+        "+duty=%g" % duty,
         "+segs=%x" % (word & 0xFF),
         "+pat=%d" % ((word >> 8) & 3),
         "+cansel=%d" % ((word >> 10) & 3),
@@ -144,8 +144,8 @@ def run_point(period_ns, word, nframes, corner=None, forcecan=None):
     res = subprocess.run(cmd, capture_output=True, text=True,
                          timeout=VVP_TIMEOUT_S)
     log = os.path.join(
-        SIMDIR, "run_p%d_w%04x%s.log"
-        % (period_ns, word, "_" + corner if corner else "_zdelay"))
+        SIMDIR, "run_p%g_d%g_w%04x%s.log"
+        % (period_ns, duty, word, "_" + corner if corner else "_zdelay"))
     open(log, "w").write(res.stdout + "\n===STDERR===\n" + res.stderr)
     # Surface annotation problems: unannotated IOPATH / bad instance refs.
     warns = [l for l in res.stderr.splitlines()
@@ -155,6 +155,11 @@ def run_point(period_ns, word, nframes, corner=None, forcecan=None):
             len(warns), warns[0][:120],
             " ..." if len(warns) > 1 else ""))
     fields = dict(RESULT_RE.findall(res.stdout))
+    if res.returncode or "SDF ERROR" in res.stdout + res.stderr:
+        raise RuntimeError(f"simulation/annotation failed: {log}")
+    for key in ("ops", "err_cnt", "gen_cnt", "mat_cnt"):
+        if key not in fields or not fields[key].isdigit():
+            raise RuntimeError(f"missing/unknown {key}: {log}")
     fields["log"] = os.path.basename(log)
     return fields
 
@@ -166,7 +171,7 @@ def main():
                     help="zero-delay functional reference points only")
     args = ap.parse_args()
     os.makedirs(C.DATA, exist_ok=True)
-    for corner in ("nom_slow_1p08V_125C", "nom_typ_1p20V_25C"):
+    for corner in C.CORNER_NAMES:
         filter_sdf(corner)
     compile_tb()
 
@@ -176,13 +181,12 @@ def main():
     # Zero-delay functional reference: must be error-free at any period.
     points = [(20, None)]
     if not args.no_sdf:
-        # Periods bracketing the STA-predicted slow-corner knee
-        # (seg=3333, worst: 24.81 ns data path -> predicted T_fail 25.26 ns)
-        # and the typ-corner knee (15.82 ns -> 16.19 ns).
-        for t in (22, 24, 25, 26, 28, 30, 40):
-            points.append((t, "nom_slow_1p08V_125C"))
-        for t in (14, 16, 18, 20):
+        for t in (18, 20, 22, 24, 26):
+            points.append((t, "nom_fast_1p32V_m40C"))
+        for t in (20, 26, 28, 30, 32, 34, 36, 40):
             points.append((t, "nom_typ_1p20V_25C"))
+        for t in (36, 40, 42, 44, 46, 48, 50, 54, 60):
+            points.append((t, "nom_slow_1p08V_125C"))
 
     rows = []
     for period, corner in points:
@@ -190,6 +194,8 @@ def main():
         row = {
             "corner": corner or "(zero-delay reference)",
             "period_ns": period,
+            "capture_duty": 0.5,
+            "high_time_ns": period * 0.5,
             "freq_mhz": round(1e3 / period, 3),
             "cfg_word": "0x%04X" % (word | (1 << 14)),
             "segs": "3333",
@@ -199,10 +205,11 @@ def main():
             "forcecan": 1,
             "nframes_req": nframes,
             "ops": f.get("ops", ""),
+            "n_compared": max(int(f["ops"]) - 1, 0),
             "err_cnt": f.get("err_cnt", ""),
             "err_rate_per_op": (
-                round(int(f["err_cnt"]) / int(f["ops"]), 6)
-                if f.get("err_cnt") and f.get("ops") and int(f["ops"]) else ""),
+                round(int(f["err_cnt"]) / (int(f["ops"]) - 1), 6)
+                if f.get("err_cnt") and f.get("ops") and int(f["ops"]) > 1 else ""),
             "gen_cnt": f.get("gen_cnt", ""),
             "mat_cnt": f.get("mat_cnt", ""),
             "cfg_echo": f.get("cfg_echo", ""),
@@ -221,53 +228,8 @@ def main():
               "err", row["err_cnt"], "/", row["ops"],
               "gen", row["gen_cnt"], "mat", row["mat_cnt"])
 
-    # RO canary cross-check: with the SDF annotated and the loops live
-    # (FORCE_CAN off), the edge counters would measure the annotated
-    # oscillation over a small window -- compare against the STA loop-delay
-    # prediction in data/ro_predict.csv (P1.3). INVALID for that purpose:
-    # pnr.sdc disables the RO timing arcs, so write_sdf emits hard 0.000
-    # IOPATH triples for every u_ro_* cell (see
-    # docs/ro-sdf-crosscheck-diagnosis.md). The loops then race at ~zero
-    # delay and the counters latch deterministic simulator race artifacts,
-    # not oscillation counts. The row is kept for its DUT error count only;
-    # gen_cnt/mat_cnt are blanked here so they cannot be mistaken for RO
-    # measurements. RO frequency prediction is the STA loop-delay model
-    # (data/ro_predict.csv); extracted transient SPICE remains the
-    # validation path if an engine becomes available.
-    ro_frames = 30
-    f = run_point(20, word, ro_frames, "nom_slow_1p08V_125C", forcecan=0)
-    rows.append({
-        "corner": "nom_slow_1p08V_125C",
-        "period_ns": 20,
-        "freq_mhz": 50.0,
-        "cfg_word": "0x%04X" % (word & ~(1 << 14)),
-        "segs": "3333",
-        "pattern": "worst",
-        "cansel": 3,
-        "winsel": 0,
-        "forcecan": 0,
-        "nframes_req": ro_frames,
-        "ops": f.get("ops", ""),
-        "err_cnt": f.get("err_cnt", ""),
-        "err_rate_per_op": (
-            round(int(f["err_cnt"]) / int(f["ops"]), 6)
-            if f.get("err_cnt") and f.get("ops") and int(f["ops"]) else ""),
-        "gen_cnt": "",
-        "mat_cnt": "",
-        "cfg_echo": f.get("cfg_echo", ""),
-        "stat": f.get("stat", ""),
-        "err_dut": f.get("err_dut", ""),
-        "ro_note": ("invalid: RO cells zero-annotated (disabled arcs); "
-                    "counts blanked, see docs/ro-sdf-crosscheck-diagnosis.md"),
-        "sdf": sdf_path("nom_slow_1p08V_125C"),
-        "run_id": C.RUN_ID,
-        "git_commit": C.GIT_COMMIT,
-        "librelane_image": C.LL_IMAGE,
-        "pdk_rev": C.CIEL_PDK_REV,
-        "log": f.get("log", ""),
-    })
-    print("RO cross-check (DUT-only, RO counts blanked):",
-          {k: f.get(k) for k in ("ops", "err_cnt", "cfg_echo")})
+    # Do not run the known-invalid zero-annotated RO cross-check. RO frequency
+    # remains a separate broken-loop STA estimate, not an SDF measurement.
 
     csv_path = os.path.join(C.DATA, "sdfsim.csv")
     with open(csv_path, "w", newline="") as fh:

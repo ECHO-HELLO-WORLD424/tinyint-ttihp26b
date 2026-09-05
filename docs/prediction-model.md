@@ -1,176 +1,104 @@
-# Frozen pre-silicon prediction protocol
+# Predeclared prediction model v2
 
-Model version: **`tpv-predict-1.0.1`**. This document is the protocol fixed
-before any silicon measurement. Predictor definitions, the calibration
-equations, thresholds, and metrics below may only change by publishing a new
-model version *before* post-silicon data is examined; after silicon arrives,
-the only permitted change is substituting measured values into the calibration
-factor (and the measured ground truth). Generated outputs: `data/predict/`
-(`tools/predict_model.py`). Field units and RTL mirrors:
-`docs/data-dictionary.md`.
+Model: **tpv-predict-2.0.0**, development branch `proposal-canary-dev`.
+Frozen before post-silicon data. This replaces the full-cycle v1 analysis for the
+new half-cycle RTL; the original `data/predict/` and archived CI build remain
+historical v1 results. V2 inputs/outputs are under `data/halfcycle/`.
 
-Revision history: `1.0.0` first frozen revision; `1.0.1` (still pre-silicon)
-adds the `1e-6`/op threshold as a scored boundary, predeclares the anchor
-fallback `A'` and censoring contingency (the nominal anchor may be
-unreachable on the board), and corrects the canary-counter semantics (16-bit
-wrap, not saturation) — see `docs/post-silicon-protocol.md`.
+## Timing aperture and STA predictor
 
-## Inputs (pinned)
+Operands launch on a rising clock edge. `capture_pending` accepts that launch and
+causes exactly one capture on the immediately following falling edge. The captured
+result holds until the next 19-cycle frame boundary. The combinational oracle
+settles on stable operands before that comparison.
 
-- `data/experiment_sta.csv` (96 rows), `data/ro_predict.csv` (24 rows),
-  `data/sdfsim.csv` — all regenerated against hardening run `33839023290`,
-  commit `1e31757e50080b19fa7642b8b9cd6822f64b1d11`, LibreLane image
-  `ghcr.io/librelane/librelane:3.0.5`, PDK ciel revision
-  `c4b8b4e5e7a05f375cca3815d51b3a37721fbf5c`. The model script asserts this
-  provenance is constant across all inputs.
-- Conventions: 19-cycle frames; 16-bit canary counters that WRAP mod 65536
-  (telemetry; only `err_cnt`/`ops_cnt` saturate in hardware); window win =
-  `2^(8+2*win)` clk cycles; nominal corner `nom_typ_1p20V_25C`;
-  predeclared canary readout **can_sel = 3, win0** (256 clk cycles).
+For period T, high-time fraction d, and extracted setup slack S at that waveform:
 
-## Ground truth (post-silicon first-failure boundary)
+- Available aperture H = d × T.
+- Required aperture H_required = d × T − S.
+- Predicted boundary period T_boundary = H_required / d = T − S/d.
+- Predicted boundary frequency F = 1000 / T_boundary (MHz for ns inputs).
 
-An operating point (corner, seg config, pattern, period `T`) FAILS iff
-`err_cnt >= 1` is observed over the run (`N_ops >= 200`; larger `N_ops` on
-silicon, recorded per point). Primary boundary threshold: first error.
-Secondary thresholds `err_rate >= 1e-6`, `1e-4`, and `1e-2` per op are
-recorded and scored (boundary extraction and metrics computed per
-threshold); calibration uses the primary first-error threshold only.
-Threshold boundaries are extracted per `docs/post-silicon-protocol.md`
-(bracket midpoint, per-threshold).
+The committed nominal predictions use d = 0.5 and T = 20 ns. They include the
+extracted launch/capture clock paths, clock inversion, setup and the existing
+250 ps setup uncertainty. The original full-cycle formula T − S is **wrong for
+this RTL**. `tools/verify_halfcycle.py` checks the formula against raw STA at
+20/40 ns and duty fractions 0.4/0.5/0.6, and tests equal high times in SDF.
 
-Sweep protocol: frequency up then down; a point's bracket is
-`[last failing period, first passing period]`. The measured boundary is the
-bracket midpoint:
+Use measured clock HIGH time and its uncertainty in silicon comparisons. To
+compare frequencies across duty ratios, normalize to a 50% duty-equivalent
+frequency F_equiv = 500 / H_measured (MHz). Clock-path duty distortion remains
+part of the uncertainty; a board-pin measurement is not an internal die probe.
+Do not silently calibrate away an unmeasured duty-cycle error.
 
-    T_meas = (T_last_fail + T_first_pass) / 2      [ns]
-    F_meas = 1000 / T_meas                          [MHz]
+STA case-analyzes static configuration and reports runtime pattern-state paths
+to all 17 capture flops. The global signoff path is not substituted for these
+paths. `control_slack_ns` reports the worst other register endpoint for each
+case; it must remain positive throughout the claimed operating envelope.
+`hold` has no runtime path; its prediction remains empty rather than zero.
 
-## Predictors (frozen definitions)
+## Canary predictors
 
-Let `nom = nom_typ_1p20V_25C` and `N_x(c)` = canary `x` edge count at the
-readout config (can_sel 3, win0) at corner `c`.
+The generic and matched predictors independently scale the nominal STA ladder:
 
-1. **P_STA** (uncalibrated extracted STA):
+P_x(c, seg, pattern) = P_STA(nominal, seg, pattern) × R_x(c).
 
-       P_STA(cfg, pat, c) = 1000 / (T_clk - slack(cfg, pat, c))   [MHz]
+Pre-silicon R_x(c) is the ratio of the corner's modeled RO count to the nominal
+modeled count at the **same** reference clock, selection and window. The model
+uses selection 3, window 0, and a 50 MHz reference clock (256 nominal cycles).
+At a different measurement clock, normalize unwrapped counts to the reference
+clock: N_ref = N_measured × f_measured / 50 MHz. Raw unnormalized counts at two
+different clock frequencies are not a delay ratio.
 
-   with `slack` from the case-analyzed runtime path (`u_pat -> result_reg`)
-   at corner `c` and analysis point `T_clk = 20 ns`; per-corner linear
-   translation of slack, clock tree/uncertainty held at the corner.
+Both counters are 16-bit ripple counters and wrap modulo 65536. `sat_win*` in
+the RO dataset means a modeled overflow risk; there is no hardware saturation
+or overflow flag for the canaries. Reject wrapped/ambiguous telemetry with a
+recorded exclusion. Do not shorten counters or drop negative correlation results.
 
-2. **P_GEN** (generic-RO canary):
+The window counter runs during enabled boot clocks, while the RO gate opens
+only at boot completion. Depending on configuration's FREEZE bit during boot,
+the actual initial RO interval can be shorter than the nominal window by up to
+three clocks. Retain identical configuration/boot handling at calibration and
+measurement; report this small window-model uncertainty. This is inherited
+behavior, not resolved by the half-cycle change.
 
-       P_GEN(cfg, pat, c) = P_STA(cfg, pat, nom) * N_gen(c) / N_gen(nom)
+RO frequencies remain **broken-loop extracted STA estimates**, not transient
+SPICE-validated oscillation measurements. The signoff SDF has disabled RO arcs;
+a free-running SDF RO simulation would be invalid. The SDF sweep masks the ROs.
 
-3. **P_MAT** (structure-matched-RO canary):
+## Calibration and scoring
 
-       P_MAT(cfg, pat, c) = P_STA(cfg, pat, nom) * N_mat(c) / N_mat(nom)
+The single anchor is nominal core voltage (1.20 V), ambient near 25 °C,
+seg3333/worst, selection 3/window 0, characterized 50% duty. Capture the anchor
+before examining other post-silicon boundary outcomes. For each predictor:
 
-Both canary predictors are **monotone maps from canary count to predicted DUT
-first-failure frequency** (higher count = faster silicon = higher predicted
-boundary; equivalently in the period domain `T_x = T_STA(nom) * N_x(nom) /
-N_x(c)`). They are built ONLY from nominal-corner structure: the nominal STA
-ladder provides the configuration/workload dependence, the canary count ratio
-provides the PVT tracking. At `c = nom` all three predictors equal the
-nominal STA ladder by construction. With only three PVT corners available
-pre-silicon, **no free parameters are fitted** to corner data; the model may
-be judged on corner-wise rank correlation but nothing is fitted per point.
+k_x = F_measured_equiv(anchor) / P_x(anchor), and P_x_cal = k_x × P_x.
 
-Consequence, stated up front: because the canary predictors are anchored to
-the nominal STA ladder, `P_STA = P_GEN = P_MAT` at nominal; the predictors
-differ only through their corner scaling, and all three one-point calibration
-factors coincide numerically at the anchor. Predictor merit is therefore
-evaluated at non-nominal corners and across configurations, never at the
-anchor itself.
+Pre-silicon k_x = 1.0 is explicitly a placeholder, not a fitted result. Apply
+the same k_x to all remaining points. If the anchor is censored above 50 MHz,
+report calibration unavailable. **Do not move to a heated/undervolted anchor
+chosen after looking at other outcomes.** A new anchor needs a separately
+versioned prospective protocol before additional outcome inspection.
 
-## One-point calibration (predeclared)
+Score first observed error and error probabilities 1e-6, 1e-4 and 1e-2 per
+completed comparison. Preserve pass/fail brackets; do not turn censored points
+into measured boundary values. Report signed/absolute/relative boundary error,
+rank correlation, workload dependence, missed-failure probability, false-warning
+rate and guardband cost. Compare uncalibrated and calibrated predictions on the
+same held-out points. Predeclare guardband fractions 0, 5%, 10%, 20%; warn when
+operating frequency exceeds (1 − guardband) × predicted boundary. Use the same
+rules for both canaries and STA, and do not tune guardbands to silicon outcomes.
 
-Primary anchor `A = (1.20 V, 25 °C, seg3333, pattern = worst)`, measured on
-the same die at the same readout config. The nominal seg3333/worst knee is
-predicted at 61.46 MHz, above the 50 MHz board ceiling, so `A` may be
-unmeasurable on the board. Predeclared fallback, applied in order without
-examining any other boundary data:
+## Scope and limitations
 
-- `A' = (1.08 V, maximum reachable temperature, seg3333, pattern = worst)`
-  (matched to the slow corner, predicted knee 39.34 MHz — inside range);
-  when `A'` is used, the calibration ratio is defined in the PERIOD domain
-  against the slow-corner predictions and the die temperature is recorded
-  with the point.
-- If neither `A` nor `A'` is reachable (no voltage/temperature control),
-  calibration is censored: report uncalibrated metrics only and state the
-  censoring explicitly in the results.
+The three library corners jointly vary process, voltage and temperature. They
+are not three temperatures of a single die. An 85 °C observation must not be
+joined to the 125 °C slow corner as an exact-PVT prediction. Quantitative V/T
+validation beyond these corners requires fixed-process characterization at the
+measured conditions; otherwise report model mismatch explicitly.
 
-For each predictor `x` at the measured anchor:
-
-    k_x   = F_meas(A) / P_x(A)          [dimensionless, one per predictor]
-    P_x_cal(cfg, pat, c) = k_x * P_x(cfg, pat, c)     (everywhere, unchanged)
-    T_x_cal(cfg, pat, c) = T_x(cfg, pat, c) / k_x     (period domain)
-
-Pseudocode:
-
-```
-for x in ["sta", "ro_gen", "ro_mat"]:
-    F_pred_A = predict(x, corner="nom_typ_1p20V_25C", segs=3333, pattern="worst")
-    k[x] = F_meas_A / F_pred_A          # single measured division
-    for (corner, segs, pat) in measurement_matrix:
-        P_cal = k[x] * predict(x, corner, segs, pat)
-        emit(x, corner, segs, pat, P_cal)
-```
-
-`data/predict/predictions.csv` already contains the placeholder rows
-(`cal_k = 1.0`, `*_cal = uncalibrated`); the post-silicon run substitutes the
-measured `k_x` values and nothing else. At the nominal anchor the three
-`k_x` coincide numerically at pre-silicon; they are still emitted
-per-predictor so the anchor definition can move without redefining the model.
-
-## Post-silicon evaluation metrics (predeclared)
-
-For each measured point with calibrated prediction `P_cal` and measured
-boundary `F_meas`:
-
-- **Boundary error**: `e_abs = P_cal - F_meas` [MHz] and
-  `e_rel = (P_cal - F_meas) / F_meas` [%]; positive = overprediction
-  (missed-failure risk).
-- **Guardband rule**: an operating frequency `f_op` is declared safe iff
-  `f_op <= P_cal * (1 - g)`.
-- **Missed-failure rate**: fraction of measured failing points declared safe.
-- **False-warning rate**: fraction of measured passing points declared unsafe.
-- **Required guardband** `g*`: minimum `g` achieving zero missed failures on
-  the measured sweep; **guardband cost** = `g*` (fraction of predicted
-  boundary frequency unused), also reported as `g* * P_cal` [MHz].
-- **Rank correlation**: Spearman rank correlation between `P_cal` and
-  `F_meas` across all measured (cfg x pat x corner) boundary points.
-- **Workload dependence**: `e_rel` compared across patterns (prbs, worst,
-  alt; hold excluded by construction).
-- **Calibration benefit**: identical metrics computed uncalibrated vs
-  calibrated; the delta is the reported value of one-point calibration.
-
-## Known limitations (part of the protocol, not footnotes)
-
-- The STA knee is a linear slack translation; validity degrades far from the
-  20 ns analysis point.
-- The SDF boundary is IOPATH-only annotated (wire interconnect unannotated;
-  Icarus's interconnect annotator crashes on this design), so the sim is
-  optimistic by ~1.3-3.4 ns vs STA (`data/predict/summary.md` cross-check).
-- The `sdfsim.csv` RO cross-check row (FORCE_CAN off) is INVALID: RO loop
-  cells carry hard 0.000 SDF delays because `src/pnr.sdc` disables RO timing
-  arcs (`docs/ro-sdf-crosscheck-diagnosis.md`). Its counts are excluded from
-  this model.
-- `alt` knees lie above the 50 MHz board ceiling (not measurable there);
-  `hold` has no runtime path (no prediction by construction).
-- Canary counts are floor-quantized (+-1 edge); at win0 counts >= 240 the
-  ratio quantization is <= ~0.4%.
-- Canary counters wrap mod 65536 (no saturation flag in hardware); at the
-  predeclared readout (can_sel 3, win0) all counts fit without wrapping.
-  Larger windows require host-side unwrapping per
-  `docs/post-silicon-protocol.md`.
-- Canary counts are floor-quantized (+-1 edge); at win0 counts >= 240 the
-  ratio quantization is <= ~0.4%.
-- One die: all claims are within-die PVT/workload validation, not process
-  distribution.
-
-## model_version
-
-`tpv-predict-1.0.1` — current frozen revision. Bumping the version requires a
-revised pre-declaration committed before silicon data is examined.
+The full-chip timed simulation uses per-cell IOPATH SDF, with wire interconnect
+and flip-flop timing checks omitted. Its boundary can differ from extracted
+STA in either direction. It confirms workload sensitization and falling-edge
+capture, not metastability, absolute failure probabilities or RO oscillation.
+One die supports within-die workload/PVT conclusions, not a process distribution.
