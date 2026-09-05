@@ -16,6 +16,7 @@ import os
 
 import cocotb
 from cocotb.triggers import Timer
+from cocotb.handle import Force, Release
 
 FRAME = 19  # cycles per measured operation
 
@@ -391,3 +392,30 @@ async def test_frame_strobe_pacing(dut):
         dut.clk.value = 0
         await Timer(CLK_HALF, "ns")
     assert strobes == 36, strobes
+
+
+@cocotb.test(skip=GL)
+async def test_ro_ripple_counter_wrap(dut):
+    """Known injected RO edges verify binary carry, wrap and reset in both counters."""
+    await configure(dut, cfg_word(force_can=1))
+    await freeze(dut, True)
+    nodes = (dut.user_project.u_ro_gen.ro_node, dut.user_project.u_ro_mat.ro_node)
+    for node in nodes:
+        node.value = Force(0)
+    await Timer(2, "ns")
+    for count in range(1, 65540):
+        for node in nodes:
+            node.value = Force(1)
+        await Timer(2, "ns")
+        if count in (1, 2, 3, 255, 256, 32768, 65535, 65536, 65539):
+            assert int(dut.user_project.gen_cnt.value) == count % 65536
+            assert int(dut.user_project.mat_cnt.value) == count % 65536
+        for node in nodes:
+            node.value = Force(0)
+        await Timer(2, "ns")
+    for node in nodes:
+        node.value = Release()
+    dut.rst_n.value = 0
+    await Timer(2, "ns")
+    assert int(dut.user_project.gen_cnt.value) == 0
+    assert int(dut.user_project.mat_cnt.value) == 0

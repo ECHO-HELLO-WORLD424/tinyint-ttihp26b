@@ -8,8 +8,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-`default_nettype none
-`timescale 1ns / 1ps
+`default_nettype none `timescale 1ns / 1ps
 
 /* Tunable inverter line for RO loops (delay-bearing in simulation, so the
    loops oscillate; see tpv_inv_ro). Same tap structure as tpv_delay_line. */
@@ -30,17 +29,20 @@ module tpv_ro_line #(
   genvar i;
   generate
     for (i = 0; i < N_INV; i = i + 1) begin : g_inv
-      tpv_inv_ro u_inv (.a(node[i]), .y(node[i+1]));
+      tpv_inv_ro u_inv (
+          .a(node[i]),
+          .y(node[i+1])
+      );
     end
   endgenerate
 
   tpv_tap_mux4 u_mux (
-    .n0 (node[0]),
-    .n1 (node[2*TAP]),
-    .n2 (node[4*TAP]),
-    .n3 (node[N_INV]),
-    .sel(sel),
-    .out(d_out)
+      .n0 (node[0]),
+      .n1 (node[2*TAP]),
+      .n2 (node[4*TAP]),
+      .n3 (node[N_INV]),
+      .sel(sel),
+      .out(d_out)
   );
 
 endmodule
@@ -52,23 +54,23 @@ endmodule
    repair, no metastable enable sampling). */
 module tpv_ro_gen (
     input  wire        rst_n,
-    input  wire        en,      /* loop enable (window active) */
-    input  wire [1:0]  sel,
-    input  wire        mask,    /* 1 = stall loop, counter stays zero */
+    input  wire        en,       /* loop enable (window active) */
+    input  wire [ 1:0] sel,
+    input  wire        mask,     /* 1 = stall loop, counter stays zero */
     output wire        ro_node,
-    output reg  [15:0] cnt
+    output wire [15:0] cnt
 );
-  wire       nand_out;
-  wire       line_out;
-  wire       close;
+  wire nand_out;
+  wire line_out;
+  wire close;
 
   tpv_ro_line #(
-    .N_PAIRS(21),
-    .TAP    (7)
+      .N_PAIRS(21),
+      .TAP    (7)
   ) u_line (
-    .d_in (nand_out),
-    .sel  (sel),
-    .d_out(line_out)
+      .d_in (nand_out),
+      .sel  (sel),
+      .d_out(line_out)
   );
 
   (* keep *) wire [8:0] tail;
@@ -77,25 +79,48 @@ module tpv_ro_gen (
   genvar i;
   generate
     for (i = 0; i < 8; i = i + 1) begin : g_tail
-      tpv_inv_ro u_t (.a(tail[i]), .y(tail[i+1]));
+      tpv_inv_ro u_t (
+          .a(tail[i]),
+          .y(tail[i+1])
+      );
     end
   endgenerate
 
-  tpv_inv_ro u_close (.a(tail[8]), .y(close));
+  tpv_inv_ro u_close (
+      .a(tail[8]),
+      .y(close)
+  );
   tpv_ro_gate u_gate (
-    .en      (en),
-    .mask    (mask),
-    .close   (close),
-    .rst_n   (rst_n),
-    .nand_out(nand_out)
+      .en      (en),
+      .mask    (mask),
+      .close   (close),
+      .rst_n   (rst_n),
+      .nand_out(nand_out)
   );
 
   assign ro_node = nand_out;
 
+  /* True ripple edge counter: only bit 0 sees the full RO frequency.
+     Higher bits toggle on the preceding bit's falling edge (binary carry).
+     Read only after the loop stops and the ripple settles. No wide adder
+     must meet a sub-nanosecond RO clock period. */
+  reg count_lsb;
+  assign cnt[0] = count_lsb;
   always @(posedge ro_node or negedge rst_n) begin
-    if (!rst_n) cnt <= 16'd0;
-    else        cnt <= cnt + 16'd1;
+    if (!rst_n) count_lsb <= 1'b0;
+    else count_lsb <= ~count_lsb;
   end
+  genvar bit_idx;
+  generate
+    for (bit_idx = 1; bit_idx < 16; bit_idx = bit_idx + 1) begin : g_count
+      reg count_bit;
+      assign cnt[bit_idx] = count_bit;
+      always @(negedge cnt[bit_idx-1] or negedge rst_n) begin
+        if (!rst_n) count_bit <= 1'b0;
+        else count_bit <= ~count_bit;
+      end
+    end
+  endgenerate
 
 endmodule
 
@@ -105,27 +130,47 @@ endmodule
 module tpv_ro_match (
     input  wire        rst_n,
     input  wire        en,
-    input  wire [1:0]  sel,
+    input  wire [ 1:0] sel,
     input  wire        mask,
     output wire        ro_node,
-    output reg  [15:0] cnt
+    output wire [15:0] cnt
 );
-  wire       nand_out;
-  wire       close;
-  wire       l0, l1;
-  wire       f0, f1;
-  wire       f0s, f1s;  /* unused FA sum outputs */
+  wire nand_out;
+  wire close;
+  wire l0, l1;
+  wire f0, f1;
+  wire f0s, f1s;  /* unused FA sum outputs */
 
   tpv_ro_line #(
-    .N_PAIRS(33),
-    .TAP    (11)
-  ) u_line0 (.d_in(nand_out), .sel(sel), .d_out(l0));
-  tpv_fa u_f0 (.a(1'b1), .b(1'b0), .ci(l0), .s(f0s), .co(f0));
+      .N_PAIRS(33),
+      .TAP    (11)
+  ) u_line0 (
+      .d_in (nand_out),
+      .sel  (sel),
+      .d_out(l0)
+  );
+  tpv_fa u_f0 (
+      .a (1'b1),
+      .b (1'b0),
+      .ci(l0),
+      .s (f0s),
+      .co(f0)
+  );
   tpv_ro_line #(
-    .N_PAIRS(33),
-    .TAP    (11)
-  ) u_line1 (.d_in(f0), .sel(sel), .d_out(l1));
-  tpv_fa u_f1 (.a(1'b1), .b(1'b0), .ci(l1), .s(f1s), .co(f1));
+      .N_PAIRS(33),
+      .TAP    (11)
+  ) u_line1 (
+      .d_in (f0),
+      .sel  (sel),
+      .d_out(l1)
+  );
+  tpv_fa u_f1 (
+      .a (1'b1),
+      .b (1'b0),
+      .ci(l1),
+      .s (f1s),
+      .co(f1)
+  );
 
   /* List the unused FA sum outputs to prevent warnings */
   wire _unused = &{f0s, f1s, 1'b0};
@@ -136,24 +181,47 @@ module tpv_ro_match (
   genvar i;
   generate
     for (i = 0; i < 8; i = i + 1) begin : g_tail
-      tpv_inv_ro u_t (.a(tail[i]), .y(tail[i+1]));
+      tpv_inv_ro u_t (
+          .a(tail[i]),
+          .y(tail[i+1])
+      );
     end
   endgenerate
 
-  tpv_inv_ro u_close (.a(tail[8]), .y(close));
+  tpv_inv_ro u_close (
+      .a(tail[8]),
+      .y(close)
+  );
   tpv_ro_gate u_gate (
-    .en      (en),
-    .mask    (mask),
-    .close   (close),
-    .rst_n   (rst_n),
-    .nand_out(nand_out)
+      .en      (en),
+      .mask    (mask),
+      .close   (close),
+      .rst_n   (rst_n),
+      .nand_out(nand_out)
   );
 
   assign ro_node = nand_out;
 
+  /* True ripple edge counter: only bit 0 sees the full RO frequency.
+     Higher bits toggle on the preceding bit's falling edge (binary carry).
+     Read only after the loop stops and the ripple settles. No wide adder
+     must meet a sub-nanosecond RO clock period. */
+  reg count_lsb;
+  assign cnt[0] = count_lsb;
   always @(posedge ro_node or negedge rst_n) begin
-    if (!rst_n) cnt <= 16'd0;
-    else        cnt <= cnt + 16'd1;
+    if (!rst_n) count_lsb <= 1'b0;
+    else count_lsb <= ~count_lsb;
   end
+  genvar bit_idx;
+  generate
+    for (bit_idx = 1; bit_idx < 16; bit_idx = bit_idx + 1) begin : g_count
+      reg count_bit;
+      assign cnt[bit_idx] = count_bit;
+      always @(negedge cnt[bit_idx-1] or negedge rst_n) begin
+        if (!rst_n) count_bit <= 1'b0;
+        else count_bit <= ~count_bit;
+      end
+    end
+  endgenerate
 
 endmodule
