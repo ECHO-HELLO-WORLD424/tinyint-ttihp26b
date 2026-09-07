@@ -1,3 +1,9 @@
+> **10 MHz submission candidate:** normal operation is specified at 10 MHz,
+> 50% duty (100 ns period). The 10–50 MHz research sweep deliberately exceeds
+> that timing-safe specification. Verification is tracked in
+> [the attempt log](ci-timing-closure-attempts.md). Earlier physical results below
+> remain evidence for the earlier build until replaced by fresh results.
+
 # Research Proposal — Timing-Prediction Test Vehicle on IHP SG13G2 (ttihp26b)
 
 Revision 2, development branch `proposal-canary-dev`. This proposal describes the
@@ -23,7 +29,7 @@ Negative correlations and boundaries outside the measurement range remain result
 ## Implemented architecture
 
 The design occupies one 1x1 Tiny Tapeout tile, with the standard interface and a
-nominal maximum submitted clock of 50 MHz.
+normal submitted clock of 10 MHz and experimental ceiling of 50 MHz.
 
 1. **Arithmetic DUT:** a structurally preserved 16-bit ripple-carry adder divided
    into four 4-bit segments. Each carry boundary, including final carry-out, has

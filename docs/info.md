@@ -1,3 +1,9 @@
+> **10 MHz submission candidate:** normal operation is specified at 10 MHz,
+> 50% duty (100 ns period). The 10–50 MHz research sweep deliberately exceeds
+> that timing-safe specification. Verification is tracked in
+> [the attempt log](ci-timing-closure-attempts.md). Earlier physical results below
+> remain evidence for the earlier build until replaced by fresh results.
+
 <!---
 
 This file is used to generate your project datasheet. Please fill in the information below and delete any unused

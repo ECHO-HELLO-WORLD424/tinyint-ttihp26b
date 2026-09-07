@@ -1,3 +1,10 @@
+## 2026-09-08: 10 MHz normal-operation candidate
+
+User authorized separating 10 MHz submitted operation from deliberate 10–50 MHz
+experimental sweeps. Fresh verification is in progress; see
+[the attempt log](docs/ci-timing-closure-attempts.md). Historical 50 MHz signoff
+failures below refer to the preceding build. No setup exceptions are introduced.
+
 # Pre-Silicon Readiness Audit and Action Plan
 
 ## Development candidate implemented — proposal-canary-dev

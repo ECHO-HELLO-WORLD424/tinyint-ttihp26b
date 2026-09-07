@@ -33,7 +33,8 @@ rate, guardband cost, workload dependence, and an open pre/post-silicon dataset.
 
 - Process and shuttle: IHP SG13G2, Tiny Tapeout `ttihp26b`.
 - Tile size: `1x1`.
-- Nominal maximum submitted clock: 50 MHz (`20 ns` period).
+- Normal submitted clock: 10 MHz (`100 ns` period, 50% duty).
+- Experimental failure sweep: 10–50 MHz; not guaranteed error-free operation.
 - HDL: synthesizable Verilog.
 - Top module: `tt_um_echoworld424_tpv`.
 - Tiny Tapeout metadata: `info.yaml`.
