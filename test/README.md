@@ -1,47 +1,71 @@
-# Sample testbench for a Tiny Tapeout project
+# Verification
 
-This is a sample testbench for a Tiny Tapeout project. It uses [cocotb](https://docs.cocotb.org/en/stable/) to drive the DUT and check the outputs.
-See below to get started or for more information, check the [website](https://tinytapeout.com/hdl/testing/).
+The cocotb suite verifies configuration capture, boot timing, the 19-cycle
+operation frame, all four pattern classes, selectable DUT delay paths,
+one-shot result capture, error accounting, DFT injection, canary windows,
+freeze semantics, status readout, and mid-run reset/reconfiguration.
 
-## Setting up
+Run HDL tests inside the repository devcontainer, where `/ttsetup/venv` and
+the IHP SG13G2 PDK are configured.
 
-1. Edit [Makefile](Makefile) and modify `PROJECT_SOURCES` to point to your Verilog files.
-2. Edit [tb.v](tb.v) and replace `tt_um_example` with your module name.
-
-## How to run
-
-To run the RTL simulation:
+## RTL regression
 
 ```sh
-make -B
+make clean
+make
 ```
 
-To run gatelevel simulation, first harden your project and copy `../runs/wokwi/results/final/verilog/gl/{your_module_name}.v` to `gate_level_netlist.v`.
+Expected baseline: **13 passing tests** (merged half-cycle design; the
+archived full-cycle build's baseline was 10). Inspect `results.xml`; the
+cocotb
+simulator make rules may not propagate every test failure through the process
+exit code.
 
-Then run:
+The RTL build defines `TPV_GDELAY=1`, which supplies simulation-only delay to
+the intentional RO loops. It has no synthesis effect.
+
+## Functional gate-level regression
+
+Copy the routed/synthesized netlist from the archived merged-design build:
 
 ```sh
-make -B GATES=yes
+cp ../artifacts/run-34158224984/submission/tt_submission/tt_um_echoworld424_tpv.v gate_level_netlist.v
+make clean
+make GATES=yes
 ```
 
-If you wish to save the waveform in VCD format instead of FST format, edit tb.v to use `$dumpfile("tb.vcd");` and then run:
+From a fresh local hardening run instead, use its `final/nl/` netlist
+(see `../AGENTS.md` and `../docs/halfcycle-development-validation.md`).
 
-```sh
-make -B FST=
-```
+Expected baseline: **9 passes and 4 intentional skips** (13 total; the
+archived full-cycle build's baseline was 8 passes and 2 skips).
 
-This will generate `tb.vcd` instead of `tb.fst`.
+This target is a zero-delay functional test:
 
-## How to view the waveform file
+- Specify blocks are removed from the standard-cell models.
+- SDF is not annotated.
+- `strip_ro_cells.py` removes the asynchronous RO combinational loops.
+- Four tests run only in RTL (`skip=GL`): one-shot capture hold, counter
+  saturation, canary window counts, and RO ripple-counter wrap. They depend
+  on the simulation-only RO gate delays (`TPV_GDELAY=1`) and internal RTL
+  signals that the zero-delay, RO-stripped netlist does not provide.
 
-Using GTKWave
+It validates synthesized configuration, control, counters, and readout. It
+does not predict DUT failure frequency or RO frequency. The separate timed
+flow is `../tools/run_sdfsim.py`; extracted runtime STA and RO estimation are
+`../tools/run_experiment_sta.py` and `../tools/run_ro_predict.py`.
+
+## Waveforms
+
+The default dump is `tb.fst`:
 
 ```sh
 gtkwave tb.fst tb.gtkw
 ```
 
-Using Surfer
+To generate VCD instead:
 
 ```sh
-surfer tb.fst
+make clean
+make FST=
 ```

@@ -34,7 +34,7 @@
 # beyond NLDM, supply bounce). Measured silicon RO counts vs this prediction
 # is itself part of the research comparison. A transient SPICE check of the
 # extracted loops is a possible refinement (no SPICE engine is available in
-# the pinned tool image; documented in tools/README.md).
+# the pinned tool image; documented in docs/prediction-model.md).
 #
 # Inputs (env): ES_LIBS, ES_NETLIST, ES_SPEF, ES_CASES_TCL (loop cases),
 # ES_RO_MODE (line|gate segment, see above).

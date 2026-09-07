@@ -87,10 +87,9 @@ Note also: with real delays restored, expect counts somewhat *below* the STA
 prediction in this IOPATH-only setup (no interconnect delay is annotated, so
 the bias direction for the loops is fast, not slow).
 
-Minor bookkeeping: the stale comment in `tools/run_sdfsim.py` ("24.81 ns data
-path -> predicted T_fail 25.26 ns") refers to the previous run's STA numbers;
-the regenerated `data/experiment_sta.csv` (run `33839023290`) gives 24.96 ns →
-39.34 MHz at the slow corner for seg3333/worst.
+The current `data/experiment_sta.csv` (run `33839023290`) gives a 24.96 ns
+runtime data path and a 25.42 ns predicted failure period (39.34 MHz) at the
+slow corner for seg3333/worst.
 
 ## Reproduction
 

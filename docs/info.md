@@ -66,9 +66,10 @@ capture. Maintain the normal clock waveform through the pending falling edge.
    is the data byte selected by `uo[3:0]` (auto-incrementing pointer). Byte map:
    0-1 = DUT error count (saturating), 2-3/4-5 = generic/matched RO edge counts
    (16-bit, wrap mod 65536 -- telemetry, not saturating), 6-7 = op count (saturating),
-   8 = segment-tap echo `{seg3, seg2, seg1, seg0}` (canary select/window are echoed in
-   byte 9 bits [3:0]/[1:0]), 9 = status flags `{1, mat_ro_dead, gen_ro_dead, err_seen,
-   can_sel[1:0], win_sel[1:0]}` (   bit 7 = 1), 10 = low 8 bits of the first failed DUT result capture, 11 = 0.
+   8 = segment-tap echo `{seg3, seg2, seg1, seg0}`; 9 = status flags
+   `{1, mat_ro_dead, gen_ro_dead, err_seen, can_sel[1:0], win_sel[1:0]}`
+   (`can_sel` is bits 3:2, `win_sel` is bits 1:0, and bit 7 is 1); 10 = low
+   8 bits of the first failed DUT result capture; 11-15 = 0.
    While frozen, `uo[7:4]` = `{frame_strobe, mat_ro_dead, gen_ro_dead, dut_err}`.
 4. Repeat across frequency/voltage/temperature; compare `f(error)` contours against the
    RO telemetry and static timing analysis.

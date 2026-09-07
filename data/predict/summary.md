@@ -20,7 +20,7 @@ Sign: positive `STA - mid` = the STA knee sits at a longer period than the IOPAT
 
 ## Canary readout at can_sel=3 (predeclared)
 
-Counts are predicted edges per window (16-bit counters saturate at 65535; `*` marks a saturated window). `gen/mat` is the canary distinguishability ratio at win0.
+Counts are predicted edges per window (hardware counters wrap mod 65536; `*` marks a prediction exceeding one 16-bit range). `gen/mat` is the canary distinguishability ratio at win0.
 
 | corner | gen win0 | gen win1 | gen win2 | gen win3 | mat win0 | mat win1 | mat win2 | mat win3 | gen/mat (win0) |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -28,7 +28,7 @@ Counts are predicted edges per window (16-bit counters saturate at 65535; `*` ma
 | typ 1.20V 25C | 1299 | 5197 | 20791 | 83167* | 384 | 1537 | 6150 | 24600 | 3.383 |
 | slow 1.08V 125C | 825 | 3303 | 13212 | 52851 | 240 | 962 | 3849 | 15398 | 3.438 |
 
-win0 (256 cycles) counts fit 16 bits at every corner for both canaries: **yes**. win2 also fits everywhere; win3 saturates for ro_gen at the fast/typ corners (sat flag in `ro_predict.csv`) and is not a usable readout window there.
+win0 (256 cycles) counts fit 16 bits at every corner for both canaries: **yes**. win2 also fits everywhere; win3 would wrap ro_gen at the fast/typ corners (`sat_win3` is the model's overflow-risk flag, not an RTL saturation flag) and is not a usable single-window readout there.
 
 Board ceiling is 50 MHz (20 ns); knees above it are not reachable on the demo board.
 
@@ -62,7 +62,7 @@ Other patterns: `alt` bypasses the delay banks (one knee per corner, seg-indepen
 
 ## One-point calibration (placeholder rows)
 
-After the nominal silicon point (1.20 V, 25 C, seg3333, worst) is measured, each predictor x is calibrated by k_x = F_meas / P_x(anchor) and applied as P_x_cal = k_x * P_x everywhere, unchanged. Pre-silicon every row carries `cal_k = 1.0` and `predicted_fmax_mhz_cal = predicted_fmax_mhz`; the post-silicon run substitutes the measured k only.
+Each predictor x is calibrated at the primary nominal anchor (1.20 V, 25 C, seg3333, worst), or at the predeclared slow-corner fallback if the primary boundary is above the 50 MHz ceiling. The rule is k_x = F_meas / P_x(anchor), applied as P_x_cal = k_x * P_x everywhere, unchanged. Pre-silicon every row carries `cal_k = 1.0` and `predicted_fmax_mhz_cal = predicted_fmax_mhz`; the post-silicon run substitutes the measured k only.
 
 ## Notes
 

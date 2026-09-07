@@ -4,6 +4,10 @@
 
 - [Read the documentation for project](docs/info.md)
 - [Research proposal](docs/research-proposal.md)
+- [Pre-silicon status and evidence](PRE_SILICON_ACTION_PLAN.md)
+- [Frozen prediction model](docs/prediction-model.md)
+- [Frozen post-silicon protocol](docs/post-silicon-protocol.md)
+- [Dataset field definitions](docs/data-dictionary.md)
 
 ## Project: Timing-Prediction Test Vehicle
 
