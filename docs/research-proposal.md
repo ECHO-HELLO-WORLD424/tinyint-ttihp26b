@@ -1,174 +1,180 @@
-> **Development revision 2 (proposal-canary-dev):** the active implementation now
-> launches on a rising edge and captures the DUT on the immediately following
-> falling edge. Clock high time is the timing aperture. The independent oracle is
-> combinational; RO counters are true ripple counters. The 19-cycle frame, pins,
-> configuration word and byte map are retained. See
-> [development validation](halfcycle-development-validation.md) for the selected
-> local build and measured area/timing evidence, and
-> [prediction protocol v2](prediction-model.md) / [test protocol v2](post-silicon-protocol.md).
-> Numerical build results and full-cycle/serial-checker descriptions below are
-> retained as historical proposal-baseline evidence; they are not results for v2.
-> V2 targets nominal-voltage ambient observability; heating to 125 °C is not required.
-
 # Research Proposal — Timing-Prediction Test Vehicle on IHP SG13G2 (ttihp26b)
 
-Status: RTL implemented in this repository (`src/`), validated with the cocotb suite in
-`test/`. This document is the concise proposal backing the design decisions.
+Revision 2, development branch `proposal-canary-dev`. This proposal describes the
+implemented half-cycle candidate and the prospective silicon experiment. The
+original full-cycle proposal remains in Git history on `proposal-canary`; its
+root-level datasets and CI run `33839023290` are historical v1 evidence.
 
-## Research question
+## Research question and contribution
 
-> How accurately can pre-silicon timing analysis and low-cost on-chip delay proxies
-> predict the workload-dependent first-failure boundary of a synthesized arithmetic
-> circuit across voltage, temperature, and frequency in the IHP SG13G2 open PDK?
+> How accurately can extracted pre-silicon timing analysis and two low-cost
+> on-chip delay proxies predict the workload-dependent first-failure boundary of
+> an arithmetic carry path across voltage, temperature, frequency and configured
+> path length?
 
-Secondary questions: how much guardband does each proxy need to avoid missed
-failures, and how much does one-point post-silicon calibration improve prediction?
+The contribution is experimental quantification: compare extracted STA, a generic
+ring oscillator and a structure-matched ring oscillator against observed silicon
+errors. Measure boundary prediction error, missed failures, false warnings,
+guardband cost, workload dependence and the benefit of one-point calibration.
+The study does not claim a novel canary architecture. One die supports within-die
+PVT/workload validation; process-distribution claims require multiple samples.
+Negative correlations and boundaries outside the measurement range remain results.
 
-## Originality and positioning
+## Implemented architecture
 
-The contribution is *experimental quantification*, not a new canary circuit (prior art:
-Razor/iRazor, tunable replica circuits; the nearby Tiny Tapeout space already has
-ring-oscillator arrays and metastability detectors). Deliverables:
+The design occupies one 1x1 Tiny Tapeout tile, with the standard interface and a
+nominal maximum submitted clock of 50 MHz.
 
-- Prediction error of extracted STA vs. two on-chip delay proxies vs. real silicon errors.
-- Missed-failure rate, false-warning guardband, operand-class dependence.
-- Value of one-point (nominal V/T) calibration.
-- An open-source test vehicle + pre/post-silicon dataset validating SG13G2 timing models
-  (the PDK standard-cell views are recent; characterization is timely).
+1. **Arithmetic DUT:** a structurally preserved 16-bit ripple-carry adder divided
+   into four 4-bit segments. Each carry boundary, including final carry-out, has
+   selectable delay taps at 0/16/32/48 inverter pairs. Mapped library cells and
+   structural inspection preserve the physical experiment through synthesis.
+2. **Half-cycle sample:** operands launch at a frame-boundary rising edge. A
+   registered pending pulse captures the 17-bit DUT result exactly once on the
+   immediately following falling edge. The sample holds until comparison, so a
+   later settled result cannot overwrite a timing failure.
+3. **Independent oracle:** a combinational reference adder computes the expected
+   result from stable operands. Comparison occurs at the next frame boundary,
+   after 19 cycles. Extracted case-analyzed control timing is checked separately
+   from the deliberately slow DUT.
+4. **Two delay proxies:** generic inverter-line and structure-matched ring
+   oscillators each drive a 16-bit ripple edge counter. Windows are selectable
+   from 256 to 16,384 clock cycles. RO counters wrap modulo 65,536; they have no
+   saturation or overflow flag.
+5. **Measurement/readout:** saturating 16-bit error and launch counters, the low
+   byte of the first failed DUT result, configuration/status bytes, FREEZE and
+   FORCE_ERR/FORCE_CAN test features. The chip does not store first-error operands
+   or a full first-error result.
 
-Both positive and negative results are publishable (technical report / workshop paper).
+One operation launches every **19 clock cycles**. Configuration commits on the
+third rising edge after reset release; pins must remain stable through that edge.
+FREEZE blocks new launches while allowing an accepted falling-edge sample to
+finish. Read after two complete settling clocks. The complete pin and byte
+protocol is in [the datasheet](info.md).
 
-## Implemented architecture (1x1 Tiny Tapeout tile)
+## Why half-cycle capture
 
-1. **DUT**: structurally preserved 16-bit ripple-carry adder (`tpv_rca16`), four 4-bit
-   segments. The carry between segments and the final carry-out pass through
-   configurable inverter-pair delay banks (taps at 0/16/32/48 pairs, `tpv_delay_line`),
-   giving a family of selectable critical-path lengths. `dont_touch` attributes protect
-   the deliberate structure from synthesis restructuring.
-2. **Independent oracle**: bit-serial reference adder (`tpv_checker`) computing the
-   expected 17-bit result over 17 cycles with a very short per-cycle path, making the
-   chip self-checking (no result readout bandwidth needed).
-3. **Two canary families**, both ring-oscillator based (area-feasible in 1x1; a
-   capture-based replica canary would need ~1-clock-period delay chains, ~2x the area):
-   - *Generic RO canary* (`tpv_ro_gen`): tunable inverter line, activity-blind.
-   - *Structure-matched RO canary* (`tpv_ro_match`): loop passes through the same
-     delay-bank + full-adder composition as a DUT segment, margin tuned by config.
-   Each drives a 16-bit edge counter over a configurable measurement window
-   (2^8..2^14 clk cycles), giving continuous delay telemetry, not just a binary flag.
-4. **Measurement block**: frame-based operation (1 timed op per 19-cycle frame, operands
-   registered per frame), 16-bit DUT error counter, 16-bit op counter, first-error
-   operand/result capture, serial byte readout with auto-incrementing pointer,
-   global freeze input for quiescent readout, and FORCE_ERR/FORCE_CAN DFT bits so the
-   error-accounting path itself is verifiable pre-silicon.
+The original full-cycle design predicted a nominal boundary of 61.46 MHz,
+above the planned 50 MHz sweep ceiling. Its slower library corner combined slow
+process, 1.08 V and 125 °C; heating a typical die would not reproduce that corner.
 
-## Experiment plan
+The revised aperture is clock HIGH time, H = duty × period: 10 ns at
+50 MHz and 50% duty. The longest-path worst-carry configuration now predicts a
+nominal boundary near 31 MHz. This makes nominal-voltage ambient observation
+plausible without requiring a 125 °C test. Silicon observability is still a
+prediction until measured; the library temperature is not an assembly rating.
 
-Per voltage/temperature point: select path configuration + pattern class, sweep clock
-frequency up then down, run a known op count, freeze, read counters. Record error rate
-vs. frequency (`err_cnt/ops`), RO counts, first-error signatures. Define failure by
-error-rate thresholds (first error, 1e-6, 1e-4, 1e-2 per op), not a single point.
-Pattern classes: PRBS, worst-case carry, carry-free alternating, static hold — the
-operand-dependence of the first-failure boundary is a primary measurement. The
-frozen operating procedure (instruments, sweep steps, op counts per error-rate
-threshold, uncertainty budget, raw-data format) is `docs/post-silicon-protocol.md`.
+For extracted setup slack S at period T and duty d, the boundary period is
+T_boundary = T − S/d. Record actual HIGH time and duty, and report the
+50%-duty-equivalent frequency as 500/H MHz for H in ns.
 
-Pre-silicon hierarchy: RTL sim -> post-synth STA -> post-route extracted STA across
-corners -> SDF gate-level sim with sensitizing vectors -> SPICE on selected paths ->
-fitted canary-vs-DUT calibration model.
+## Experiment and prediction plan
 
-### Pre-silicon prediction package
+Start at nominal 1.20 V and ambient near 25 °C. Characterize the delivered clock,
+board power topology and measurement uncertainty before extending voltage or
+optional temperature sweeps. The normal measurement range is 10–50 MHz; 1 MHz
+bring-up uses FORCE_CAN to avoid overflowing a long clock-based RO window.
 
-The prediction protocol is frozen pre-silicon in `docs/prediction-model.md`
-(model `tpv-predict-1.0.1`): predictor definitions (per-corner case-analyzed
-STA knee; nominal-STA-ladder x canary-count-ratio maps for the generic and
-matched RO), one-point calibration equations, and the post-silicon evaluation
-metrics (boundary error, missed-failure probability, false-warning rate,
-guardband cost). Field units, RTL mirrors, and frame/counter conventions are
-in `docs/data-dictionary.md`. The generated package lives in `data/predict/`
-(`predictions.csv/.json`, `summary.md`, plots): per-corner knee ladders, both
-canary count predictors at the predeclared readout (can_sel 3, win0), the
-STA-vs-SDF boundary cross-check for seg3333/worst, and placeholder one-point
-calibration rows (`cal_k = 1.0`) into which the post-silicon run substitutes
-measured values only.
+For each permitted operating point, sweep frequency up and down across path
+configurations and PRBS/worst-carry patterns, with alternating and static-hold
+controls. Refine observed transitions and repeat measurements. Report first-error
+and 1e-6/1e-4/1e-2 error-rate thresholds as pass/fail brackets, including censored
+all-pass/all-fail outcomes. Error rates use completed comparisons:
+max(launch_count − 1, 0), before saturation. Split long runs into batches of at
+most 60,000 comparisons; reset repeats deterministic workloads and does not
+create independent random samples.
 
-## Key risks and countermeasures
+The prospective [prediction model](prediction-model.md), version
+`tpv-predict-2.0.0`, compares case-analyzed extracted STA with two separate
+nominal-STA-ladder × normalized-RO-count predictors. Normalize measured counts
+for the actual measurement clock before comparing them with the 50 MHz reference
+window. Preserve suspected wrap and other exclusions in raw records.
 
-| Risk | Countermeasure |
+Use one predeclared calibration anchor: nominal voltage/ambient,
+seg3333/worst, canary selection 3/window 0, characterized 50% duty. Derive each
+predictor's scale from that anchor and apply it unchanged to held-out points.
+If the anchor is censored above 50 MHz, report calibration unavailable; do not
+select a heated anchor after inspecting outcomes. Evaluate guardbands of
+0%, 5%, 10% and 20% without fitting them to silicon results.
+
+The [post-silicon protocol](post-silicon-protocol.md) specifies sweep steps,
+sample counts, uncertainty, exclusions and immutable raw records. The
+[data dictionary](data-dictionary.md) defines fields and units.
+
+## Current pre-silicon evidence
+
+These are **local development results**, from physical input revision
+`041c1906a276211a62263dc30ce0da13b01c00ed`, run `dev-halfcycle-final`.
+Documentation changes do not change those physical inputs. The build used
+LibreLane 3.0.5 and IHP PDK revision
+`c4b8b4e5e7a05f375cca3815d51b3a37721fbf5c`; exact tool identities, source hashes
+and artifact hashes are in the [local manifest](../data/halfcycle/verification/local-build-manifest.json).
+
+| Check | Local result |
 | --- | --- |
-| Timing knee outside the measurable clock range | Four independently selectable delay banks; complete extracted STA before tapeout freeze |
-| Synthesis rewrites the deliberate path | `dont_touch` cells/banks, structural RTL, inspect netlist and layout |
-| Critical path not sensitized by vectors | Worst-case carry patterns + gate-level sensitization check |
-| Canary/DUT activity mismatch | Compare activity-blind generic RO against structure-matched RO (explicit study point) |
-| Checker fails before DUT | Bit-serial oracle with very short path; sweep stays inside its validity band |
-| RO counter metastability | Ripple counters frozen (RO NAND-gated) before any clk-domain readout |
-| TT board limits (core voltage control, 50 MHz clock noise, uio contention) | Verify power topology with TinyTapeout early; external clock source; fixed pin directions per phase (config-in / status-out) |
-| Single die | Frame as within-die PVT/workload study; multiple samples if available |
-| 1x1 area overflow | RO canaries chosen for area; fallback: shrink delay banks (fewer pairs) |
-| Deadline | DUT + checker + 2 RO canaries + counters are the minimum viable payload (already implemented) |
+| RTL regression | 13 pass |
+| Functional gate-level regression | 9 pass, 4 intentional RTL-only skips |
+| Tiny Tapeout precheck | 10 pass |
+| Routing DRC / Magic DRC / LVS / antenna | 0 violations/errors |
+| Max slew / max capacitance | 0 violations |
+| Hold slack, fast / typical / slow | +0.1315 / +0.2189 / +0.3769 ns |
+| Worst case-analyzed control setup slack at 50 MHz | +6.26 ns |
+| Active standard-cell area | 20,990.8 µm²; 12.47% below original |
+| Actual utilization | 72.53%; configured placement density 72% |
+| Structural inspection | 384 DUT bank inverters and taps, both RO loops, 17 falling-edge captures preserved |
+
+The approximately 70% utilization is accepted for this development candidate,
+subject to the shuttle's acceptance checks. It remains above the earlier 60%
+objective and is not evidence of portal approval.
+
+Longest-path worst-carry timing evidence at 50% duty:
+
+| Joint library corner | Extracted STA boundary | IOPATH SDF last failing / first passing period |
+| --- | ---: | ---: |
+| Fast, 1.32 V, −40 °C | 45.126 MHz | 20 / 22 ns |
+| Typical, 1.20 V, 25 °C | 30.998 MHz | 32 / 34 ns |
+| Slow, 1.08 V, 125 °C | 19.904 MHz | 46 / 48 ns |
+
+At nominal conditions, timed simulation therefore places the transition between
+29.412 and 31.25 MHz. Equal-HIGH-time tests across 40/50/60% duty confirm the
+aperture behavior. These are simulated boundaries, not silicon measurements.
+
+The v2 package in [data/halfcycle](../data/halfcycle/) contains 96 STA cases,
+24 RO-model rows, a 23-point main SDF sweep and 288 derived prediction rows.
+See [development validation](halfcycle-development-validation.md) for raw evidence,
+reproduction commands and test scope.
+
+## Remaining limitations and acceptance gates
+
+**The local hardening flow exits with a setup failure.** Conservative 20 ns,
+50%-duty signoff reports global fast/typical/slow setup slack of
+−1.1844 / −6.2859 / −15.3976 ns. A DUT intended to fail near 31 MHz does not meet
+an error-free 50 MHz requirement at maximum delay. Experiment-specific case
+analysis remains separate from signoff; no false-path or multicycle exception
+has been added to hide the slow path. A submission-compatible treatment must be
+resolved before claiming readiness. A fresh GitHub run must be assessed on its
+actual results, separately from these local checks.
+
+Functional GL uses zero delay and stripped RO loops. It verifies digital control
+and readout, not failure frequency. The separate SDF flow retains cell IOPATH
+arcs but omits interconnect and flip-flop timing checks; it supports sensitization
+and capture behavior, not metastability or absolute error probabilities.
+
+RO predictions currently use extracted broken-loop STA estimates. Extracted
+transient oscillation validation remains open; disabled signoff RO arcs do not
+predict oscillation frequency. Boot may shorten the initial window by up to
+three clocks, which remains a documented modeling uncertainty.
+
+Joint library corners do not form a temperature sweep of one die. Quantitative
+comparisons at other measured V/T points require matching characterization or
+an explicit mismatch label. Clock duty distortion, checker validity, RO settling
+and counter wrap must remain part of the measurement uncertainty and exclusions.
 
 ## Deliverables
 
-Open-source RTL + cocotb suite (this repo), hardening reports (timing/area), pre-silicon
-prediction data, post-silicon PVT dataset and error-rate contours, technical report with
-quantified proxy-prediction accuracy and one-point calibration benefit.
-
-## Contribution statement
-
-> An open-source silicon test vehicle and dataset comparing extracted STA, a generic
-> delay RO, and a structure-matched replica RO for predicting operand-dependent timing
-> failures in an arithmetic carry path across PVT in IHP SG13G2, quantifying prediction
-> error, missed-failure probability, guardband cost, and one-point calibration benefit.
-
-## Pre-silicon status (this repository)
-
-The RTL is implemented and verified, and the 1x1 tile has been hardened with the
-IHP SG13G2 LibreLane flow (matching the Tiny Tapeout GDS CI):
-
-- Cocotb RTL suite: 10/10 tests pass (config/echo, functional zero-error across all
-  pattern classes and delay configurations, forced-error accounting with exact
-  counter values and first-error capture, one-shot capture semantics, canary window
-  counts, freeze semantics, mid-run reconfiguration, frame pacing).
-- Gate-level suite (zero-delay functional; specify blocks stripped, RO loop cells
-  removed, no SDF): 8/10 pass, 2 skipped by design — the RO counters are stripped
-  with the loops (their zero counts are asserted instead), and the one-shot capture
-  monitor reads hierarchical RTL state that the flattened netlist does not expose.
-  This suite validates synthesized configuration, control, counters, and readout
-  only; it is NOT evidence of post-layout failure frequency or RO behavior.
-  Timing evidence comes from a separate SDF-annotated full-chip suite
-  (`tools/run_sdfsim.py`, IOPATH-annotated, boundary sweep in `data/sdfsim.csv`)
-  and case-analyzed extracted STA (`data/experiment_sta.csv`).
-  The GL run caught two real pre-tapeout bugs: a synthesis-unsafe config-shadow
-  register (async data load mis-mapped by Yosys, which would have left the chip
-  unconfigurable) and a config commit race when rst_n release coincides with a
-  clock edge.
-- Hardening (final run [33839023290](https://github.com/ECHO-HELLO-WORLD424/tinyint-ttihp26b/actions/runs/33839023290),
-  commit `1e31757`, artifacts staged in `artifacts/run-33839023290/` with manifest):
-  2610 instances (1747 standard cells + 863 fillers), 82.9% final design
-  utilization, zero routing DRC / Magic DRC / antenna / LVS / power-grid
-  violations. Hold slack positive at all corners (+0.14/+0.23/+0.39 ns
-  fast/typ/slow). Setup slack +8.57/+3.32 ns fast/typ.
-- The global slow-corner setup violation (-6.07 ns worst, 5 paths, TNS -10.38 ns)
-  starts at the static configuration register (`cfg[8]`), which does not change
-  during measurement — it is a conservative signoff artifact, not the experiment
-  boundary, and it is left unhidden in the tapeout constraints. The experiment
-  boundary is established by a separate case-analyzed, runtime-sensitizable STA
-  flow (`tools/run_experiment_sta.py`): paths from the pattern-generator registers
-  (`u_pat.lfsr`/`idx`) to the one-shot `result_reg` capture, case-analyzed over
-  all 8 segment configurations and 4 patterns at 3 corners (96-row table,
-  `data/experiment_sta.csv`). Predicted first-failure knees span 39.3-112 MHz at
-  the slow corner (seg3333/worst = 39.3 MHz), placing the measured boundary
-  inside the 1-50 MHz board range for the longest configurations. The SDF sweep
-  brackets the STA knee for seg3333/worst (fails at 22 ns, passes at 24 ns slow;
-  fails 14 ns, passes 16 ns typ; STA conservative by +1.3/+2.4 ns, consistent
-  with IOPATH-only annotation).
-- Physical-only checker findings, report-only relative to the LibreLane generic
-  limits: one max-fanout violation (`clkbuf_0_clk/X` fanout 16 vs limit 8) with
-  clean max-slew (0) and max-cap (0) checks; four unannotated parasitic drivers
-  (`ena` — intentionally unused and consumed in `_unused`, plus the three
-  `clkload*` clock-load inverters).
-- Canary loops are preserved through synthesis by pre-mapping them to library
-  cells (plain dont_touch/keep attributes were insufficient: ABC merged inverter
-  pairs into buffers and cut the loops).
-- Post-silicon measurement protocol (instruments, sweep procedure, uncertainty
-  budget, raw-data format) is frozen in `docs/post-silicon-protocol.md`,
-  written before silicon data exists.
+An open RTL/test vehicle, reproducible final-build artifacts and manifests,
+pre-silicon predictions, append-only silicon measurements, and a technical
+report comparing uncalibrated and calibrated predictors. The final submission
+build must be archived and its prediction package regenerated if physical inputs
+or resulting implementation change. CI success and portal acceptance are separate
+milestones; neither substitutes for the remaining research validation.

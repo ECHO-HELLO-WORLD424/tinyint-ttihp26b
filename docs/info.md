@@ -29,7 +29,8 @@ A timing-prediction test vehicle for the IHP SG13G2 open PDK. It contains:
   auto-incrementing pointer, a freeze input, and FORCE_ERR/FORCE_CAN DFT bits that make
   the error-accounting path itself testable before tapeout.
 
-Config word (16-bit, sampled while rst_n is low): [1:0]/[3:2]/[5:4]/[7:6] = delay bank
+Config word (16-bit, driven during reset and held through the third rising edge
+after reset release, when it is committed): [1:0]/[3:2]/[5:4]/[7:6] = delay bank
 taps per segment, [9:8] = pattern (0=PRBS, 1=worst-case carry, 2=carry-free alternating,
 3=static hold), [11:10] = canary select, [13:12] = window select, [14] = force canary
 mask, [15] = force DUT error.

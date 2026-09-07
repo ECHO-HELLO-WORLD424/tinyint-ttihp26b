@@ -12,7 +12,9 @@ seg3333/worst extracted STA predicts **31.0 MHz**, with IOPATH SDF failing at
 
 This supersedes the earlier candidate-only status below. The current branch is
 **not submission-ready**: the unchanged 50 MHz setup signoff fails as expected
-for the intentional DUT boundary, and the 60% area objective remains unmet.
+for the intentional DUT boundary. The user accepts approximately 70% utilization
+for this candidate (actual 72.53%), subject to shuttle acceptance; the earlier
+60% objective is no longer an active area-reduction requirement.
 Physical DRC/LVS/antenna/hold checks are clean; case-analyzed control slack remains
 positive. Transient RO validation and real board operating limits remain open.
 `data/halfcycle/` is the v2 package; original root-level data is the v1 baseline.
