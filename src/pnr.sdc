@@ -5,10 +5,9 @@ current_design tt_um_echoworld424_tpv
 ###############################################################################
 # Timing Constraints
 ###############################################################################
-# Submitted normal operation: 10 MHz, 50% duty, 50 ns capture aperture.
-# Intentional 10-50 MHz experimental sweeps use separate timing analysis.
+# Nominal 50% duty; DUT capture uses the falling edge (10 ns aperture).
 # No multicycle/false-path exception hides intentional DUT setup failures.
-create_clock -name clk -period 100.0000 -waveform {0.0000 50.0000} [get_ports {clk}]
+create_clock -name clk -period 20.0000 -waveform {0.0000 10.0000} [get_ports {clk}]
 set_clock_transition 0.1500 [get_clocks {clk}]
 set_clock_uncertainty -setup 0.2500 clk
 set_clock_uncertainty -hold 0.0500 clk

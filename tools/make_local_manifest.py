@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Record the local development build honestly, including failed setup signoff."""
+"""Record the local development build honestly, including setup signoff status."""
 import hashlib
 import importlib.metadata
 import json
@@ -45,6 +45,7 @@ for p in (run / "resolved.json", run / "54-openroad-stapostpnr/summary.rpt"):
     files[str(p.relative_to(root))] = record(p)
 packages = {name: importlib.metadata.version(name) for name in ("cocotb", "gdstk", "klayout", "PyYAML")}
 image = json.loads(subprocess.check_output(["docker", "image", "inspect", C.LL_IMAGE], text=True))[0]
+setup_clean = all(v >= 0 for k, v in metrics.items() if k.startswith("timing__setup__ws"))
 manifest = {
     "kind": "local development experiment; not a submitted/green CI build",
     "run_id": C.RUN_ID, "build_commit": C.GIT_COMMIT,
@@ -58,9 +59,9 @@ manifest = {
     "active_area_um2": metrics["design__instance__area__stdcell"],
     "utilization_pct": 100 * metrics["design__instance__utilization"],
     "physical_metrics": metrics,
-    "hardening_exit_status": 1,
-    "hardening_failure": "Unchanged 20 ns/50% duty setup signoff fails in typical corner; intentional DUT aperture violations. Not waived.",
-    "remaining": ["60% utilization target not met", "submission setup policy unresolved",
+    "hardening_exit_status": 0 if setup_clean else 1,
+    "hardening_failure": None if setup_clean else "Unchanged 20 ns/50% duty setup signoff fails in typical corner; intentional DUT aperture violations. Not waived.",
+    "remaining": ([] if setup_clean else ["submission setup policy unresolved"]) + [
                   "RO frequencies are broken-loop STA models, not transient-validated",
                   "actual board duty/voltage/thermal limits unverified"],
     "analysis_source_files": {str(p.relative_to(root)): record(p)

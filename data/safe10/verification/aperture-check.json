@@ -1,0 +1,137 @@
+{
+  "run_id": "local-dev-safe10",
+  "build_commit": "7b20196bb74195649679fae6313a891712e87458",
+  "corner": "nom_typ_1p20V_25C",
+  "sta": [
+    {
+      "period_ns": 20,
+      "duty": 0.5,
+      "slack_ns": -6.13,
+      "required_high_ns": 16.13,
+      "predicted_fmax_mhz": 30.998140111593305
+    },
+    {
+      "period_ns": 40,
+      "duty": 0.5,
+      "slack_ns": 3.87,
+      "required_high_ns": 16.13,
+      "predicted_fmax_mhz": 30.998140111593305
+    },
+    {
+      "period_ns": 20,
+      "duty": 0.4,
+      "slack_ns": -8.13,
+      "required_high_ns": 16.130000000000003,
+      "predicted_fmax_mhz": 24.79851208927464
+    },
+    {
+      "period_ns": 20,
+      "duty": 0.6,
+      "slack_ns": -4.13,
+      "required_high_ns": 16.13,
+      "predicted_fmax_mhz": 37.197768133911964
+    }
+  ],
+  "sdf": [
+    {
+      "period_ns": 35.0,
+      "duty": 0.4,
+      "high_time_ns": 14,
+      "ops": 200,
+      "err_cnt": 49,
+      "log": "run_p35_d0.4_w4dff_nom_typ_1p20V_25C.log"
+    },
+    {
+      "period_ns": 28.0,
+      "duty": 0.5,
+      "high_time_ns": 14,
+      "ops": 200,
+      "err_cnt": 49,
+      "log": "run_p28_d0.5_w4dff_nom_typ_1p20V_25C.log"
+    },
+    {
+      "period_ns": 23.333333333333336,
+      "duty": 0.6,
+      "high_time_ns": 14,
+      "ops": 200,
+      "err_cnt": 49,
+      "log": "run_p23.3333_d0.6_w4dff_nom_typ_1p20V_25C.log"
+    },
+    {
+      "period_ns": 45.0,
+      "duty": 0.4,
+      "high_time_ns": 18,
+      "ops": 200,
+      "err_cnt": 0,
+      "log": "run_p45_d0.4_w4dff_nom_typ_1p20V_25C.log"
+    },
+    {
+      "period_ns": 36.0,
+      "duty": 0.5,
+      "high_time_ns": 18,
+      "ops": 200,
+      "err_cnt": 0,
+      "log": "run_p36_d0.5_w4dff_nom_typ_1p20V_25C.log"
+    },
+    {
+      "period_ns": 30.0,
+      "duty": 0.6,
+      "high_time_ns": 18,
+      "ops": 200,
+      "err_cnt": 0,
+      "log": "run_p30_d0.6_w4dff_nom_typ_1p20V_25C.log"
+    }
+  ],
+  "controls": [
+    {
+      "pattern": "prbs",
+      "result": {
+        "period_ns": "40.000000",
+        "high_time_ns": "20.000000",
+        "segs": "ff",
+        "ops": "200",
+        "err_cnt": "0",
+        "gen_cnt": "0",
+        "mat_cnt": "0",
+        "cfg_echo": "ff",
+        "stat": "ec",
+        "err_dut": "00",
+        "log": "run_p40_d0.5_w4cff_nom_typ_1p20V_25C.log"
+      }
+    },
+    {
+      "pattern": "alt",
+      "result": {
+        "period_ns": "20.000000",
+        "high_time_ns": "10.000000",
+        "segs": "ff",
+        "ops": "200",
+        "err_cnt": "0",
+        "gen_cnt": "0",
+        "mat_cnt": "0",
+        "cfg_echo": "ff",
+        "stat": "ec",
+        "err_dut": "00",
+        "log": "run_p20_d0.5_w4eff_nom_typ_1p20V_25C.log"
+      }
+    },
+    {
+      "pattern": "hold",
+      "result": {
+        "period_ns": "20.000000",
+        "high_time_ns": "10.000000",
+        "segs": "ff",
+        "ops": "200",
+        "err_cnt": "0",
+        "gen_cnt": "0",
+        "mat_cnt": "0",
+        "cfg_echo": "ff",
+        "stat": "ec",
+        "err_dut": "00",
+        "log": "run_p20_d0.5_w4fff_nom_typ_1p20V_25C.log"
+      }
+    }
+  ],
+  "limitation": "IOPATH-only SDF; no interconnect or flip-flop timing checks",
+  "passed": true
+}

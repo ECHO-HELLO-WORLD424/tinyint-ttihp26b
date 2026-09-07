@@ -116,6 +116,13 @@ therefore do not yet meet this standard.
 
 ## Current blocking work
 
+**10 MHz candidate:** local `dev-safe10` hardening now passes setup at all
+three corners, RTL 13 pass, GL 9 pass/4 skips, precheck 10 pass. Experimental
+50 MHz control checks and nominal ~31 MHz DUT boundary remain verified. See
+`docs/ci-timing-closure-attempts.md` and `data/safe10/`. The following 50 MHz
+submission failure describes the previous build. Portal acceptance and extracted
+RO transient validation remain open.
+
 **Development branch `proposal-canary-dev`:** the active DUT capture is on the
 falling edge immediately after an accepted rising-edge launch. `capture_pending`
 clears on every rising edge, including freeze. Pending capture completes even if

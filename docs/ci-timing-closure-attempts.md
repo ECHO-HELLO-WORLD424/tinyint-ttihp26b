@@ -43,3 +43,55 @@ are incompatible for the same mode and waveform.
    requires new protocol, RTL, timing and physical verification. Not attempted.
 
 No candidate has yet been declared verified or submission-ready.
+
+## Authorized candidate: 10 MHz normal operation
+
+User approved verification of the lower declared clock. Physical source revision:
+`7b20196bb74195649679fae6313a891712e87458`. Changed `info.yaml` to
+10,000,000 Hz, `CLOCK_PERIOD` to 100 ns and the SDC waveform to {0,50} ns.
+RTL, IO delay/load, uncertainty and all DUT setup/hold checks remain intact.
+No DUT false path, multicycle path or setup-checker suppression was added.
+
+Fresh devcontainer build `src/runs/dev-safe10` used LibreLane 3.0.5 and the
+same PDK revision as the earlier build. It **completed with exit 0**.
+Setup slack fast/typical/slow: +38.8156/+33.7141/+24.6024 ns.
+Hold slack: +0.1315/+0.2189/+0.3769 ns. Routing DRC, Magic DRC, LVS and
+antenna: zero violations. Utilization remains 72.5284%.
+
+The first verification launcher referenced a temporary script that was not
+visible inside the devcontainer and exited 127. No design tool ran in that
+attempt. Retried from the shared workspace using `tools/verify_safe10.sh`.
+Experimental analysis explicitly uses 20 ns/50% duty independently of the
+100 ns submission constraint. Outputs are isolated in `data/safe10/` so the
+previous half-cycle and original full-cycle datasets remain unchanged.
+
+### Verification result
+
+- RTL: 13 pass, zero failures.
+- Functional GL from the new routed netlist: 9 pass, 4 intentional skips.
+- Tiny Tapeout precheck: 10 pass, including KLayout DRC.
+- Structure: all 384 DUT bank inverters/taps, both RO loops and 17 falling-edge
+  capture flops preserved.
+- Fresh case-analyzed STA: 96 rows, minimum other-control slack +6.26 ns at
+  50 MHz. Longest-path nominal boundary 30.998 MHz.
+- Fresh IOPATH SDF sweep: 23 main points; nominal last fail 32 ns and first pass
+  34 ns. Equal-aperture/different-duty validation passes.
+- RO model: 24 regenerated rows; prediction package: 288 regenerated rows.
+- Manifest: `data/safe10/verification/local-build-manifest.json`; physical input
+  contents verified against `7b20196`. Every final view is hashed. Physical
+  artifacts remain in ignored `src/runs/dev-safe10/final/`.
+
+The candidate **passes local hardening and verification** and retains the intended
+ambient failure experiment. This is not yet a statement of portal acceptance.
+RO transient validation and actual board operating limits remain open research
+items. Intentional overclocking results are not guaranteed error-free operation.
+
+Reproduce inside the devcontainer: generate the TT merged configuration, then
+run LibreLane 3.0.5 with `--run-tag dev-safe10` and the pinned PDK as in
+`docs/halfcycle-development-validation.md` (use a fresh tag for another build).
+Run `bash tools/verify_safe10.sh` for the post-build suite. That script explicitly
+selects the new build and dataset using `TPV_*` environment variables; default
+analysis commands still select the archived half-cycle dataset. It expects the
+build's RTL regression XML in the verification directory.
+
+Canonical GitHub CI: pending push of this verification/documentation revision.

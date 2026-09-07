@@ -28,3 +28,11 @@ data/halfcycle/sdf_path/*.iopath.sdf
 data/halfcycle/sta_stdout_*.log
 data/halfcycle/*.stdout.log
 data/halfcycle/verification/*.stdout.log
+
+data/safe10/sdfsim/*.vvp
+data/safe10/sdfsim/sg13g2_stdcell_sdf.v
+data/safe10/sdfsim/netlist_sim.v
+data/safe10/sdf_path/*.iopath.sdf
+data/safe10/sta_stdout_*.log
+data/safe10/*.stdout.log
+data/safe10/verification/*.stdout.log

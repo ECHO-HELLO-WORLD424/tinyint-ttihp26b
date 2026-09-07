@@ -1,8 +1,8 @@
 > **10 MHz submission candidate:** normal operation is specified at 10 MHz,
 > 50% duty (100 ns period). The 10–50 MHz research sweep deliberately exceeds
-> that timing-safe specification. Verification is tracked in
+> that timing-safe specification. Local hardening, RTL, GL and precheck pass; verification is tracked in
 > [the attempt log](ci-timing-closure-attempts.md). Earlier physical results below
-> remain evidence for the earlier build until replaced by fresh results.
+> remain historical evidence; fresh results are in `data/safe10/`.
 
 # Research Proposal — Timing-Prediction Test Vehicle on IHP SG13G2 (ttihp26b)
 

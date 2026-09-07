@@ -1,3 +1,9 @@
+> The 10 MHz normal-operation candidate uses the same half-cycle protocol.
+> Its regenerated build-specific data are in `data/safe10/`; `data/halfcycle/`
+> retains the earlier build. The 10–50 MHz sweep is intentional experimental
+> overclocking above the submitted timing-safe frequency, not a guarantee of
+> error-free operation. See [verification attempts](ci-timing-closure-attempts.md).
+
 # Predeclared post-silicon protocol v2
 
 For half-cycle RTL on `proposal-canary-dev`, model `tpv-predict-2.0.0`.

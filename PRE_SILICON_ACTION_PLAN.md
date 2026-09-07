@@ -1,7 +1,8 @@
 ## 2026-09-08: 10 MHz normal-operation candidate
 
 User authorized separating 10 MHz submitted operation from deliberate 10–50 MHz
-experimental sweeps. Fresh verification is in progress; see
+experimental sweeps. Fresh local hardening, RTL, GL, precheck, structural and experimental timing
+verification pass; see
 [the attempt log](docs/ci-timing-closure-attempts.md). Historical 50 MHz signoff
 failures below refer to the preceding build. No setup exceptions are introduced.
 
