@@ -1,31 +1,39 @@
-## 2026-09-08: 10 MHz normal-operation candidate
+## 2026-09-08: 10 MHz normal-operation candidate merged into proposal-canary
 
 User authorized separating 10 MHz submitted operation from deliberate 10–50 MHz
 experimental sweeps. Fresh local hardening, RTL, GL, precheck, structural and experimental timing
-verification pass; see
-[the attempt log](docs/ci-timing-closure-attempts.md). Historical 50 MHz signoff
+verification pass, and canonical CI is all green on
+`b9f03f798978840c8bdc2bb574877408e0f33f4c` (GDS run `34158224984`); see
+[the attempt log](docs/ci-timing-closure-attempts.md). The verified candidate
+was merged into `proposal-canary` on this date. Historical 50 MHz signoff
 failures below refer to the preceding build. No setup exceptions are introduced.
 
 # Pre-Silicon Readiness Audit and Action Plan
 
-## Development candidate implemented — proposal-canary-dev
+## Development candidate merged into proposal-canary — 2026-09-08
 
-See [half-cycle development validation](docs/halfcycle-development-validation.md)
-for current results. Local physical build `041c190` implements falling-edge
+The verified half-cycle candidate developed on `proposal-canary-dev` was
+fast-forward merged into `proposal-canary` (tip `a35f501`); the original
+full-cycle design remains only in pre-merge Git history. See
+[half-cycle development validation](docs/halfcycle-development-validation.md)
+for the development verification record. Local physical build `041c190` implements falling-edge
 one-shot capture, combinational oracle and storage/counter reductions. It has
 13 passing RTL tests, 9 passing GL tests (4 intentional skips), and 10 passing
 Tiny Tapeout prechecks. Utilization is **72.53%** versus 82.86%; nominal
 seg3333/worst extracted STA predicts **31.0 MHz**, with IOPATH SDF failing at
 32 ns and passing at 34 ns. Equal-aperture duty sweeps confirm half-cycle behavior.
 
-This supersedes the earlier candidate-only status below. The current branch is
-**not submission-ready**: the unchanged 50 MHz setup signoff fails as expected
-for the intentional DUT boundary. The user accepts approximately 70% utilization
+This supersedes the earlier candidate-only status below. The merged design
+submits a 10 MHz normal-operation specification and passed canonical CI all
+green (GDS run `34158224984` on `b9f03f798978840c8bdc2bb574877408e0f33f4c`); the
+10–50 MHz sweep remains intentional experimental overclocking outside the
+error-free specification. The user accepts approximately 70% utilization
 for this candidate (actual 72.53%), subject to shuttle acceptance; the earlier
 60% objective is no longer an active area-reduction requirement.
 Physical DRC/LVS/antenna/hold checks are clean; case-analyzed control slack remains
-positive. Transient RO validation and real board operating limits remain open.
-`data/halfcycle/` is the v2 package; original root-level data is the v1 baseline.
+positive. Portal acceptance, transient RO validation and real board operating
+limits remain open. `data/halfcycle/` and `data/safe10/` are the v2 packages
+(safe10 is the final 10 MHz build); original root-level data is the v1 baseline.
 
 
 ## 2026-09-06 feasibility qualification — reachable laboratory boundary

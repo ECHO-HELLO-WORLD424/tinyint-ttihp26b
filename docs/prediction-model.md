@@ -6,7 +6,8 @@
 
 # Predeclared prediction model v2
 
-Model: **tpv-predict-2.0.0**, development branch `proposal-canary-dev`.
+Model: **tpv-predict-2.0.0**, merged into `proposal-canary` on 2026-09-08
+(developed on `proposal-canary-dev`).
 Frozen before post-silicon data. This replaces the full-cycle v1 analysis for the
 new half-cycle RTL; the original `data/predict/` and archived CI build remain
 historical v1 results. V2 inputs/outputs are under `data/halfcycle/`.

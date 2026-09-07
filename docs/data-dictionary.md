@@ -1,6 +1,7 @@
 # Development v2 additions
 
-The active half-cycle package is `data/halfcycle/`, model `tpv-predict-2.0.0`.
+The half-cycle packages are `data/halfcycle/` (earlier build) and
+`data/safe10/` (final 10 MHz build), model `tpv-predict-2.0.0`.
 The original root-level datasets and the definitions below remain historical
 full-cycle baseline evidence. V2 retains their common fields and adds:
 

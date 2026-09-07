@@ -1,14 +1,16 @@
-> **10 MHz submission candidate:** normal operation is specified at 10 MHz,
-> 50% duty (100 ns period). The 10–50 MHz research sweep deliberately exceeds
-> that timing-safe specification. Local hardening, RTL, GL and precheck pass; verification is tracked in
+> **Submitted normal operation: 10 MHz**, 50% duty (100 ns period). The 10–50 MHz
+> research sweep deliberately exceeds that timing-safe specification. The design is
+> verified: local hardening, RTL, GL and precheck pass, and canonical CI is all green
+> (GDS run `34158224984`); verification is tracked in
 > [the attempt log](ci-timing-closure-attempts.md). Earlier physical results below
 > remain historical evidence; fresh results are in `data/safe10/`.
 
 # Research Proposal — Timing-Prediction Test Vehicle on IHP SG13G2 (ttihp26b)
 
-Revision 2, development branch `proposal-canary-dev`. This proposal describes the
+Revision 2, merged into `proposal-canary` on 2026-09-08 (developed on
+`proposal-canary-dev`, tip `a35f501`). This proposal describes the
 implemented half-cycle candidate and the prospective silicon experiment. The
-original full-cycle proposal remains in Git history on `proposal-canary`; its
+original full-cycle proposal remains in pre-merge Git history; its
 root-level datasets and CI run `33839023290` are historical v1 evidence.
 
 ## Research question and contribution
@@ -115,6 +117,11 @@ Documentation changes do not change those physical inputs. The build used
 LibreLane 3.0.5 and IHP PDK revision
 `c4b8b4e5e7a05f375cca3815d51b3a37721fbf5c`; exact tool identities, source hashes
 and artifact hashes are in the [local manifest](../data/halfcycle/verification/local-build-manifest.json).
+The final 10 MHz build re-verified the same physical result under the submitted
+constraint (run `dev-safe10`, build commit `7b20196`, setup clean at all three
+corners; [its manifest](../data/safe10/verification/local-build-manifest.json)),
+and canonical CI is all green on `b9f03f798978840c8bdc2bb574877408e0f33f4c`
+(GDS run `34158224984`).
 
 | Check | Local result |
 | --- | --- |
@@ -129,7 +136,7 @@ and artifact hashes are in the [local manifest](../data/halfcycle/verification/l
 | Actual utilization | 72.53%; configured placement density 72% |
 | Structural inspection | 384 DUT bank inverters and taps, both RO loops, 17 falling-edge captures preserved |
 
-The approximately 70% utilization is accepted for this development candidate,
+The approximately 70% utilization is accepted for this merged candidate,
 subject to the shuttle's acceptance checks. It remains above the earlier 60%
 objective and is not evidence of portal approval.
 
@@ -145,21 +152,24 @@ At nominal conditions, timed simulation therefore places the transition between
 29.412 and 31.25 MHz. Equal-HIGH-time tests across 40/50/60% duty confirm the
 aperture behavior. These are simulated boundaries, not silicon measurements.
 
-The v2 package in [data/halfcycle](../data/halfcycle/) contains 96 STA cases,
+The v2 packages [data/halfcycle](../data/halfcycle/) (development build) and
+[data/safe10](../data/safe10/) (final 10 MHz build) each contain 96 STA cases,
 24 RO-model rows, a 23-point main SDF sweep and 288 derived prediction rows.
-See [development validation](halfcycle-development-validation.md) for raw evidence,
+See [development validation](halfcycle-development-validation.md) and
+[the attempt log](ci-timing-closure-attempts.md) for raw evidence,
 reproduction commands and test scope.
 
 ## Remaining limitations and acceptance gates
 
-**The local hardening flow exits with a setup failure.** Conservative 20 ns,
-50%-duty signoff reports global fast/typical/slow setup slack of
-−1.1844 / −6.2859 / −15.3976 ns. A DUT intended to fail near 31 MHz does not meet
-an error-free 50 MHz requirement at maximum delay. Experiment-specific case
-analysis remains separate from signoff; no false-path or multicycle exception
-has been added to hide the slow path. A submission-compatible treatment must be
-resolved before claiming readiness. A fresh GitHub run must be assessed on its
-actual results, separately from these local checks.
+**Submitted signoff and the experimental sweep are separate.** Under the
+submitted 10 MHz specification (100 ns period, 50% duty), setup passes at all
+three corners (+38.8156 / +33.7141 / +24.6024 ns) and canonical CI is all
+green. The intentional 10–50 MHz sweep remains outside the error-free
+specification: at the intermediate 50 MHz development constraint the DUT's
+~31 MHz nominal boundary necessarily violates setup at maximum delay (global
+slacks −1.1844 / −6.2859 / −15.3976 ns), and that failure was deliberately not
+waived — no false-path or multicycle exception hides the slow path under
+either policy.
 
 Functional GL uses zero delay and stripped RO loops. It verifies digital control
 and readout, not failure frequency. The separate SDF flow retains cell IOPATH

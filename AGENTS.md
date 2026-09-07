@@ -116,22 +116,35 @@ therefore do not yet meet this standard.
 
 ## Current blocking work
 
-**10 MHz candidate:** local `dev-safe10` hardening now passes setup at all
-three corners, RTL 13 pass, GL 9 pass/4 skips, precheck 10 pass. Experimental
-50 MHz control checks and nominal ~31 MHz DUT boundary remain verified. See
-`docs/ci-timing-closure-attempts.md` and `data/safe10/`. The following 50 MHz
-submission failure describes the previous build. Portal acceptance and extracted
-RO transient validation remain open.
+**Merged state (2026-09-08):** the verified half-cycle candidate developed on
+`proposal-canary-dev` is merged into this branch (fast-forward to `a35f501`);
+the original full-cycle design exists only in pre-merge Git history (tip
+`96811e8`). Both concerns that motivated the development branch are resolved:
 
-**Development branch `proposal-canary-dev`:** the active DUT capture is on the
-falling edge immediately after an accepted rising-edge launch. `capture_pending`
-clears on every rising edge, including freeze. Pending capture completes even if
-FREEZE arrives during the aperture. The checker is combinational, RO counters are
-true ripple counters, and the public 19-cycle protocol is retained. See
-`docs/halfcycle-development-validation.md` and `data/halfcycle/` for current local
-verification. The historical full-cycle completion statements below apply only
-to the archived original branch. V2 is not submission-ready: conservative 50 MHz
-setup checks intentionally fail, and 72.53% utilization still exceeds 60%.
+- **Clock demand:** normal submitted operation is 10 MHz (100 ns period, 50%
+  duty, 50 ns falling-edge capture aperture); 10–50 MHz is an intentional
+  experimental sweep and is not guaranteed error-free. Canonical CI on
+  `b9f03f798978840c8bdc2bb574877408e0f33f4c` is all green (GDS run
+  `34158224984`; RTL run `34158224983` and docs run `34158225032` also
+  passed), and local `dev-safe10` hardening passes setup at all three corners
+  (RTL 13 pass, GL 9 pass/4 skips, precheck 10 pass; see `data/safe10/`). No
+  multicycle/false-path exception or setup-checker suppression was added.
+  Portal acceptance remains open.
+- **Utilization:** placement density was lowered 82% → 72%, reducing final
+  utilization from 82.86% to 72.53% (sequential cells 195 → 152). The earlier
+  60% objective was retired by owner decision; approximately 70% utilization
+  is accepted for this candidate, subject to shuttle acceptance.
+
+The active DUT capture is on the falling edge immediately after an accepted
+rising-edge launch. `capture_pending` clears on every rising edge, including
+freeze. Pending capture completes even if FREEZE arrives during the aperture.
+The checker is combinational, RO counters are true ripple counters, and the
+public 19-cycle protocol is retained. See
+`docs/halfcycle-development-validation.md` and `data/halfcycle/` for the
+development verification record and `docs/ci-timing-closure-attempts.md` for
+the attempt log. Extracted RO transient validation and actual board operating
+limits remain open. The historical full-cycle completion statements below
+apply only to the pre-merge Git history of this branch.
 
 
 Both research-blocking issues from the original audit (commit
@@ -218,7 +231,9 @@ make clean
 make
 ```
 
-The expected audited baseline is 9 passing cocotb tests. Inspect `test/results.xml`; CI
+The expected audited baseline is 13 passing cocotb tests (the merged half-cycle
+design; the archived full-cycle design's baseline was 9). Inspect
+`test/results.xml`; CI
 also checks it explicitly because the simulator make rules may return success even when
 a cocotb test fails.
 
@@ -240,7 +255,9 @@ make clean
 make GATES=yes
 ```
 
-The audited baseline is 8 passes and 1 intentional skip. This is a **zero-delay
+The audited baseline is 9 passes and 4 intentional skips (13 total; the
+archived full-cycle design's baseline was 8 passes and 1 skip). This is a
+**zero-delay
 functional** GL test:
 
 - Specify blocks are patched out.

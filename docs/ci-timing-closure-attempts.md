@@ -118,3 +118,12 @@ reported by GitHub). This resolves the CI setup failure for the honestly declare
 10 MHz normal-operation specification. Portal acceptance remains to be checked
 by the user; experimental operation above 10 MHz remains intentionally outside
 the error-free timing specification.
+
+## Merged into proposal-canary (2026-09-08)
+
+The verified 10 MHz candidate was fast-forward merged from
+`proposal-canary-dev` into `proposal-canary` (tip
+`a35f5018614fdcce1a52b0c7a0f717eb89175949`). Branch references in the log
+entries above refer to the development period before the merge. Fresh CI on
+the merged branch supersedes nothing here; portal acceptance remains to be
+checked by the user.

@@ -1,6 +1,7 @@
-> **10 MHz submission candidate:** normal operation is specified at 10 MHz,
-> 50% duty (100 ns period). The 10–50 MHz research sweep deliberately exceeds
-> that timing-safe specification. Local hardening, RTL, GL and precheck pass; verification is tracked in
+> **Submitted normal operation: 10 MHz**, 50% duty (100 ns period). The 10–50 MHz
+> research sweep deliberately exceeds that timing-safe specification. The design is
+> verified: local hardening, RTL, GL and precheck pass, and canonical CI is all green
+> (GDS run `34158224984`); verification is tracked in
 > [the attempt log](ci-timing-closure-attempts.md). Earlier physical results below
 > remain historical evidence; fresh results are in `data/safe10/`.
 

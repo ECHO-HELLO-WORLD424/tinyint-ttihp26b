@@ -6,7 +6,8 @@
 
 # Predeclared post-silicon protocol v2
 
-For half-cycle RTL on `proposal-canary-dev`, model `tpv-predict-2.0.0`.
+For half-cycle RTL on `proposal-canary` (merged from `proposal-canary-dev` on
+2026-09-08), model `tpv-predict-2.0.0`.
 Written before silicon outcomes. This supersedes v1's full-cycle aperture and
 heated fallback anchor. Follow `docs/info.md` for pins and bytes.
 

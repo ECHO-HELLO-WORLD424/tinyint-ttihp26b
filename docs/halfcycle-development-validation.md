@@ -1,7 +1,16 @@
 # Half-cycle development implementation and verification
 
-Branch: **proposal-canary-dev**. The original `proposal-canary` reference remains
-at `96811e87dc11fdbb70785de9b84abc879ca3155d`; no changes were committed there.
+> **Merged (2026-09-08):** the design verified here was fast-forward merged
+> into `proposal-canary` (tip `a35f501`). This page is preserved as the
+> development-time record; the branch, clock and signoff statements below
+> describe the intermediate 50 MHz development candidate and are superseded
+> by the 10 MHz normal-operation specification
+> ([attempt log](ci-timing-closure-attempts.md)).
+
+Branch: **proposal-canary-dev** (development record; the original
+`proposal-canary` reference at the time was
+`96811e87dc11fdbb70785de9b84abc879ca3155d` and no changes were committed
+there before the merge).
 Final physical input revision: **041c1906a276211a62263dc30ce0da13b01c00ed**.
 The subsequent analysis/documentation commit does not change those RTL or
 constraint inputs; the local manifest verifies their file contents against this
