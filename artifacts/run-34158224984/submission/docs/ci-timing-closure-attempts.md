@@ -105,16 +105,3 @@ The working files and tested build were correct, but intermediate commit
 `git diff 7b20196 HEAD -- src info.yaml tools/common.py` is empty. The local
 verification remains applicable. Any CI on `b08b46c` is superseded and must not
 be used as evidence for the 10 MHz candidate.
-
-## Canonical CI result: all green
-
-Commit **`b9f03f798978840c8bdc2bb574877408e0f33f4c`**:
-[GDS workflow 34158224984](https://github.com/ECHO-HELLO-WORLD424/tinyint-ttihp26b/actions/runs/34158224984)
-passed all four jobs: GDS, precheck, functional GL and viewer. Separate
-[RTL tests](https://github.com/ECHO-HELLO-WORLD424/tinyint-ttihp26b/actions/runs/34158224983)
-and [docs](https://github.com/ECHO-HELLO-WORLD424/tinyint-ttihp26b/actions/runs/34158225032)
-also passed. The `tt_submission` artifact is ID `10031816458` (910,283 bytes
-reported by GitHub). This resolves the CI setup failure for the honestly declared
-10 MHz normal-operation specification. Portal acceptance remains to be checked
-by the user; experimental operation above 10 MHz remains intentionally outside
-the error-free timing specification.

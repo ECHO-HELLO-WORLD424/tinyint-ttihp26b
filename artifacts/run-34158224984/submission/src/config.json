@@ -1,0 +1,44 @@
+{
+  "//": "Tiny Tapeout IHP project LibreLane configuration: the template defaults",
+  "//": "plus this design's overrides. tt_tool reads this file as-is on CI (it only",
+  "//": "regenerates src/user_config.json), so these keys survive.",
+  "//": "",
+  "//": "Design overrides vs the template defaults (docs/research-proposal.md):",
+  "//": " - PL_TARGET_DENSITY_PCT 72 / MAX_FANOUT_CONSTRAINTS 400: the RO-heavy",
+  "//": "   design needs them to place and legalize",
+  "//": " - PNR_SDC_FILE / SIGNOFF_SDC_FILE: src/pnr.sdc detaches the canary RO",
+  "//": "   loops from STA so PnR repair never restructures them, and splits the",
+  "//": "   clock uncertainty (hold 50ps, setup 250ps)",
+  "//": " - RUN_POST_CTS_RESIZER_TIMING false: the post-CTS resizer's legalization",
+  "//": "   cannot handle the RO loops",
+  "//": " - HOLD_VIOLATION_CORNERS typ/slow: raw fast-corner hold slack is positive;",
+  "//": "   the zero-tolerance checker otherwise counts 250ps of padding",
+"PL_TARGET_DENSITY_PCT": 72
+,"CLOCK_PERIOD": 100
+,"PL_RESIZER_HOLD_SLACK_MARGIN": 0.1
+,"GRT_RESIZER_HOLD_SLACK_MARGIN": 0.05
+,"RUN_LINTER": 1
+,"LINTER_INCLUDE_PDK_MODELS": 1
+,"CLOCK_PORT": "clk"
+,"RUN_KLAYOUT_XOR": 0
+,"RUN_KLAYOUT_DRC": 0
+,"DESIGN_REPAIR_BUFFER_OUTPUT_PORTS": 0
+,"TOP_MARGIN_MULT": 1
+,"BOTTOM_MARGIN_MULT": 1
+,"LEFT_MARGIN_MULT": 6
+,"RIGHT_MARGIN_MULT": 6
+,"FP_SIZING": "absolute"
+,"GRT_ALLOW_CONGESTION": 1
+,"FP_IO_HLENGTH": 2
+,"FP_IO_VLENGTH": 2
+,"FP_PDN_VPITCH": 38.87
+,"RUN_CTS": 1
+,"FP_PDN_MULTILAYER": 0
+,"MAGIC_DEF_LABELS": 0
+,"MAGIC_WRITE_LEF_PINONLY": 1
+,"MAX_FANOUT_CONSTRAINTS": 400
+,"PNR_SDC_FILE": "dir::pnr.sdc"
+,"SIGNOFF_SDC_FILE": "dir::pnr.sdc"
+,"RUN_POST_CTS_RESIZER_TIMING": false
+,"HOLD_VIOLATION_CORNERS": ["*typ*", "*slow*"]
+}
