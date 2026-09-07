@@ -95,3 +95,13 @@ analysis commands still select the archived half-cycle dataset. It expects the
 build's RTL regression XML in the verification directory.
 
 Canonical GitHub CI: pending push of this verification/documentation revision.
+
+### Submission-tree correction
+
+After the verification commit, a tree check detected stale staged copies of
+four files (`info.yaml`, `src/config.json`, `src/pnr.sdc`, `tools/common.py`).
+The working files and tested build were correct, but intermediate commit
+`b08b46c` had restored their older values. Commit `e64c842` corrects the tree;
+`git diff 7b20196 HEAD -- src info.yaml tools/common.py` is empty. The local
+verification remains applicable. Any CI on `b08b46c` is superseded and must not
+be used as evidence for the 10 MHz candidate.
