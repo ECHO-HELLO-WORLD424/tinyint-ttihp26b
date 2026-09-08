@@ -27,7 +27,10 @@ high time, duty, uncertainty, build/analysis commit and batch comparison count.
 Scope: field-by-field definitions for the pinned input tables
 (`data/experiment_sta.csv`, `data/ro_predict.csv`, `data/sdfsim.csv`) and the
 generated prediction table (`data/predict/predictions.csv`). The frozen model
-protocol is `docs/prediction-model.md`; the generated package is `data/predict/`.
+protocol is `docs/prediction-model.md`; the generated package was
+`data/predict/` (archived v1; the current v2 packages are
+`data/halfcycle/predict/` and `data/safe10/predict/`, same fields plus the v2
+additions above).
 
 All units are ns, MHz, V, °C, cycles, or dimensionless counts, as marked.
 Empty numeric fields mean "not applicable / no value" (e.g. `hold` rows have no

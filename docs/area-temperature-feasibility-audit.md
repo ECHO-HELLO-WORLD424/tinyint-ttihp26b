@@ -1,5 +1,16 @@
 # Area and accessible timing-boundary audit
 
+> **Status (2026-09-08):** written before implementation, against the archived
+> v1 full-cycle design (commit `96811e8`, CI run `33839023290`). Its preferred
+> candidate — half-cycle capture plus control/storage area reduction — has since
+> been implemented, verified and merged into `proposal-canary` (10 MHz normal
+> operation, model `tpv-predict-2.0.0`); see
+> [the attempt log](ci-timing-closure-attempts.md) and
+> [development validation](halfcycle-development-validation.md). This page is
+> retained as the motivating historical record; its 60% utilization objective
+> was later retired by owner decision (approximately 70% is accepted for the
+> merged candidate).
+
 Audit: 2026-09-06. Inspected checkout `96811e87dc11fdbb70785de9b84abc879ca3155d`.
 Physical and timing evidence: archived CI run **33839023290**, RTL commit
 `1e31757e50080b19fa7642b8b9cd6822f64b1d11`, LibreLane 3.0.5,

@@ -333,7 +333,11 @@ Current audited artifact hashes:
 - Fix the two RTL width warnings by comparing 10-bit counters with 10-bit constants.
   The other linter messages are PDK black-box timescale warnings.
 
-## Current verified baseline
+## Verified baseline of the archived v1 full-cycle build (run `33839023290`)
+
+Historical v1 evidence (full-cycle design, model `tpv-predict-1.0.1`); the
+merged half-cycle design's verified state is in the 2026-09-08 sections above
+and in `data/safe10/`.
 
 Final hardening run `33839023290` (commit `1e31757`, all CI jobs green), unless noted:
 
@@ -393,7 +397,10 @@ Predeclare the comparison so a negative result remains useful:
 
 ## Definition of “pre-silicon complete”
 
-The pre-silicon phase is complete when all of the following are true:
+The pre-silicon phase is complete when all of the following are true. This
+checklist was defined and first completed against the archived v1 full-cycle
+design; its v1 evidence below is historical. The one reopened item was
+re-resolved by the merged half-cycle (v2) design as annotated.
 
 - [x] `result_reg` is a verified one-shot capture that cannot self-repair before compare.
       (Commit `21d43c6`: capture gated by `chk_start`; `test_oneshot_capture_holds`
@@ -409,13 +416,17 @@ The pre-silicon phase is complete when all of the following are true:
       worst runtime path `u_pat.lfsr/idx -> result_reg`, slow-corner knee 39.3 MHz
       at seg3333/worst, 61.5 MHz typ, 89.5 MHz fast; HOLD has no runtime path.
       Regenerated against the final-RTL run `33839023290` artifacts.)
-- [ ] Selected configurations place predicted timing knees inside the accessible clock
+- [x] Selected configurations place predicted timing knees inside the accessible clock
       range with margin for model error.
-      (Reopened 2026-09-06: the slow corner is not established as reachable on
-      the delivered die/board, and nominal knees exceed the clock ceiling.
-      Slow-corner knee ladder 112.0/69.3/50.3/39.3/76.6/77.0/57.9/58.3 MHz in
-      `SEG_CONFIGS` order spans the 1–50 MHz board range; `seg2222` lands at the
-      50 MHz ceiling.)
+      (Reopened 2026-09-06 against the v1 full-cycle design. Resolved by the merged
+      half-cycle design (2026-09-08): seg3333/worst knees are 45.126 / 30.998 /
+      19.904 MHz at fast/typ/slow — inside the 10–50 MHz experimental sweep, with
+      the nominal point near 31 MHz corroborated by the IOPATH SDF brackets
+      20/22, 32/34 and 46/48 ns (`data/safe10/predict/summary.md`). The
+      fast-corner margin below the 50 MHz ceiling remains limited
+      (docs/research-proposal.md). Historical v1 slow-corner ladder retained for
+      the record: 112.0/69.3/50.3/39.3/76.6/77.0/57.9/58.3 MHz in `SEG_CONFIGS`
+      order, `seg2222` at the 50 MHz ceiling.)
 - [x] Sensitizing sequences are confirmed in SDF simulation or reduced extracted timing
       simulation. (Full-chip SDF-annotated sweep, `data/sdfsim.csv`: seg3333/worst
       slow corner fails at 22 ns (49/200 err) and passes at 24 ns; typ fails at

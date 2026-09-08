@@ -1,5 +1,11 @@
 # RO canary cross-check in SDF simulation: why gen_cnt=6 / mat_cnt=0
 
+> **Scope (2026-09-08):** this diagnosis applies to the archived v1 root-level
+> package (`data/sdfsim.csv` / `data/ro_predict.csv`, run `33839023290`),
+> retained as historical full-cycle evidence. The v2 packages
+> (`data/halfcycle/`, `data/safe10/`) exclude the invalid FORCE_CAN-off row, so
+> they contain no RO cross-check row.
+
 Status: diagnosis of the `data/sdfsim.csv` RO cross-check row (slow corner,
 `cansel=3`, `winsel=0`, FORCE_CAN off, 30 frames) against the STA prediction in
 `data/ro_predict.csv` (run `33839023290`). The SDF-sim tooling itself is owned by
@@ -87,7 +93,7 @@ Note also: with real delays restored, expect counts somewhat *below* the STA
 prediction in this IOPATH-only setup (no interconnect delay is annotated, so
 the bias direction for the loops is fast, not slow).
 
-The current `data/experiment_sta.csv` (run `33839023290`) gives a 24.96 ns
+The archived v1 `data/experiment_sta.csv` (run `33839023290`) gives a 24.96 ns
 runtime data path and a 25.42 ns predicted failure period (39.34 MHz) at the
 slow corner for seg3333/worst.
 

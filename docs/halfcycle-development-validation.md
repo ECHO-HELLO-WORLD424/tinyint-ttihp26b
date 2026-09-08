@@ -5,7 +5,9 @@
 > development-time record; the branch, clock and signoff statements below
 > describe the intermediate 50 MHz development candidate and are superseded
 > by the 10 MHz normal-operation specification
-> ([attempt log](ci-timing-closure-attempts.md)).
+> ([attempt log](ci-timing-closure-attempts.md)). The 60% area objective
+> referenced below was later retired by owner decision; approximately 70%
+> utilization is accepted for the merged candidate.
 
 Branch: **proposal-canary-dev** (development record; the original
 `proposal-canary` reference at the time was

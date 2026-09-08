@@ -1,6 +1,6 @@
 {
  "model_version": "tpv-predict-2.0.0",
- "generated_utc": "2026-09-05T17:30:23Z",
+ "generated_utc": "2026-09-08T00:12:10Z",
  "provenance": {
   "run_id": "local-dev-halfcycle-final",
   "git_commit": "041c1906a276211a62263dc30ce0da13b01c00ed",
@@ -25,19 +25,20 @@
  },
  "calibration": {
   "method": "one-point multiplicative (docs/prediction-model.md)",
-  "anchor": {
+  "primary_anchor": {
    "corner": "nom_typ_1p20V_25C",
    "seg_label": "3333",
    "pattern": "worst",
    "v_volt": 1.2,
    "t_celsius": 25
   },
+  "censor_if_unreachable": true,
   "placeholder_k": 1.0,
-  "note": "post-silicon run substitutes measured k_x per predictor and re-emits; nothing else changes"
+  "note": "post-silicon run substitutes measured k_x per predictor at the primary anchor and re-emits; nothing else changes. v2 has no fallback anchor: if the primary boundary is censored above the 50 MHz ceiling, calibration is unavailable (docs/prediction-model.md)"
  },
  "notes": [
   "Frame = 19 clk cycles (frame_cnt 0..18); one timed DUT operation per frame.",
-  "Canary counters wrap modulo 65536; sat_win fields are MODEL overflow flags, not silicon flags; win0 = 256 clk cycles.",
+  "Canary counters are 16-bit and wrap mod 65536; sat_win fields are model overflow-risk flags, not hardware saturation flags; win0 = 256 clk cycles.",
   "A FORCE_CAN-off SDF RO cross-check would be INVALID for model purposes: RO loop cells carry hard 0.000 SDF delays because src/pnr.sdc disables RO timing arcs (docs/ro-sdf-crosscheck-diagnosis.md); its gen_cnt/mat_cnt are excluded.",
   "The SDF boundary is IOPATH-only annotated (no wire interconnect): the boundary may differ in either direction; positive err_sta_minus_mid_ns = STA more conservative than sim."
  ],
@@ -108,27 +109,27 @@
     "counts": {
      "ro_gen@nom_fast_1p32V_m40C": {
       "count": 1954,
-      "saturated": false
+      "would_wrap": false
      },
      "ro_mat@nom_fast_1p32V_m40C": {
       "count": 771,
-      "saturated": false
+      "would_wrap": false
      },
      "ro_gen@nom_typ_1p20V_25C": {
       "count": 1333,
-      "saturated": false
+      "would_wrap": false
      },
      "ro_mat@nom_typ_1p20V_25C": {
       "count": 528,
-      "saturated": false
+      "would_wrap": false
      },
      "ro_gen@nom_slow_1p08V_125C": {
       "count": 847,
-      "saturated": false
+      "would_wrap": false
      },
      "ro_mat@nom_slow_1p08V_125C": {
       "count": 338,
-      "saturated": false
+      "would_wrap": false
      }
     }
    },
@@ -138,27 +139,27 @@
     "counts": {
      "ro_gen@nom_fast_1p32V_m40C": {
       "count": 7816,
-      "saturated": false
+      "would_wrap": false
      },
      "ro_mat@nom_fast_1p32V_m40C": {
       "count": 3084,
-      "saturated": false
+      "would_wrap": false
      },
      "ro_gen@nom_typ_1p20V_25C": {
       "count": 5333,
-      "saturated": false
+      "would_wrap": false
      },
      "ro_mat@nom_typ_1p20V_25C": {
       "count": 2115,
-      "saturated": false
+      "would_wrap": false
      },
      "ro_gen@nom_slow_1p08V_125C": {
       "count": 3390,
-      "saturated": false
+      "would_wrap": false
      },
      "ro_mat@nom_slow_1p08V_125C": {
       "count": 1352,
-      "saturated": false
+      "would_wrap": false
      }
     }
    },
@@ -168,27 +169,27 @@
     "counts": {
      "ro_gen@nom_fast_1p32V_m40C": {
       "count": 31267,
-      "saturated": false
+      "would_wrap": false
      },
      "ro_mat@nom_fast_1p32V_m40C": {
       "count": 12337,
-      "saturated": false
+      "would_wrap": false
      },
      "ro_gen@nom_typ_1p20V_25C": {
       "count": 21333,
-      "saturated": false
+      "would_wrap": false
      },
      "ro_mat@nom_typ_1p20V_25C": {
       "count": 8462,
-      "saturated": false
+      "would_wrap": false
      },
      "ro_gen@nom_slow_1p08V_125C": {
       "count": 13562,
-      "saturated": false
+      "would_wrap": false
      },
      "ro_mat@nom_slow_1p08V_125C": {
       "count": 5410,
-      "saturated": false
+      "would_wrap": false
      }
     }
    },
@@ -198,27 +199,27 @@
     "counts": {
      "ro_gen@nom_fast_1p32V_m40C": {
       "count": 125068,
-      "saturated": true
+      "would_wrap": true
      },
      "ro_mat@nom_fast_1p32V_m40C": {
       "count": 49349,
-      "saturated": false
+      "would_wrap": false
      },
      "ro_gen@nom_typ_1p20V_25C": {
       "count": 85333,
-      "saturated": true
+      "would_wrap": true
      },
      "ro_mat@nom_typ_1p20V_25C": {
       "count": 33851,
-      "saturated": false
+      "would_wrap": false
      },
      "ro_gen@nom_slow_1p08V_125C": {
       "count": 54251,
-      "saturated": false
+      "would_wrap": false
      },
      "ro_mat@nom_slow_1p08V_125C": {
       "count": 21643,
-      "saturated": false
+      "would_wrap": false
      }
     }
    }

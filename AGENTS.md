@@ -111,8 +111,8 @@ Preserve these properties unless the task explicitly changes the experiment:
 Do not describe the globally worst STA path as the experimental timing boundary unless
 it starts at runtime-changing state, ends at the one-shot DUT capture register, is
 analyzed with static configuration case analysis, and has a confirmed sensitizing
-sequence. The current audited global slow-corner violations start at static `cfg[8]` and
-therefore do not yet meet this standard.
+sequence. The archived full-cycle design's audited global slow-corner violations start
+at static `cfg[8]` and therefore do not meet this standard.
 
 ## Current blocking work
 
@@ -148,14 +148,16 @@ apply only to the pre-merge Git history of this branch.
 
 
 Both research-blocking issues from the original audit (commit
-`206715252bb569430b0d8569393f12997b2a552b`) are resolved: `result_reg` is a
-one-shot capture gated by `chk_start` (commit `21d43c6`, regression-tested),
-and the experiment-specific STA flow case-analyzes static configuration and
-reports runtime-sensitizable `u_pat.lfsr/idx -> result_reg` paths
-(`data/experiment_sta.csv`, run `33839023290`). The full pre-silicon
-prediction package (SDF boundary sweep, RO loop model, prediction model and
-calibration protocol, post-silicon protocol, final-build manifest) is
-complete — see `PRE_SILICON_ACTION_PLAN.md` for the audited state and the
+`206715252bb569430b0d8569393f12997b2a552b`) were resolved in the archived
+full-cycle design's pre-merge history: `result_reg` is a one-shot capture
+gated by `chk_start` (commit `21d43c6`, regression-tested), and the
+full-cycle experiment-specific STA flow case-analyzes static configuration and
+reports runtime-sensitizable `u_pat.lfsr/idx -> result_reg` paths (archived v1
+`data/experiment_sta.csv`, run `33839023290`). That v1 pre-silicon prediction
+package (SDF boundary sweep, RO loop model, prediction model and calibration
+protocol, post-silicon protocol, final-build manifest) is complete but
+superseded by the v2 packages (`data/halfcycle/`, `data/safe10/`) — see
+`PRE_SILICON_ACTION_PLAN.md` for the audited state and the
 definition-of-complete checklist.
 
 The remaining pre-silicon work is package maintenance only: re-run the STA/RO/
@@ -232,7 +234,7 @@ make
 ```
 
 The expected audited baseline is 13 passing cocotb tests (the merged half-cycle
-design; the archived full-cycle design's baseline was 9). Inspect
+design; the archived full-cycle design's baseline was 10). Inspect
 `test/results.xml`; CI
 also checks it explicitly because the simulator make rules may return success even when
 a cocotb test fails.
@@ -256,7 +258,7 @@ make GATES=yes
 ```
 
 The audited baseline is 9 passes and 4 intentional skips (13 total; the
-archived full-cycle design's baseline was 8 passes and 1 skip). This is a
+archived full-cycle design's baseline was 8 passes and 2 skips). This is a
 **zero-delay
 functional** GL test:
 
