@@ -22,6 +22,18 @@
  *  [11:10] canary sel (both RO canaries)
  *  [13:12] window sel (2^8/2^10/2^12/2^14 clk cycles)
  *  [14]  force canary count mask, [15] force DUT error (DFT)
+ *   
+ * Naming conventions:
+ * `*_sel` = `*_select`
+ * `*_en`  = `*_enable`
+ * `*_can` = `*_canary`
+ * `*_seg` = `*_segment`    (Used to configure delay in DUT)
+ * `*_win` = `*_window`     (The window length selector for Ring Osc)
+ * `*_fa`  = `*_fall-adder`
+ * `pat_*` = `pattern_*`
+ * `*_cnt` = `*_count`
+ * `*_cout`= `*_carry-out`
+ * `*_cin` = `*_carry-in`
  *
  * Copyright (c) 2026 ECHO-HELLO-WORLD424
  * SPDX-License-Identifier: Apache-2.0
@@ -42,14 +54,14 @@ module tt_um_echoworld424_tpv (
   localparam [4:0] FRAME_LAST = 5'd18;  /* frames are 19 cycles */
 
   /* ------------------------------------------------------------------ */
-  /* Configuration (sampled while in reset, committed at reset release)  */
+  /* Configuration (sampled while in reset, committed at reset release) */
   /* ------------------------------------------------------------------ */
   reg  [15:0] cfg;
   wire [15:0] cfg_word = {uio_in, ui_in};
 
   /* Boot counter: cfg commits once, at the boot==2 clock edge (race-free
      even when release coincides with a clock edge), then freezes. */
-  reg  [ 1:0] boot;
+  reg  [1:0] boot;
   always @(posedge clk or negedge rst_n) begin
     if (!rst_n) boot <= 2'd0;
     else if (boot != 2'd3) boot <= boot + 2'd1;
@@ -80,7 +92,7 @@ module tt_um_echoworld424_tpv (
   assign uio_oe = {8{boot[1]}};
 
   /* ------------------------------------------------------------------ */
-  /* Frame timing: one timed operation per 19 cycles                     */
+  /* Frame timing: one timed operation per 19 cycles                    */
   /* ------------------------------------------------------------------ */
   reg  [4:0] frame_cnt;
   wire       frame_boundary = (frame_cnt == FRAME_LAST);
@@ -100,7 +112,7 @@ module tt_um_echoworld424_tpv (
   end
 
   /* ------------------------------------------------------------------ */
-  /* DUT: pattern -> ripple-carry adder -> result register               */
+  /* DUT: pattern -> ripple-carry adder -> result register              */
   /* ------------------------------------------------------------------ */
   wire [15:0] pat_a;
   wire [15:0] pat_b;
@@ -157,11 +169,11 @@ module tt_um_echoworld424_tpv (
       .cin(pat_cin),
       .acc(chk_acc)
   );
-  wire        dut_err = frame_boundary & started & update_en & (chk_acc != result_reg);
+  wire dut_err = frame_boundary & started & update_en & (chk_acc != result_reg);
 
-  reg  [15:0] err_cnt;
-  reg         err_seen;
-  reg  [ 7:0] err_dut_b;
+  reg [15:0] err_cnt;
+  reg        err_seen;
+  reg [ 7:0] err_dut_b;
 
   always @(posedge clk or negedge rst_n) begin
     if (!rst_n) begin
