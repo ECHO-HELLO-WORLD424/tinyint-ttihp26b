@@ -1,0 +1,37 @@
+# Timing boundary at one PVT corner (SDF backend, post-route netlist).
+#
+#   python3 tools/chip_emulate.py repl --backend sdf --corner slow \
+#       --script tools/emulator/examples/timing_boundary.txt
+#
+# The SDF backend annotates real per-cell delays, so the clock period and the
+# corner decide whether the DUT's half-cycle capture is still correct.  Clock
+# HIGH time is the measurement aperture, so halving the period halves it.
+
+echo == safe period: 40 ns (25 MHz), high time 20 ns ==
+period 40
+config seg=3333 pat=worst cansel=3 winsel=0
+measure 50
+assert st.err_cnt == 0
+assert st.ops == 50
+
+echo == too fast: 16 ns (62.5 MHz), high time 8 ns ==
+period 16
+measure 50
+assert st.err_cnt > 0
+assert st.err_seen
+
+echo == the canaries are masked in this backend (their SDF arcs are disabled) ==
+assert st.gen_cnt == 0
+assert st.mat_cnt == 0
+assert st.gen_dead
+assert st.mat_dead
+
+echo == bisect the first-failing period between 16 ns and 32 ns ==
+findfail 16 32 50 0.25
+
+echo == and back to a safe period with a different workload ==
+period 40
+config seg=3333 pat=prbs cansel=3 winsel=0
+measure 50
+assert st.err_cnt == 0
+quit

@@ -1,0 +1,112 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="2160" viewBox="0 0 1200 2160" role="img" aria-labelledby="title desc">
+<title id="title">V2 chip architecture — all host input, output and UIO pins</title>
+<desc id="desc">Dedicated UI inputs configure segment delays; UI bit 7 becomes FREEZE. Bidirectional UIO pins input the upper configuration byte and output status bytes. Dedicated UO outputs carry the pointer and flags. Clock, reset, enable and UIO direction control are identified. The measurement path compares a falling-edge DUT sample with an independent oracle. Two ring oscillator counters provide delay telemetry.</desc>
+<defs><marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto-start-reverse"><path d="M0 0 L8 4 L0 8 Z" fill="#334e68"/></marker>
+<style>text{font-family:Arial,Helvetica,sans-serif;fill:#18354b;font-size:26px}.title{font-size:36px;font-weight:700}.head{font-size:29px;font-weight:700}.muted{fill:#52677c}.data{fill:none;stroke:#334e68;stroke-width:3;marker-end:url(#arrow)}.control{fill:none;stroke:#76869a;stroke-width:3;stroke-dasharray:8 6;marker-end:url(#arrow)}</style></defs>
+<rect width="1200" height="2160" rx="16" fill="#f8fafc"/>
+<text x="30" y="48" class="title">A tiny instrument for measuring timing failure</text>
+<text x="30" y="87" class="muted">V2 · IHP SG13G2 · 1 × 1 Tiny Tapeout tile</text>
+<rect x="25" y="115" width="1150" height="440" rx="12" fill="#c6daf4" stroke="none"/>
+<text x="45" y="155" class="head">01  HOST → CHIP · input pins</text>
+<rect x="45" y="175" width="530" height="280" rx="12" fill="#fff" stroke="#69859d"/>
+<path d="M48 189 V441" stroke="#2463ce" stroke-width="6"/>
+<text x="65" y="214" class="head">ui_in[7:0] · INPUT</text>
+<text x="65" y="253" class="">[1:0] → segment 0 delay selection</text>
+<text x="65" y="287" class="">[3:2] → segment 1 delay selection</text>
+<text x="65" y="321" class="">[5:4] → segment 2 delay selection</text>
+<text x="65" y="355" class="">[7:6] → segment 3 delay selection</text>
+<text x="65" y="389" class="">Run: [7] = FREEZE; [6:0] unused</text>
+<rect x="595" y="175" width="560" height="280" rx="12" fill="#fff" stroke="#69859d"/>
+<path d="M598 189 V441" stroke="#2463ce" stroke-width="6"/>
+<text x="615" y="214" class="head">uio[7:0] · INPUT for config</text>
+<text x="615" y="253" class="">[1:0] → pattern · cfg[9:8]</text>
+<text x="615" y="287" class="">[3:2] → canary taps · cfg[11:10]</text>
+<text x="615" y="321" class="">[5:4] → RO window · cfg[13:12]</text>
+<text x="615" y="355" class="">[6] → FORCE_CAN · cfg[14]</text>
+<text x="615" y="389" class="">[7] → FORCE_ERR · cfg[15]</text>
+<text x="45" y="493" class="">clk → clock · rst_n → active-low reset · ena → unused input</text>
+<text x="45" y="531" class="">Hold {uio_in, ui_in} through the third rising edge after reset release.</text>
+<path d="M305 555 V590" class="data"/>
+<path d="M875 555 V590" class="data"/>
+<rect x="25" y="590" width="1150" height="195" rx="12" fill="#c6daf4" stroke="none"/>
+<rect x="45" y="610" width="530" height="155" rx="12" fill="#fff" stroke="#69859d"/>
+<path d="M48 624 V751" stroke="#2463ce" stroke-width="6"/>
+<text x="65" y="649" class="head">Configuration + frame control</text>
+<text x="65" y="688" class="">16-bit cfg; one operation / 19 clocks</text>
+<text x="65" y="722" class="">↑ clk launches; ui_in[7] freezes state</text>
+<rect x="595" y="610" width="560" height="155" rx="12" fill="#fff" stroke="#69859d"/>
+<path d="M598 624 V751" stroke="#2463ce" stroke-width="6"/>
+<text x="615" y="649" class="head">Canary window control</text>
+<text x="615" y="688" class="">256 / 1,024 / 4,096 / 16,384 clocks</text>
+<text x="615" y="722" class="">Enable ROs after boot; stop at done</text>
+<path d="M305 785 V820" class="control"/>
+<rect x="25" y="820" width="1150" height="620" rx="12" fill="#bce7f0" stroke="none"/>
+<rect x="45" y="840" width="1110" height="120" rx="12" fill="#fff" stroke="#69859d"/>
+<path d="M48 854 V946" stroke="#139653" stroke-width="6"/>
+<text x="65" y="879" class="head">Pattern generator · a[15:0], b[15:0], cin</text>
+<text x="65" y="918" class="">PRBS / carry-heavy / carry-free alternating / static hold</text>
+<path d="M305 960 V1010" class="data"/>
+<path d="M875 960 V1010" class="data"/>
+<rect x="45" y="1010" width="530" height="170" rx="12" fill="#fff" stroke="#69859d"/>
+<path d="M48 1024 V1166" stroke="#0097b2" stroke-width="6"/>
+<text x="65" y="1049" class="head">DUT · 16-bit ripple-carry adder</text>
+<text x="65" y="1088" class="">Four 4-bit segments + delay banks</text>
+<text x="65" y="1122" class="">Each bank: 0 / 16 / 32 / 48</text>
+<text x="65" y="1156" class="">preserved inverter pairs</text>
+<rect x="595" y="1010" width="560" height="170" rx="12" fill="#fff" stroke="#69859d"/>
+<path d="M598 1024 V1166" stroke="#8295aa" stroke-width="6"/>
+<text x="615" y="1049" class="head">Independent oracle</text>
+<text x="615" y="1088" class="">Combinational 17-bit a + b + cin</text>
+<text x="615" y="1122" class="">Same operands; no delay banks</text>
+<text x="615" y="1156" class="">Operands hold until next launch</text>
+<path d="M305 1180 V1230" class="data"/>
+<path d="M875 1180 V1230" class="data"/>
+<rect x="45" y="1230" width="530" height="180" rx="12" fill="#fff" stroke="#69859d"/>
+<path d="M48 1244 V1396" stroke="#ee9800" stroke-width="6"/>
+<text x="65" y="1269" class="head">One-shot DUT capture</text>
+<text x="65" y="1308" class="">↓ clk immediately after launch</text>
+<text x="65" y="1342" class="">Hold 17-bit sample until next capture</text>
+<text x="65" y="1376" class="">FORCE_ERR flips all sample bits</text>
+<rect x="595" y="1230" width="560" height="180" rx="12" fill="#fff" stroke="#69859d"/>
+<path d="M598 1244 V1396" stroke="#d94c35" stroke-width="6"/>
+<text x="615" y="1269" class="head">Compare + error accounting</text>
+<text x="615" y="1308" class="">Compare at next frame boundary</text>
+<text x="615" y="1342" class="">16-bit saturating error / op counts</text>
+<text x="615" y="1376" class="">Save low byte of first failed sample</text>
+<path d="M575 1310 H595" class="data"/>
+<rect x="25" y="1470" width="1150" height="230" rx="12" fill="#dbc9f5" stroke="none"/>
+<rect x="45" y="1490" width="720" height="85" rx="12" fill="#fff" stroke="#69859d"/>
+<path d="M48 1504 V1561" stroke="#713bd1" stroke-width="6"/>
+<text x="65" y="1529" class="head">Generic RO · inverter delay loop</text>
+<rect x="45" y="1595" width="720" height="85" rx="12" fill="#fff" stroke="#69859d"/>
+<path d="M48 1609 V1666" stroke="#d12b8f" stroke-width="6"/>
+<text x="65" y="1634" class="head">Matched RO · delay banks + carry cells</text>
+<rect x="805" y="1490" width="350" height="85" rx="12" fill="#fff" stroke="#69859d"/>
+<path d="M808 1504 V1561" stroke="#713bd1" stroke-width="6"/>
+<text x="825" y="1529" class="head">16-bit gen_cnt</text>
+<rect x="805" y="1595" width="350" height="85" rx="12" fill="#fff" stroke="#69859d"/>
+<path d="M808 1609 V1666" stroke="#d12b8f" stroke-width="6"/>
+<text x="825" y="1634" class="head">16-bit mat_cnt</text>
+<path d="M765 1532 H805" class="data"/>
+<path d="M765 1637 H805" class="data"/>
+<path d="M1160 1360 H1188 V1720 H875 V1750" class="data"/>
+<path d="M975 1700 V1750" class="data"/>
+<rect x="25" y="1750" width="1150" height="295" rx="12" fill="#c6daf4" stroke="none"/>
+<text x="45" y="1790" class="head">02  CHIP → HOST · output pins</text>
+<rect x="45" y="1810" width="530" height="215" rx="12" fill="#fff" stroke="#69859d"/>
+<path d="M48 1824 V2011" stroke="#2463ce" stroke-width="6"/>
+<text x="65" y="1849" class="head">uio[7:0] · OUTPUT for status</text>
+<text x="65" y="1888" class="">uio_out[7:0] = selected status byte</text>
+<text x="65" y="1922" class="">Errors / RO counts / operations /</text>
+<text x="65" y="1956" class="">tap echo / flags / first failed byte</text>
+<text x="65" y="1990" class="">Same 8 physical pins as config UIO</text>
+<rect x="595" y="1810" width="560" height="215" rx="12" fill="#fff" stroke="#69859d"/>
+<path d="M598 1824 V2011" stroke="#2463ce" stroke-width="6"/>
+<text x="615" y="1849" class="head">uo_out[7:0] · OUTPUT</text>
+<text x="615" y="1888" class="">[7] frame_strobe · [6] matched dead</text>
+<text x="615" y="1922" class="">[5] generic dead · [4] dut_err pulse</text>
+<text x="615" y="1956" class="">[3:0] byte pointer · 0–15</text>
+<text x="615" y="1990" class="">Pointer advances every ↑ clk</text>
+<text x="30" y="2085" class="">UIO direction control: uio_oe[7:0] = {8{boot[1]}}; 0 = input, 1 = output.</text>
+<text x="30" y="2123" class="muted">Solid arrows: data / counts · Dashed: control · Shared fanout omitted.</text>
+</svg>

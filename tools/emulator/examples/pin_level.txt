@@ -1,0 +1,49 @@
+# Pin-level walkthrough (RTL backend).
+#
+#   python3 tools/chip_emulate.py repl --script tools/emulator/examples/pin_level.txt
+#
+# Everything here is what a board host does: drive pins, step single clock
+# cycles, read pins.  No high-level protocol helpers are used except `config`
+# and `status`.
+
+echo == 1. drive the config word while rst_n is low ==
+rst 0
+ui 0xFF
+uio 0x05
+tick 2
+pins
+
+echo == 2. release reset; the boot counter commits cfg at the 3rd rising edge ==
+rst 1
+tick 3
+pins
+
+echo == 3. release the config pins (ui[7]=FREEZE must stay low) ==
+ui 0x00
+uio 0x00
+
+echo == 4. step single clock cycles and watch uo[7] (frame strobe) ==
+tick 1
+pins
+tick 1
+pins
+tick 17
+pins
+
+echo == 5. run 5 measured operations, then freeze and read ==
+run 5
+freeze 1
+status
+assert st.err_cnt == 0
+assert st.cfg_echo == 0xFF
+
+echo == 6. drive FREEZE from the pin level and resume ==
+ui 0x80
+tick 2
+status
+ui 0x00
+tick 2
+run 3
+freeze 1
+status
+quit

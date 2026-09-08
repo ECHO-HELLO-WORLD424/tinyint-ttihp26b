@@ -1,0 +1,235 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1240" height="645" viewBox="0 0 1240 645" font-family="Helvetica, Arial, sans-serif">
+  <defs>
+    <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#555"/>
+    </marker>
+  </defs>
+
+  <style>
+    .seg  { fill:#f4f7fe; stroke:#4a5fc1; stroke-width:1.5; rx:6; }
+    .fa   { fill:#dce6fb; stroke:#4a5fc1; stroke-width:1.2; }
+    .bank { fill:#fdf0d9; stroke:#c07f1f; stroke-width:1.4; }
+    .wire { stroke:#555; stroke-width:1.5; fill:none; }
+    .bus  { stroke:#777; stroke-width:2.5; fill:none; }
+    .t    { fill:#222; font-size:11px; }
+    .tb   { fill:#1a2a6b; font-size:11px; font-weight:bold; }
+    .ts   { fill:#444; font-size:8px; }
+    .tss  { fill:#7a4c00; font-size:9px; }
+  </style>
+
+  <text x="620" y="22" text-anchor="middle" font-size="16" font-weight="bold" fill="#1a2a6b">tpv_rca16 &#8212; 16-bit segmented ripple-carry DUT with tunable carry-delay banks</text>
+
+  <!-- operand buses -->
+  <text x="50" y="34" class="t">a[15:0]</text>
+  <line x1="50" y1="40" x2="1150" y2="40" class="bus"/>
+  <text x="50" y="64" class="t">b[15:0]</text>
+  <line x1="50" y1="52" x2="1150" y2="52" class="bus"/>
+
+  <!-- cin -->
+  <text x="26" y="186" text-anchor="end" class="t">cin</text>
+  <line x1="30" y1="182" x2="68" y2="182" class="wire" marker-end="url(#arr)"/>
+
+  <!-- ================= SEGMENT 0 ================= -->
+  <g transform="translate(60,0)">
+    <text x="8" y="126" class="tb">SEGMENT 0</text>
+    <rect x="0" y="130" width="230" height="195" class="seg" rx="6"/>
+    <line x1="105" y1="40" x2="105" y2="130" class="wire" marker-end="url(#arr)"/>
+    <line x1="125" y1="52" x2="125" y2="130" class="wire" marker-end="url(#arr)"/>
+    <!-- sum rail -->
+    <line x1="30" y1="160" x2="30" y2="155" class="wire"/>
+    <line x1="86" y1="160" x2="86" y2="155" class="wire"/>
+    <line x1="142" y1="160" x2="142" y2="155" class="wire"/>
+    <line x1="198" y1="160" x2="198" y2="155" class="wire"/>
+    <line x1="30" y1="155" x2="198" y2="155" class="wire"/>
+    <line x1="30" y1="155" x2="30" y2="72" class="wire" marker-end="url(#arr)"/>
+    <text x="40" y="66" class="t">sum[3:0]</text>
+    <!-- FAs -->
+    <rect x="8"   y="160" width="44" height="45" class="fa" rx="4"/>
+    <rect x="64"  y="160" width="44" height="45" class="fa" rx="4"/>
+    <rect x="120" y="160" width="44" height="45" class="fa" rx="4"/>
+    <rect x="176" y="160" width="44" height="45" class="fa" rx="4"/>
+    <text x="30"  y="186" text-anchor="middle" class="t">FA0</text>
+    <text x="86"  y="186" text-anchor="middle" class="t">FA1</text>
+    <text x="142" y="186" text-anchor="middle" class="t">FA2</text>
+    <text x="198" y="186" text-anchor="middle" class="t">FA3</text>
+    <line x1="52"  y1="182" x2="64"  y2="182" class="wire" marker-end="url(#arr)"/>
+    <line x1="108" y1="182" x2="120" y2="182" class="wire" marker-end="url(#arr)"/>
+    <line x1="164" y1="182" x2="176" y2="182" class="wire" marker-end="url(#arr)"/>
+    <!-- carry into bank -->
+    <line x1="198" y1="205" x2="198" y2="235" class="wire" marker-end="url(#arr)"/>
+    <text x="204" y="226" class="ts">sc[4]</text>
+    <!-- delay bank -->
+    <rect x="108" y="235" width="116" height="57" class="bank" rx="5"/>
+    <text x="166" y="250" text-anchor="middle" class="tss" font-weight="bold">tpv_delay_line</text>
+    <text x="166" y="263" text-anchor="middle" class="tss">48 inv-pair chain</text>
+    <text x="166" y="276" text-anchor="middle" class="tss">taps: 0/16/32/48</text>
+    <line x1="166" y1="305" x2="166" y2="292" class="wire" marker-end="url(#arr)"/>
+    <text x="166" y="318" text-anchor="middle" class="ts">seg_sel[1:0] &#8592; cfg[1:0]</text>
+    <!-- carry out to next segment -->
+    <polyline points="224,262 255,262 255,182 288,182" class="wire" marker-end="url(#arr)"/>
+    <text x="255" y="174" text-anchor="middle" class="ts">bank_out[0]</text>
+  </g>
+
+  <!-- ================= SEGMENT 1 ================= -->
+  <g transform="translate(340,0)">
+    <text x="8" y="126" class="tb">SEGMENT 1</text>
+    <rect x="0" y="130" width="230" height="195" class="seg" rx="6"/>
+    <line x1="105" y1="40" x2="105" y2="130" class="wire" marker-end="url(#arr)"/>
+    <line x1="125" y1="52" x2="125" y2="130" class="wire" marker-end="url(#arr)"/>
+    <line x1="30" y1="160" x2="30" y2="155" class="wire"/>
+    <line x1="86" y1="160" x2="86" y2="155" class="wire"/>
+    <line x1="142" y1="160" x2="142" y2="155" class="wire"/>
+    <line x1="198" y1="160" x2="198" y2="155" class="wire"/>
+    <line x1="30" y1="155" x2="198" y2="155" class="wire"/>
+    <line x1="30" y1="155" x2="30" y2="72" class="wire" marker-end="url(#arr)"/>
+    <text x="40" y="66" class="t">sum[7:4]</text>
+    <rect x="8"   y="160" width="44" height="45" class="fa" rx="4"/>
+    <rect x="64"  y="160" width="44" height="45" class="fa" rx="4"/>
+    <rect x="120" y="160" width="44" height="45" class="fa" rx="4"/>
+    <rect x="176" y="160" width="44" height="45" class="fa" rx="4"/>
+    <text x="30"  y="186" text-anchor="middle" class="t">FA0</text>
+    <text x="86"  y="186" text-anchor="middle" class="t">FA1</text>
+    <text x="142" y="186" text-anchor="middle" class="t">FA2</text>
+    <text x="198" y="186" text-anchor="middle" class="t">FA3</text>
+    <line x1="52"  y1="182" x2="64"  y2="182" class="wire" marker-end="url(#arr)"/>
+    <line x1="108" y1="182" x2="120" y2="182" class="wire" marker-end="url(#arr)"/>
+    <line x1="164" y1="182" x2="176" y2="182" class="wire" marker-end="url(#arr)"/>
+    <line x1="198" y1="205" x2="198" y2="235" class="wire" marker-end="url(#arr)"/>
+    <text x="204" y="226" class="ts">sc[4]</text>
+    <rect x="108" y="235" width="116" height="57" class="bank" rx="5"/>
+    <text x="166" y="250" text-anchor="middle" class="tss" font-weight="bold">tpv_delay_line</text>
+    <text x="166" y="263" text-anchor="middle" class="tss">48 inv-pair chain</text>
+    <text x="166" y="276" text-anchor="middle" class="tss">taps: 0/16/32/48</text>
+    <line x1="166" y1="305" x2="166" y2="292" class="wire" marker-end="url(#arr)"/>
+    <text x="166" y="318" text-anchor="middle" class="ts">seg_sel[1:0] &#8592; cfg[3:2]</text>
+    <polyline points="224,262 255,262 255,182 288,182" class="wire" marker-end="url(#arr)"/>
+    <text x="255" y="174" text-anchor="middle" class="ts">bank_out[1]</text>
+  </g>
+
+  <!-- ================= SEGMENT 2 ================= -->
+  <g transform="translate(620,0)">
+    <text x="8" y="126" class="tb">SEGMENT 2</text>
+    <rect x="0" y="130" width="230" height="195" class="seg" rx="6"/>
+    <line x1="105" y1="40" x2="105" y2="130" class="wire" marker-end="url(#arr)"/>
+    <line x1="125" y1="52" x2="125" y2="130" class="wire" marker-end="url(#arr)"/>
+    <line x1="30" y1="160" x2="30" y2="155" class="wire"/>
+    <line x1="86" y1="160" x2="86" y2="155" class="wire"/>
+    <line x1="142" y1="160" x2="142" y2="155" class="wire"/>
+    <line x1="198" y1="160" x2="198" y2="155" class="wire"/>
+    <line x1="30" y1="155" x2="198" y2="155" class="wire"/>
+    <line x1="30" y1="155" x2="30" y2="72" class="wire" marker-end="url(#arr)"/>
+    <text x="40" y="66" class="t">sum[11:8]</text>
+    <rect x="8"   y="160" width="44" height="45" class="fa" rx="4"/>
+    <rect x="64"  y="160" width="44" height="45" class="fa" rx="4"/>
+    <rect x="120" y="160" width="44" height="45" class="fa" rx="4"/>
+    <rect x="176" y="160" width="44" height="45" class="fa" rx="4"/>
+    <text x="30"  y="186" text-anchor="middle" class="t">FA0</text>
+    <text x="86"  y="186" text-anchor="middle" class="t">FA1</text>
+    <text x="142" y="186" text-anchor="middle" class="t">FA2</text>
+    <text x="198" y="186" text-anchor="middle" class="t">FA3</text>
+    <line x1="52"  y1="182" x2="64"  y2="182" class="wire" marker-end="url(#arr)"/>
+    <line x1="108" y1="182" x2="120" y2="182" class="wire" marker-end="url(#arr)"/>
+    <line x1="164" y1="182" x2="176" y2="182" class="wire" marker-end="url(#arr)"/>
+    <line x1="198" y1="205" x2="198" y2="235" class="wire" marker-end="url(#arr)"/>
+    <text x="204" y="226" class="ts">sc[4]</text>
+    <rect x="108" y="235" width="116" height="57" class="bank" rx="5"/>
+    <text x="166" y="250" text-anchor="middle" class="tss" font-weight="bold">tpv_delay_line</text>
+    <text x="166" y="263" text-anchor="middle" class="tss">48 inv-pair chain</text>
+    <text x="166" y="276" text-anchor="middle" class="tss">taps: 0/16/32/48</text>
+    <line x1="166" y1="305" x2="166" y2="292" class="wire" marker-end="url(#arr)"/>
+    <text x="166" y="318" text-anchor="middle" class="ts">seg_sel[1:0] &#8592; cfg[5:4]</text>
+    <polyline points="224,262 255,262 255,182 288,182" class="wire" marker-end="url(#arr)"/>
+    <text x="255" y="174" text-anchor="middle" class="ts">bank_out[2]</text>
+  </g>
+
+  <!-- ================= SEGMENT 3 ================= -->
+  <g transform="translate(900,0)">
+    <text x="8" y="126" class="tb">SEGMENT 3</text>
+    <rect x="0" y="130" width="230" height="195" class="seg" rx="6"/>
+    <line x1="105" y1="40" x2="105" y2="130" class="wire" marker-end="url(#arr)"/>
+    <line x1="125" y1="52" x2="125" y2="130" class="wire" marker-end="url(#arr)"/>
+    <line x1="30" y1="160" x2="30" y2="155" class="wire"/>
+    <line x1="86" y1="160" x2="86" y2="155" class="wire"/>
+    <line x1="142" y1="160" x2="142" y2="155" class="wire"/>
+    <line x1="198" y1="160" x2="198" y2="155" class="wire"/>
+    <line x1="30" y1="155" x2="198" y2="155" class="wire"/>
+    <line x1="30" y1="155" x2="30" y2="72" class="wire" marker-end="url(#arr)"/>
+    <text x="40" y="66" class="t">sum[15:12]</text>
+    <rect x="8"   y="160" width="44" height="45" class="fa" rx="4"/>
+    <rect x="64"  y="160" width="44" height="45" class="fa" rx="4"/>
+    <rect x="120" y="160" width="44" height="45" class="fa" rx="4"/>
+    <rect x="176" y="160" width="44" height="45" class="fa" rx="4"/>
+    <text x="30"  y="186" text-anchor="middle" class="t">FA0</text>
+    <text x="86"  y="186" text-anchor="middle" class="t">FA1</text>
+    <text x="142" y="186" text-anchor="middle" class="t">FA2</text>
+    <text x="198" y="186" text-anchor="middle" class="t">FA3</text>
+    <line x1="52"  y1="182" x2="64"  y2="182" class="wire" marker-end="url(#arr)"/>
+    <line x1="108" y1="182" x2="120" y2="182" class="wire" marker-end="url(#arr)"/>
+    <line x1="164" y1="182" x2="176" y2="182" class="wire" marker-end="url(#arr)"/>
+    <line x1="198" y1="205" x2="198" y2="235" class="wire" marker-end="url(#arr)"/>
+    <text x="204" y="226" class="ts">sc[4]</text>
+    <rect x="108" y="235" width="116" height="57" class="bank" rx="5"/>
+    <text x="166" y="250" text-anchor="middle" class="tss" font-weight="bold">tpv_delay_line</text>
+    <text x="166" y="263" text-anchor="middle" class="tss">48 inv-pair chain</text>
+    <text x="166" y="276" text-anchor="middle" class="tss">taps: 0/16/32/48</text>
+    <line x1="166" y1="305" x2="166" y2="292" class="wire" marker-end="url(#arr)"/>
+    <text x="166" y="318" text-anchor="middle" class="ts">seg_sel[1:0] &#8592; cfg[7:6]</text>
+    <line x1="224" y1="262" x2="268" y2="262" class="wire" marker-end="url(#arr)"/>
+    <text x="246" y="252" text-anchor="middle" class="t">cout</text>
+  </g>
+
+  <!-- ================= delay-line detail ================= -->
+  <line x1="40" y1="352" x2="1200" y2="352" stroke="#bbb" stroke-width="1"/>
+  <text x="60" y="378" font-size="13" font-weight="bold" fill="#1a2a6b">Inside each tpv_delay_line (N_PAIRS = 48, TAP = 16 &#8594; 96 inverters = 48 inverter pairs)</text>
+
+  <text x="80" y="428" class="t">d_in (sc[4])</text>
+  <line x1="150" y1="424" x2="195" y2="424" class="wire" marker-end="url(#arr)"/>
+
+  <rect x="195" y="404" width="140" height="40" class="bank" rx="5"/>
+  <text x="265" y="420" text-anchor="middle" class="tss">16 &#215; inverter pair</text>
+  <text x="265" y="435" text-anchor="middle" class="ts">node[0] &#8594; node[32]</text>
+
+  <line x1="335" y1="424" x2="375" y2="424" class="wire" marker-end="url(#arr)"/>
+
+  <rect x="375" y="404" width="140" height="40" class="bank" rx="5"/>
+  <text x="445" y="420" text-anchor="middle" class="tss">16 &#215; inverter pair</text>
+  <text x="445" y="435" text-anchor="middle" class="ts">node[32] &#8594; node[64]</text>
+
+  <line x1="515" y1="424" x2="555" y2="424" class="wire" marker-end="url(#arr)"/>
+
+  <rect x="555" y="404" width="140" height="40" class="bank" rx="5"/>
+  <text x="625" y="420" text-anchor="middle" class="tss">16 &#215; inverter pair</text>
+  <text x="625" y="435" text-anchor="middle" class="ts">node[64] &#8594; node[96]</text>
+
+  <text x="195" y="462" class="ts">each pair = 2 &#215; tpv_inv_cell, (* keep *) chain &#8212; not collapsible to buffers</text>
+
+  <!-- tap points down to mux -->
+  <line x1="195" y1="444" x2="195" y2="490" class="wire"/>
+  <line x1="335" y1="444" x2="335" y2="490" class="wire"/>
+  <line x1="515" y1="444" x2="515" y2="490" class="wire"/>
+  <line x1="695" y1="444" x2="695" y2="490" class="wire"/>
+  <text x="200" y="486" class="ts">n0</text>
+  <text x="340" y="486" class="ts">n1</text>
+  <text x="520" y="486" class="ts">n2</text>
+  <text x="700" y="486" class="ts">n3</text>
+  <line x1="195" y1="490" x2="940" y2="490" class="wire"/>
+  <line x1="940" y1="490" x2="940" y2="500" class="wire" marker-end="url(#arr)"/>
+
+  <text x="730" y="415" class="ts">tap select (sel[1:0]):</text>
+  <text x="730" y="429" class="ts">00 &#8594; node[0]&#160;&#160;&#160;(0 pairs)</text>
+  <text x="730" y="443" class="ts">01 &#8594; node[32] (16 pairs)</text>
+  <text x="730" y="457" class="ts">10 &#8594; node[64] (32 pairs)</text>
+  <text x="730" y="471" class="ts">11 &#8594; node[96] (48 pairs)</text>
+
+  <rect x="860" y="500" width="190" height="55" class="bank" rx="5"/>
+  <text x="955" y="521" text-anchor="middle" class="tss" font-weight="bold">tpv_tap_mux4</text>
+  <text x="955" y="537" text-anchor="middle" class="tss">sel[1:0] &#8594; n0/n1/n2/n3</text>
+  <line x1="955" y1="580" x2="955" y2="555" class="wire" marker-end="url(#arr)"/>
+  <text x="955" y="593" text-anchor="middle" class="t">sel = seg_sel[2k+1:2k]</text>
+
+  <line x1="1050" y1="527" x2="1105" y2="527" class="wire" marker-end="url(#arr)"/>
+  <text x="1112" y="524" class="t">d_out</text>
+  <text x="1112" y="537" class="ts">(bank_dout / cout)</text>
+
+  <text x="620" y="632" text-anchor="middle" class="ts" font-size="10">Programmable critical path: cin &#8594; FA0..FA3 &#8594; bank0 &#8594; FA0..FA3 &#8594; bank1 &#8594; FA0..FA3 &#8594; bank2 &#8594; FA0..FA3 &#8594; bank3 &#8594; cout.&#160;&#160;Worst case: all taps = 11 (48 inverter pairs per bank).</text>
+</svg>

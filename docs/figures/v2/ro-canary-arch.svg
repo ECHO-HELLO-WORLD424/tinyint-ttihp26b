@@ -1,0 +1,169 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1220 730" font-family="Helvetica, Arial, sans-serif">
+  <defs>
+    <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#444"/>
+    </marker>
+    <style>
+      text { fill:#222; }
+      .t1  { font-size:17px; font-weight:700; text-anchor:middle; }
+      .pt  { font-size:13.5px; font-weight:700; }
+      .bl  { font-size:11px; font-weight:700; text-anchor:middle; }
+      .bt  { font-size:10px; text-anchor:middle; }
+      .sm  { font-size:9px; text-anchor:middle; }
+      .nt  { font-size:11px; }
+      .nth { font-size:12px; font-weight:700; }
+      .lab { font-size:9px; fill:#555; text-anchor:middle; }
+      .wire { stroke:#444; stroke-width:1.4; fill:none; }
+      .panel { fill:#FCFCFC; stroke:#777; stroke-width:1; }
+      .ctlb  { fill:#EFEFEF; stroke:#666; stroke-width:1; }
+      .gate  { fill:#FFE0B2; stroke:#8a5a00; stroke-width:1; }
+      .line  { fill:#BBDEFB; stroke:#28527a; stroke-width:1; }
+      .fa    { fill:#C8E6C9; stroke:#2e6b34; stroke-width:1; }
+      .tail  { fill:#E1BEE7; stroke:#5e3a6b; stroke-width:1; }
+      .cnt   { fill:#FFF59D; stroke:#8a7a00; stroke-width:1; }
+    </style>
+  </defs>
+
+  <!-- ===================== Title ===================== -->
+  <text x="610" y="32" class="t1">Ring-oscillator canary architecture &#8212; tpv_ro_gen &amp; tpv_ro_match (src/tpv_ro_canary.v)</text>
+
+  <!-- ===================== Shared control block ===================== -->
+  <rect x="40" y="52" width="1140" height="108" class="ctlb" rx="8"/>
+  <text x="52" y="74" class="pt">Shared control (top level tt_um_echoworld424_tpv) &#8212; config captured while rst_n is low</text>
+
+  <rect x="60"  y="88" width="250" height="58" class="ctlb" rx="5"/>
+  <text x="185" y="108" class="bl">sel = cfg[11:10] (can_sel)</text>
+  <text x="185" y="122" class="sm">tap select &#8212; both canaries</text>
+  <text x="185" y="136" class="sm">gen: pairs 0/7/14/21 &#183; match: pairs 0/11/22/33</text>
+
+  <rect x="340" y="88" width="230" height="58" class="ctlb" rx="5"/>
+  <text x="455" y="108" class="bl">mask = cfg[14] (force_can)</text>
+  <text x="455" y="124" class="sm">1 &#8594; stall loop, cnt stays 0</text>
+
+  <rect x="600" y="88" width="250" height="58" class="ctlb" rx="5"/>
+  <text x="725" y="106" class="bl">win_sel = cfg[13:12]</text>
+  <text x="725" y="120" class="sm">window = 2^8 / 2^10 / 2^12 / 2^14 clk cycles</text>
+  <text x="725" y="134" class="sm">win_done freezes ro_en</text>
+
+  <rect x="890" y="88" width="270" height="58" class="ctlb" rx="5"/>
+  <text x="1025" y="106" class="bl">en = ro_en =</text>
+  <text x="1025" y="120" class="sm">update_en &amp; ~win_done &amp; boot==3</text>
+  <text x="1025" y="134" class="sm">rst_n also gates loop &amp; counters</text>
+
+  <!-- ===================== Left panel: Generic RO ===================== -->
+  <rect x="40" y="185" width="540" height="320" class="panel" rx="10"/>
+  <text x="60" y="208" class="pt">tpv_ro_gen &#8212; generic inverter-line RO (PVT proxy, activity-blind)</text>
+
+  <rect x="60" y="228" width="150" height="88" class="gate" rx="5"/>
+  <text x="135" y="246" class="bl">tpv_ro_gate</text>
+  <text x="135" y="261" class="bt">nand_out = en &amp; ~mask</text>
+  <text x="135" y="274" class="bt">&amp; close &amp; rst_n</text>
+  <text x="135" y="294" class="sm">en=ro_en &#183; mask=force_can</text>
+
+  <rect x="250" y="228" width="160" height="88" class="line" rx="5"/>
+  <text x="330" y="246" class="bl">tpv_ro_line</text>
+  <text x="330" y="261" class="bt">21 pairs = 42 &#215; tpv_inv_ro</text>
+  <text x="330" y="275" class="bt">tap mux4 &#8592; sel[1:0]</text>
+  <text x="330" y="294" class="sm">taps: node 0/14/28/42</text>
+
+  <rect x="450" y="228" width="115" height="88" class="tail" rx="5"/>
+  <text x="512" y="246" class="bl">tail</text>
+  <text x="512" y="261" class="bt">8 &#215; tpv_inv_ro</text>
+  <text x="512" y="275" class="bt">+ u_close inv</text>
+  <text x="512" y="292" class="bt">&#8594; close</text>
+
+  <!-- left loop arrows -->
+  <path d="M210,272 L246,272" class="wire" marker-end="url(#arr)"/>
+  <circle cx="228" cy="272" r="2.5" fill="#444"/>
+  <path d="M415,272 L451,272" class="wire" marker-end="url(#arr)"/>
+  <text x="433" y="262" class="lab">line_out</text>
+  <path d="M512,316 L512,346 L135,346 L135,320" class="wire" marker-end="url(#arr)"/>
+  <text x="310" y="342" class="lab">close</text>
+  <!-- ro_node branch to counter -->
+  <path d="M228,272 L228,376" class="wire" marker-end="url(#arr)"/>
+  <text x="236" y="322" class="lab" text-anchor="start">ro_node</text>
+
+  <rect x="60" y="380" width="510" height="110" class="cnt" rx="5"/>
+  <text x="315" y="400" class="bl">16-bit ripple edge counter (RO clock domain)</text>
+  <text x="315" y="418" class="bt">bit0 &#8592; posedge ro_node &#183; bit k toggles on negedge bit k&#8722;1</text>
+  <text x="315" y="434" class="sm">read only after loop stops (win_done) &amp; ripple settles</text>
+  <text x="315" y="452" class="bt">cnt &#8594; gen_cnt[15:0] &#8594; serial readout (ptr 2&#8211;3)</text>
+  <text x="315" y="470" class="sm">dead flag: win_done &amp; (gen_cnt == 0) &#8594; canary-dead status</text>
+
+  <!-- ===================== Right panel: Matched RO ===================== -->
+  <rect x="620" y="185" width="540" height="320" class="panel" rx="10"/>
+  <text x="640" y="208" class="pt">tpv_ro_match &#8212; structure-matched RO (delay line + FA carry path)</text>
+
+  <!-- row 1 -->
+  <rect x="640" y="228" width="130" height="88" class="gate" rx="5"/>
+  <text x="705" y="246" class="bl">tpv_ro_gate</text>
+  <text x="705" y="261" class="bt">nand_out = en &amp; ~mask</text>
+  <text x="705" y="274" class="bt">&amp; close &amp; rst_n</text>
+  <text x="705" y="294" class="sm">en=ro_en &#183; mask=force_can</text>
+
+  <rect x="800" y="228" width="160" height="88" class="line" rx="5"/>
+  <text x="880" y="246" class="bl">tpv_ro_line (line0)</text>
+  <text x="880" y="261" class="bt">33 pairs = 66 &#215; tpv_inv_ro</text>
+  <text x="880" y="275" class="bt">tap mux4 &#8592; sel[1:0]</text>
+  <text x="880" y="294" class="sm">taps: node 0/22/44/66</text>
+
+  <rect x="990" y="228" width="150" height="88" class="fa" rx="5"/>
+  <text x="1065" y="246" class="bl">tpv_fa (u_f0)</text>
+  <text x="1065" y="261" class="bt">a = 1, b = 0</text>
+  <text x="1065" y="275" class="bt">ci = l0 &#8594; co = f0</text>
+  <text x="1065" y="294" class="sm">sum output s unused</text>
+
+  <!-- row 2 -->
+  <rect x="990" y="350" width="150" height="88" class="line" rx="5"/>
+  <text x="1065" y="368" class="bl">tpv_ro_line (line1)</text>
+  <text x="1065" y="383" class="bt">33 pairs = 66 &#215; tpv_inv_ro</text>
+  <text x="1065" y="397" class="bt">tap mux4 &#8592; sel[1:0]</text>
+  <text x="1065" y="414" class="sm">taps: node 0/22/44/66</text>
+
+  <rect x="800" y="350" width="160" height="88" class="fa" rx="5"/>
+  <text x="880" y="368" class="bl">tpv_fa (u_f1)</text>
+  <text x="880" y="383" class="bt">a = 1, b = 0</text>
+  <text x="880" y="397" class="bt">ci = l1 &#8594; co = f1</text>
+  <text x="880" y="414" class="sm">sum output s unused</text>
+
+  <rect x="640" y="350" width="130" height="88" class="tail" rx="5"/>
+  <text x="705" y="368" class="bl">tail</text>
+  <text x="705" y="383" class="bt">8 &#215; tpv_inv_ro</text>
+  <text x="705" y="397" class="bt">+ u_close inv</text>
+  <text x="705" y="414" class="bt">&#8594; close</text>
+
+  <!-- right loop arrows -->
+  <path d="M770,272 L796,272" class="wire" marker-end="url(#arr)"/>
+  <circle cx="790" cy="272" r="2.5" fill="#444"/>
+  <path d="M960,272 L986,272" class="wire" marker-end="url(#arr)"/>
+  <text x="973" y="262" class="lab">l0</text>
+  <path d="M1065,316 L1065,346" class="wire" marker-end="url(#arr)"/>
+  <text x="1073" y="336" class="lab" text-anchor="start">f0</text>
+  <path d="M990,394 L964,394" class="wire" marker-end="url(#arr)"/>
+  <text x="977" y="384" class="lab">l1</text>
+  <path d="M800,394 L774,394" class="wire" marker-end="url(#arr)"/>
+  <text x="787" y="384" class="lab">f1</text>
+  <path d="M705,350 L705,320" class="wire" marker-end="url(#arr)"/>
+  <text x="713" y="340" class="lab" text-anchor="start">close</text>
+  <!-- ro_node branch -->
+  <path d="M790,272 L790,496" class="wire" marker-end="url(#arr)"/>
+  <text x="784" y="332" class="lab" text-anchor="end">ro_node</text>
+
+  <rect x="640" y="380" width="500" height="110" class="cnt" rx="5"/>
+  <text x="890" y="400" class="bl">16-bit ripple edge counter (RO clock domain)</text>
+  <text x="890" y="418" class="bt">bit0 &#8592; posedge ro_node &#183; bit k toggles on negedge bit k&#8722;1</text>
+  <text x="890" y="434" class="sm">read only after loop stops (win_done) &amp; ripple settles</text>
+  <text x="890" y="452" class="bt">cnt &#8594; mat_cnt[15:0] &#8594; serial readout (ptr 4&#8211;5)</text>
+  <text x="890" y="470" class="sm">dead flag: win_done &amp; (mat_cnt == 0) &#8594; canary-dead status</text>
+
+  <!-- ===================== Notes ===================== -->
+  <rect x="40" y="530" width="1140" height="170" class="ctlb" rx="8"/>
+  <text x="52" y="552" class="nth">Notes</text>
+  <text x="52" y="572" class="nt">&#8226; Both loops share one control: en = ro_en = update_en &amp; ~win_done &amp; boot==3; window = 2^8 / 2^10 / 2^12 / 2^14 clk cycles (win_sel = cfg[13:12]).</text>
+  <text x="52" y="590" class="nt">&#8226; sel = cfg[11:10] tunes margin via tap mux4: generic taps at inverter-pair boundaries 0/7/14/21 (nodes 0/14/28/42); matched taps at pairs 0/11/22/33 (nodes 0/22/44/66).</text>
+  <text x="52" y="608" class="nt">&#8226; mask = force_can (cfg[14], DFT) stalls the loop so the counter stays 0; dead flag = win_done &amp; (cnt == 0).</text>
+  <text x="52" y="626" class="nt">&#8226; Cells are pre-mapped library cells (sg13g2_inv_1, sg13g2_mux2_1, ...) with (* keep *) loop nets so synthesis cannot merge inverter pairs or cut the loops; RO arcs disabled in pnr.sdc.</text>
+  <text x="52" y="644" class="nt">&#8226; Loops are asynchronous and circular &#8212; canary frequency must come from extracted transient simulation, not static STA. Counter is a true ripple counter read after the loop stops.</text>
+  <text x="52" y="662" class="nt">&#8226; Matched-RO loop mirrors the DUT segment delay composition: tunable inverter bank &#8594; full adder carrying a constant bit &#8594; repeat, then a fixed 9-inverter tail.</text>
+  <text x="52" y="680" class="nt">&#8226; In RTL sim (TPV_GDELAY) each tpv_inv_ro has a per-gate delay so the loops toggle; in synthesis they map to sg13g2_inv_1.</text>
+</svg>

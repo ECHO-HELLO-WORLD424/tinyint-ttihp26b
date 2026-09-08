@@ -1,0 +1,29 @@
+{
+  "run_id": 34158224984,
+  "commit": "b9f03f798978840c8bdc2bb574877408e0f33f4c",
+  "run_url": "https://github.com/ECHO-HELLO-WORLD424/tinyint-ttihp26b/actions/runs/34158224984",
+  "artifacts": [
+    "GDS_logs",
+    "gds_render"
+  ],
+  "pdk_revision": "c4b8b4e5e7a05f375cca3815d51b3a37721fbf5c",
+  "inputs_sha256": {
+    "final.def": "d343f1920694668dd179ca247288b3b56c453d3272e47a1f01b39ec588a353e9",
+    "final.v": "bd73969aa5746d6a12c6453e9a6e4b125eb02f2eb6c58c6b806ad803ed4c6931",
+    "sg13g2_stdcell.lef": "c7575039af0b124e1834c407bfb9ac7a2db576d1e3533d98474dad3fbc2af589",
+    "gds_render.png": "252c3a852ac3bbbb73ca9be6f794bce3c068b4994c2a01615136063f673264af"
+  },
+  "instance_counts": {
+    "Physical-only cells": 1172,
+    "Other logic (includes oracle)": 792,
+    "Control / window / readout state": 60,
+    "Error-accounting state": 25,
+    "One-shot capture flops": 17,
+    "Generic RO + counter state": 74,
+    "Matched RO + counter state": 183,
+    "Named pattern-state flops": 10,
+    "DUT carry cells + delay banks": 476
+  },
+  "matplotlib_version": "3.10.6",
+  "classification": "Preserved hierarchy for DUT/RO cells; flop Q nets for named state. Unattributed flattened logic, including the oracle, stays in Other logic. This does not assign exclusive floorplan regions to modules."
+}

@@ -1,0 +1,27 @@
+{
+  "run_id": "local-dev-safe10",
+  "build_commit": "7b20196bb74195649679fae6313a891712e87458",
+  "python_version": "3.12.3",
+  "matplotlib_version": "3.10.6",
+  "figures": [
+    "aperture.png",
+    "aperture.svg",
+    "boundary-ruler.png",
+    "boundary-ruler.svg",
+    "canary.png",
+    "canary.svg",
+    "frame-timing.png",
+    "frame-timing.svg",
+    "sta-matrix.png",
+    "sta-matrix.svg",
+    "timing-boundary.png",
+    "timing-boundary.svg"
+  ],
+  "inputs_sha256": {
+    "data/safe10/experiment_sta.csv": "bd79e7040015924fe9b3892ce9db50be2b081683260b570da6b39a93d301564b",
+    "data/safe10/sdfsim.csv": "c5e0345c9fd2056cf37c7d128fe702b69221c93fecea8f1e52da4d22ff49e876",
+    "data/safe10/ro_predict.csv": "5541b807f4fcd89d3927a37946c3d4cc1c5d212f88c4c54034550cd26daf6d22",
+    "data/safe10/verification/aperture-check.json": "e38634dc13166a40679752bc9e5ac3a5498545a4a58d528dea92028167543660"
+  },
+  "note": "Replots archived data only; no new HDL, timing analysis or simulation. The boundary ruler and frame-timing panels are schematic. The timed simulation omits interconnect delays and flip-flop timing checks."
+}
