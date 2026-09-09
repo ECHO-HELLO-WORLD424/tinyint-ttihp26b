@@ -48,5 +48,5 @@
     }
   },
   "postCreateCommand": "echo 'source /ttsetup/venv/bin/activate' >> ~/.bashrc",
-  "postStartCommand": "/bin/sh .devcontainer/copy_tt_support_tools.sh"
+  "postStartCommand": "/bin/sh .devcontainer/copy_tt_support_tools.sh && /bin/sh /ttsetup/compile_pdk_osdi.sh"
 }

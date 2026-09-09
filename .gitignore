@@ -36,3 +36,6 @@ data/safe10/sdf_path/*.iopath.sdf
 data/safe10/sta_stdout_*.log
 data/safe10/*.stdout.log
 data/safe10/verification/*.stdout.log
+
+# Extracted RO transient (SPICE) validation: generated working tree
+runs/spice-artifacts/

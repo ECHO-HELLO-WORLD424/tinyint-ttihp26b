@@ -142,9 +142,12 @@ The checker is combinational, RO counters are true ripple counters, and the
 public 19-cycle protocol is retained. See
 `docs/halfcycle-development-validation.md` and `data/halfcycle/` for the
 development verification record and `docs/ci-timing-closure-attempts.md` for
-the attempt log. Extracted RO transient validation and actual board operating
-limits remain open. The historical full-cycle completion statements below
-apply only to the pre-merge Git history of this branch.
+the attempt log. Extracted RO transient validation is **complete**
+(`docs/ro-spice-validation.md`, `data/safe10/spice/`: 24/24 cases, mean
+SPICE/STA frequency ratio 1.008, one unexplained `ro_mat` shortest-tap
+outlier kept in the data). Actual board operating limits remain open. The
+historical full-cycle completion statements below apply only to the pre-merge
+Git history of this branch.
 
 
 Both research-blocking issues from the original audit (commit
@@ -184,6 +187,13 @@ document when a checklist item is genuinely completed.
 | `info.yaml` | Tiny Tapeout submission metadata and source list |
 | `docs/info.md` | User-facing datasheet and operating protocol |
 | `docs/research-proposal.md` | Research framing and experiment plan |
+| `docs/ro-spice-validation.md` | Extracted RO transient (SPICE) validation record |
+| `tools/ro/extract_ro_loop.py` | Extracts an RO ring from the flat post-route SPICE netlist |
+| `tools/ro/run_ro_spice_case.py` | Builds and runs one ngspice RO transient deck |
+| `tools/ro/sweep_ro_spice.py` | Runs the 24-case (corner x can_sel x canary) sweep |
+| `tools/ro/analyse_spice_raw.py` | Measures f_osc from an ngspice rawfile |
+| `tools/ro/compare_ro_spice.py` | SPICE vs broken-loop STA comparison and plots |
+| `data/safe10/spice/` | SPICE RO dataset, comparison table, and plots |
 | `test/test.py` | Cocotb RTL and functional gate-level regression |
 | `test/tb.v` | Simulation wrapper and waveform setup |
 | `test/Makefile` | Icarus/cocotb RTL and GL build rules |
@@ -207,6 +217,13 @@ The devcontainer provides or configures:
 - LibreLane and the IHP PDK environment (`PDK=ihp-sg13g2`).
 - Docker-in-Docker for tools that require containers.
 - A working copy of Tiny Tapeout support tools at `tt/`, populated at container start.
+- **ngspice 45** (built from source with `--enable-osdi` and KLU) and
+  **OpenVAF-Reloaded**, for extracted RO transient validation. The Ubuntu
+  24.04 `ngspice` package is 42, whose OSDI loader only accepts OSDI v0.3 while
+  OpenVAF-Reloaded emits v0.4, so the packaged binary cannot load the PDK's
+  PSP103 models. `.devcontainer/compile_pdk_osdi.sh` compiles those models to
+  OSDI at container start (the PDK is downloaded by CIEL on first use).
+  See `docs/ro-spice-validation.md`.
 
 The shell activates `/ttsetup/venv` through `.bashrc`. If a noninteractive command does
 not have the environment activated, explicitly source `/ttsetup/venv/bin/activate`.

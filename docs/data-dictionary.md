@@ -111,6 +111,39 @@ ring oscillators with SPEF parasitics; 3 corners x 4 can_sel x 2 canaries.
 | `sat_win0..3` | - | model flag: 1 if the predicted count would exceed the 16-bit counter range (wrap mod 65536 in hardware; host-side unwrapping needed), else 0. NOT an RTL flag -- the hardware counters simply wrap |
 | provenance columns | - | as above |
 
+## `data/safe10/spice/` (extracted RO transient check)
+
+Producers `tools/ro/extract_ro_loop.py`, `tools/ro/run_ro_spice_case.py`,
+`tools/ro/sweep_ro_spice.py`, `tools/ro/analyse_spice_raw.py` and
+`tools/ro/compare_ro_spice.py`. Full method and caveats:
+`docs/ro-spice-validation.md`.
+
+| File | Contents |
+| --- | --- |
+| `spice_ro.csv` / `spice_ro.json` | one row per case: ngspice transient result, loop node, measured period/frequency, period spread, periods counted, simulated time, timestep, solver, wall time, deck/raw/log paths |
+| `ro_spice_vs_sta.csv` / `.json` | the same rows joined with `data/safe10/ro_predict.csv`: STA frequency, SPICE frequency, `ratio_spice_over_sta`, wire share of the STA loop delay, and the STA startpoint/endpoint |
+| `ro_spice_frequency.png` | predicted (STA) versus simulated (SPICE) `f_osc` for both canaries, all corners |
+| `ro_spice_ratio.png` | SPICE/STA ratio per case |
+
+Key columns of `spice_ro.csv`:
+
+| Field | Unit | Meaning |
+| --- | --- | --- |
+| `status` | - | `ok` or the failure reason (failures are kept) |
+| `f_osc_mhz` | MHz | measured oscillation frequency, `1 / mean_period` |
+| `period_ns`, `period_std_ps` | ns / ps | mean period over settled crossings and its standard deviation |
+| `n_periods`, `n_periods_raw` | - | intervals kept after outlier rejection / intervals before |
+| `node` | - | measured loop node (the gate output) |
+| `tstop_ns`, `tstep_ps`, `solver` | ns / ps / - | transient setup (`uic`, `.ic` on all loop nodes) |
+| `vmin`, `vmax` | V | measured loop-node excursion |
+
+**Method caveat:** the transient runs use the cell-level Magic spiceextraction
+(transistor-level cells, cell-internal parasitics, **no interconnect RC**),
+while `ro_predict.csv` includes SPEF wire parasitics. SPICE running faster than
+STA is therefore expected; the two are independent predictions, not a
+correction. The `ro_mat` `can_sel=0` rows are an unexplained outlier (ratio
+0.52–0.65, high jitter) and must not be dropped.
+
 ## `data/sdfsim.csv` (one row per SDF-sim probe point)
 
 Producer `tools/run_sdfsim.py` (P1.2): SDF-annotated full-chip timing

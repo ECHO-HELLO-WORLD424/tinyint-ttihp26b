@@ -70,9 +70,17 @@ three clocks. Retain identical configuration/boot handling at calibration and
 measurement; report this small window-model uncertainty. This is inherited
 behavior, not resolved by the half-cycle change.
 
-RO frequencies remain **broken-loop extracted STA estimates**, not transient
-SPICE-validated oscillation measurements. The signoff SDF has disabled RO arcs;
-a free-running SDF RO simulation would be invalid. The SDF sweep masks the ROs.
+RO frequencies are now **transient-SPICE checked** in addition to being
+broken-loop STA estimates. The signoff SDF has disabled RO arcs, so a
+free-running SDF RO simulation would be invalid, but an extracted
+transistor-level transient simulation is valid: `docs/ro-spice-validation.md`
+reports 24/24 cases (3 corners x 4 selections x 2 canaries) on the same
+post-route extracted netlist, with a mean SPICE/STA frequency ratio of
+**1.008** (generic canary 1.082, matched canary 0.935). The single `ro_mat`
+`can_sel=0` outlier is kept in the dataset and flagged as unexplained. The two
+remain independent pre-silicon predictions: the SPICE run has **no wire RC**,
+so it is not a correction to the STA model, and the STA model was **not tuned**
+to the SPICE result. The SDF sweep still masks the ROs.
 
 ## Calibration and scoring
 
