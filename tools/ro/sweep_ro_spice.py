@@ -43,6 +43,34 @@ def planned_tstop(period_s, periods, cap_ns, floor_ns=60.0):
     return round(min(max(want_ns, floor_ns), cap_ns), 1)
 
 
+def verify_control_pins(deck, raw, tol=0.05):
+    """Read the control-pin voltages back from the rawfile.
+
+    A deck whose source lines omit the ground node silently leaves those pins
+    floating (see run_ro_spice_case.py).  This check records whether every
+    static control pin actually settled at its intended level, so the dataset
+    itself proves the ring was driven correctly.
+    """
+    import re
+    want = {}
+    for line in open(deck):
+        m = re.match(r"^V\S+\s+(\S+)\s+0\s+DC\s+(\S+)", line)
+        if m:
+            want[m.group(1).lower()] = float(m.group(2))
+    varnames, cols = analyse_raw.read_raw(raw)
+    got = {n[2:-1]: (min(c), max(c)) for n, c in zip(varnames, cols)
+           if n.startswith("v(") and n.endswith(")")}
+    bad = []
+    for port, target in want.items():
+        if port not in got:
+            bad.append(f"{port}: missing")
+            continue
+        lo, hi = got[port]
+        if abs(lo - target) > tol or abs(hi - target) > tol:
+            bad.append(f"{port}: {lo:.3f}..{hi:.3f} (want {target})")
+    return ("ok" if not bad else "; ".join(bad)), len(want)
+
+
 def run_one(job):
     (canary, can_sel, corner, outdir, tstop_ns, tstep_ps, solver,
      loop_node_raw, vdd) = job
@@ -50,6 +78,12 @@ def run_one(job):
                         solver)
     rec = dict(info)
     rec["status"] = "ok" if info["rc"] == 0 else f"ngspice rc={info['rc']}"
+    try:
+        ctl, n_ctl = verify_control_pins(info["deck"], info["raw"])
+    except Exception as exc:
+        ctl, n_ctl = f"check failed: {exc}", 0
+    rec["control_pins"] = ctl
+    rec["n_control_pins"] = n_ctl
     try:
         res = analyse_raw.analyse(info["raw"], vdd=vdd, prefer=loop_node_raw)
         rec.update({k: res[k] for k in (
@@ -124,6 +158,7 @@ def main():
     csv_path = os.path.join(a.outdir, "spice_ro.csv")
     with open(csv_path, "w", newline="") as fh:
         cols = ["corner", "canary", "can_sel", "vdd", "temp", "lib", "status",
+                "control_pins", "n_control_pins",
                 "f_osc_mhz", "period_ns", "period_std_ps", "n_periods",
                 "n_periods_raw", "period_min_s", "period_max_s", "node",
                 "vmin", "vmax", "tstop_ns", "tstep_ps", "solver", "wall_s",

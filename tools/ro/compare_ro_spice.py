@@ -60,7 +60,7 @@ def main():
                    can_sel=key[2], f_sta_mhz=f_sta,
                    loop_delay_ns=loop_ns, line_seg_ns=line_ns,
                    gate_seg_ns=gate_ns,
-                   wire_share_pct=100.0 * line_ns / loop_ns,
+                   line_seg_share_pct=100.0 * line_ns / loop_ns,
                    sta_startpoint=r["startpoint"], sta_endpoint=r["endpoint"])
         if s and s.get("status") == "ok" and s.get("f_osc_mhz"):
             f_spice = float(s["f_osc_mhz"])
@@ -100,21 +100,22 @@ def main():
                 summary[f"ratio_mean_{canary}"] = sum(rs) / len(rs)
                 summary[f"ratio_min_{canary}"] = min(rs)
                 summary[f"ratio_max_{canary}"] = max(rs)
-        # wire-share correlation with the ratio: the gap should track how much
-        # of the STA loop delay is wire, which SPICE does not include.
-        ws = [r["wire_share_pct"] for r in ok]
+        # Correlation of the ratio with the share of the STA loop delay that
+        # the line segment (inverter chain + tail + close) represents.  The
+        # SPICE/STA gap is largest where mux/gate/full-adder cells dominate.
+        ws = [r["line_seg_share_pct"] for r in ok]
         if len(ws) > 2:
             mw, mr = sum(ws) / len(ws), mean
             cov = sum((w - mw) * (r_ - mr) for w, r_ in zip(ws, ratios))
             sw = (sum((w - mw) ** 2 for w in ws)) ** 0.5
             sr = (sum((r_ - mr) ** 2 for r_ in ratios)) ** 0.5
-            summary["corr_ratio_vs_wire_share"] = cov / (sw * sr) if sw and sr else None
+            summary["corr_ratio_vs_line_seg_share"] = cov / (sw * sr) if sw and sr else None
 
     os.makedirs(a.outdir, exist_ok=True)
     cols = ["corner", "v_volt", "t_celsius", "canary", "can_sel", "status",
             "f_sta_mhz", "f_spice_mhz", "ratio_spice_over_sta",
             "period_spice_ns", "period_std_ps", "n_periods",
-            "loop_delay_ns", "line_seg_ns", "gate_seg_ns", "wire_share_pct",
+            "loop_delay_ns", "line_seg_ns", "gate_seg_ns", "line_seg_share_pct",
             "tstop_ns", "tstep_ps", "solver", "spice_node", "vmin", "vmax",
             "sta_startpoint", "sta_endpoint"]
     with open(os.path.join(a.outdir, "ro_spice_vs_sta.csv"), "w", newline="") as fh:
@@ -132,7 +133,8 @@ def main():
                          "parasitics only, no wire RC",
                 "expected_difference": "SPICE omits wire RC, so f_spice is "
                                        "expected to exceed f_sta; the "
-                                       "wire_share_pct column bounds the gap",
+                                       "line_seg_share_pct column reports how "
+                                       "inverter-dominated each loop is",
             },
             "summary": summary,
             "rows": rows,

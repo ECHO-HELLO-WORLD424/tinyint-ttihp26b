@@ -135,14 +135,15 @@ Key columns of `spice_ro.csv`:
 | `n_periods`, `n_periods_raw` | - | intervals kept after outlier rejection / intervals before |
 | `node` | - | measured loop node (the gate output) |
 | `tstop_ns`, `tstep_ps`, `solver` | ns / ps / - | transient setup (`uic`, `.ic` on all loop nodes) |
+| `control_pins` | - | `ok` when every static control pin read back from the rawfile settled within 50 mV of its deck value; otherwise the offending pins. This check caught a revision-1 deck bug (floating control pins), see `RO-SPICE-SEL0-ANOMALY.md` |
 | `vmin`, `vmax` | V | measured loop-node excursion |
 
 **Method caveat:** the transient runs use the cell-level Magic spiceextraction
 (transistor-level cells, cell-internal parasitics, **no interconnect RC**),
 while `ro_predict.csv` includes SPEF wire parasitics. SPICE running faster than
 STA is therefore expected; the two are independent predictions, not a
-correction. The `ro_mat` `can_sel=0` rows are an unexplained outlier (ratio
-0.52–0.65, high jitter) and must not be dropped.
+correction. Revision 2 of the dataset has no outliers (mean SPICE/STA ratio
+1.119, range 1.04–1.22) and every case passes the control-pin read-back check.
 
 ## `data/sdfsim.csv` (one row per SDF-sim probe point)
 

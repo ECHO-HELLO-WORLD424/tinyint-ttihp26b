@@ -144,8 +144,9 @@ public 19-cycle protocol is retained. See
 development verification record and `docs/ci-timing-closure-attempts.md` for
 the attempt log. Extracted RO transient validation is **complete**
 (`docs/ro-spice-validation.md`, `data/safe10/spice/`: 24/24 cases, mean
-SPICE/STA frequency ratio 1.008, one unexplained `ro_mat` shortest-tap
-outlier kept in the data). Actual board operating limits remain open. The
+SPICE/STA frequency ratio 1.119, range 1.04–1.22, no outliers, every case
+passing a control-pin read-back check). Actual board operating limits remain
+open. The
 historical full-cycle completion statements below apply only to the pre-merge
 Git history of this branch.
 
@@ -188,6 +189,7 @@ document when a checklist item is genuinely completed.
 | `docs/info.md` | User-facing datasheet and operating protocol |
 | `docs/research-proposal.md` | Research framing and experiment plan |
 | `docs/ro-spice-validation.md` | Extracted RO transient (SPICE) validation record |
+| `RO-SPICE-SEL0-ANOMALY.md` | Post-mortem: revision-1 SPICE deck bug and corrected dataset |
 | `tools/ro/extract_ro_loop.py` | Extracts an RO ring from the flat post-route SPICE netlist |
 | `tools/ro/run_ro_spice_case.py` | Builds and runs one ngspice RO transient deck |
 | `tools/ro/sweep_ro_spice.py` | Runs the 24-case (corner x can_sel x canary) sweep |

@@ -111,7 +111,11 @@ def make_deck(canary, can_sel, corner, tstop_ns, tstep_ps, loop_sp, rawfile,
             L.append(f"Vgnd {port} 0 DC 0")
         else:
             v = vals.get(role, 0)
-            L.append(f"V_{role}_{port} {port} DC {c['vdd'] if v else 0}")
+            # NOTE: the ground node is mandatory.  "Vname node DC value"
+            # silently leaves the node floating in ngspice (the parser takes
+            # DC as the negative terminal), which is how an earlier version of
+            # this driver produced uncontrolled control pins.
+            L.append(f"V_{role}_{port} {port} 0 DC {c['vdd'] if v else 0}")
         conns.append(port)
     L.append(f"X1 {' '.join(conns)} {sub}")
     # Initialise every ring node so the operating point is well defined and
