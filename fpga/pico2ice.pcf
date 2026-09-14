@@ -1,0 +1,21 @@
+# pico2-ice harness pinout for tt_fpga_pico2ice.
+# RP2350 GPIO -> iCE40UP5K (SG48) pin mapping is from the pico2-ice Rev2 PCB.
+# Left column is the harness port name, right column the iCE40 package pin.
+
+set_io clk    35   # RP2350 GPIO21 (CLK_GPOUT0)
+set_io rst_n  20   # RP2350 GPIO22
+set_io ui_cfg 27   # RP2350 GPIO20
+
+set_io uio[0] 19   # RP2350 GPIO23
+set_io uio[1] 18   # RP2350 GPIO27
+set_io uio[2] 21   # RP2350 GPIO26
+set_io uio[3] 23   # RP2350 GPIO25
+set_io uio[4] 25   # RP2350 GPIO30
+set_io uio[5] 26   # RP2350 GPIO24
+set_io uio[6] 9    # RP2350 GPIO28
+set_io uio[7] 11   # RP2350 GPIO29
+
+set_io uo[0]  14   # RP2350 GPIO7 (config SPI SO, reused after configuration)
+set_io uo[1]  15   # RP2350 GPIO6 (config SPI SCK)
+set_io uo[2]  16   # RP2350 GPIO5 (config SPI SSN)
+set_io uo[3]  17   # RP2350 GPIO4 (config SPI SI)

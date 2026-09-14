@@ -67,7 +67,8 @@ RUN cd /ttsetup && \
 # OpenVAF-Reloaded: compiles the PDK's PSP103 Verilog-A models to OSDI.
 # Needs libLLVM 18 (Ubuntu 24.04 ships 18.1.3).
 # ---------------------------------------------------------------------------
-RUN apt-get install -y -o Acquire::Retries=10 libllvm18 && \
+RUN apt-get update && \
+    apt-get install -y -o Acquire::Retries=10 libllvm18 && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
 RUN cd /tmp && \

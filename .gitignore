@@ -39,3 +39,6 @@ data/safe10/verification/*.stdout.log
 
 # Extracted RO transient (SPICE) validation: generated working tree
 runs/spice-artifacts/
+
+# pico2-ice FPGA verification flow: generated bitstream/build products
+fpga/build/
