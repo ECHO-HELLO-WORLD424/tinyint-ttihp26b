@@ -136,10 +136,10 @@ CI workflow. The **whole submission flow has been re-run locally on the fixed
 RTL and passes**: LibreLane 3.0.5 hardening, setup/hold clean at all three
 corners, DRC/LVS/antenna/power-grid clean, RO and delay-bank structure
 preserved, precheck 10/10, functional GL 10 pass / 4 skip, RTL 14/14. Hashes
-and provenance are in `docs/post-silicon-readiness-audit.md`. Because `src/`
-changed and the tree is still uncommitted, the **canonical CI run and a
-regenerated `artifacts/run-*/manifest.json` remain outstanding** — commit,
-push, and archive the `tt-gds-action@ttihp26b` run before submission. Findings
+and provenance are in `docs/post-silicon-readiness-audit.md`. Canonical CI is
+now green on the pushed commit `0a7cd5e` (run `35034979531`: gds + precheck +
+gl_test + viewer) and the final build manifest is archived at
+`artifacts/run-35034979531/MANIFEST.md`. Findings
 F2–F12 (unsynchronized FREEZE, canary counter aliasing, one-shot canary
 window, RO counters outside timing signoff, `ops_cnt` off-by-one not in the
 datasheet, stale manifest, ignored `MAX_FANOUT_CONSTRAINTS`, stale doc
@@ -161,7 +161,8 @@ the original full-cycle design exists only in pre-merge Git history (tip
   multicycle/false-path exception or setup-checker suppression was added.
   Portal acceptance remains open.
 - **Utilization:** placement density was lowered 82% → 72%, reducing final
-  utilization from 82.86% to 72.53% (sequential cells 195 → 152). The earlier
+  utilization from 82.86% to 72.53% (sequential cells 195 → 152; the
+  post-audit build reports 72.63% and 153, one flop for `boot_done`). The earlier
   60% objective was retired by owner decision; approximately 70% utilization
   is accepted for this candidate, subject to shuttle acceptance.
 

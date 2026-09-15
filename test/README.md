@@ -15,7 +15,8 @@ make clean
 make
 ```
 
-Expected baseline: **13 passing tests** (merged half-cycle design; the
+Expected baseline: **14 passing tests** (merged half-cycle design plus
+`test_uio_oe_handoff`; the
 archived full-cycle build's baseline was 10). Inspect `results.xml`; the
 cocotb
 simulator make rules may not propagate every test failure through the process

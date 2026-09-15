@@ -17,10 +17,17 @@ REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DATA = os.path.join(REPO, os.environ.get("TPV_DATA", "data/halfcycle"))
 ARTIFACTS = os.path.join(REPO, "artifacts")
 
-# Development build: local LibreLane 3.0.5, never presented as a CI run.
-RUN_DIR = os.path.join(REPO, os.environ.get("TPV_RUN_DIR", "src/runs/dev-halfcycle-final/final"))
-RUN_ID = os.environ.get("TPV_RUN_ID", "local-dev-halfcycle-final")
-GIT_COMMIT = os.environ.get("TPV_BUILD_COMMIT", "041c1906a276211a62263dc30ce0da13b01c00ed")
+# Canonical final build: the archived ttihp26b CI hardening run whose artifacts
+# are staged under artifacts/ by the gds workflow (see tools/make_manifest.py).
+# RUN_DIR follows that staged layout: metrics.json, resolved.json,
+# commit_id.json, 54-openroad-stapostpnr/, and the run's final/ views copied in
+# as gds/, nl/, spef/, sdf/, def/, lib/, sdc/.
+# Point TPV_RUN_DIR at a local development run to work against one instead --
+# such a directory is the run's `final/` view, with resolved.json and
+# 54-openroad-stapostpnr/ in its parent (see tools/make_local_manifest.py).
+RUN_DIR = os.path.join(REPO, os.environ.get("TPV_RUN_DIR", "artifacts/run-35034979531"))
+RUN_ID = os.environ.get("TPV_RUN_ID", "35034979531")
+GIT_COMMIT = os.environ.get("TPV_BUILD_COMMIT", "0a7cd5edd8cea7a45085898f84db403c93b25af0")
 
 LL_IMAGE = "ghcr.io/librelane/librelane:3.0.5"  # tool-identical to CI gds job
 CIEL_PDK_REV = "c4b8b4e5e7a05f375cca3815d51b3a37721fbf5c"

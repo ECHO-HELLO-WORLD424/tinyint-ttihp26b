@@ -137,17 +137,17 @@ Yes — as a verified, signoff-clean design, not yet as returned silicon.
 - Replaced the step-by-step reference checker and its stored intermediate results with a direct adder. The operands already stay stable until comparison, so this extra storage was unnecessary.
 - Changed the oscillator counters to ripple counters: each bit triggers the next, removing the wide incrementing logic while retaining 16-bit counts.
 
-Together, these changes reduced storage cells from **195 to 152** and active cell area by about **12.5%**. We could then lower the placement-density target from 82% to 72%. Final core utilization fell from **82.86% to 72.53%** in the same tile. The saving comes from smaller circuitry; changing the density setting alone does not remove gates ([development comparison](halfcycle-development-validation.md), [current build metrics](../data/safe10/verification/metrics.json)).
+Together, these changes reduced storage cells from **195 to 152** and active cell area by about **12.5%**. We could then lower the placement-density target from 82% to 72%. Final core utilization fell from **82.86% to 72.63%** in the same tile. The saving comes from smaller circuitry; changing the density setting alone does not remove gates ([development comparison](halfcycle-development-validation.md), [current build metrics](../data/safe10/verification/metrics.json)).
 
-The build passes **13 RTL tests**, **9 functional gate-level tests with 4 intentional skips**, and **10 Tiny Tapeout prechecks**, covering configuration, error injection, canary masking, capture retention, freeze/resume, and counter behavior ([local build manifest](../data/safe10/verification/local-build-manifest.json)). It uses **72.53%** of the core, with **152 sequential cells** and **2,809 placed instances** (1,637 standard cells plus filler), and reports **zero routing DRC, Magic DRC, LVS, and antenna violations**.
+The build passes **14 RTL tests**, **10 functional gate-level tests with 4 intentional skips**, and **10 Tiny Tapeout prechecks**, covering configuration, error injection, canary masking, capture retention, freeze/resume, and counter behavior ([final build manifest](../artifacts/run-35034979531/MANIFEST.md)). It uses **72.63%** of the core, with **153 sequential cells** and **2,807 placed instances** (1,629 standard cells plus filler), and reports **zero routing DRC, Magic DRC, LVS, and antenna violations**.
 
 | Corner | Worst setup slack at 100 ns | Worst hold slack |
 | --- | ---: | ---: |
-| Fast · 1.32 V · −40 °C | +38.82 ns | +0.13 ns |
-| Typical · 1.20 V · 25 °C | +33.71 ns | +0.22 ns |
-| Slow · 1.08 V · 125 °C | +24.60 ns | +0.38 ns |
+| Fast · 1.32 V · −40 °C | +38.82 ns | +0.14 ns |
+| Typical · 1.20 V · 25 °C | +33.72 ns | +0.23 ns |
+| Slow · 1.08 V · 125 °C | +24.63 ns | +0.39 ns |
 
-*Normal submitted operation at 10 MHz closes timing comfortably at every corner — while the experiment deliberately overclocks past those limits. Sources: [summary report](../data/safe10/verification/summary.rpt), [metrics](../data/safe10/verification/metrics.json).*
+*Normal submitted operation at 10 MHz closes timing comfortably at every corner — while the experiment deliberately overclocks past those limits. Sources: [summary report](../artifacts/run-35034979531/54-openroad-stapostpnr/summary.rpt), [metrics](../artifacts/run-35034979531/metrics.json).*
 
 ![Routed GDS and a color-coded placement map](figures/v2/placement-map.png)
 
@@ -380,8 +380,8 @@ Model `tpv-predict-2.0.0`, frozen before any silicon data. Two canary predictors
 
 | Suite | Passed | Skipped | Failed |
 | --- | ---: | ---: | ---: |
-| RTL regression (cocotb) | 13 | 0 | 0 |
-| Functional gate-level (zero delay) | 9 | 4 | 0 |
+| RTL regression (cocotb) | 14 | 0 | 0 |
+| Functional gate-level (zero delay) | 10 | 4 | 0 |
 | Tiny Tapeout precheck | 10 | 0 | 0 |
 
 The functional gate-level suite removes oscillator loops and runs with zero delay; it checks synthesized logic and the external protocol, not timing. Structural checks confirm **384 DUT-bank inverters**, **two oscillator loops**, and **17 one-shot capture flops** survive into the built netlist.
@@ -390,12 +390,12 @@ The functional gate-level suite removes oscillator loops and runs with zero dela
 
 | Metric | Value |
 | --- | --- |
-| Core utilization | 72.53% |
-| Active standard-cell area | 20,990.8 µm² |
-| Placed instances | 2,809 (1,637 standard cells + 1,172 filler) |
-| Sequential cells | 152 |
+| Core utilization | 72.63% |
+| Active standard-cell area | 21,021.6 µm² |
+| Placed instances | 2,807 (1,629 standard cells + 1,178 filler) |
+| Sequential cells | 153 |
 | Routing DRC / Magic DRC / LVS / antenna violations | 0 / 0 / 0 / 0 |
-| Estimated total power | 0.221 mW |
+| Estimated total power | 0.225 mW |
 | Die size | 202.08 × 154.98 µm |
 
 **Build identity.** All quantitative experiment results on this page come from the local development package `local-dev-safe10`, build commit `7b20196bb74195649679fae6313a891712e87458`, analyzed on a dirty worktree with the listed source files verified against the build commit. Tools: LibreLane 3.0.5, IHP PDK revision `c4b8b4e5e7a05f375cca3815d51b3a37721fbf5c`, support-tools revision `01d5d2814fa9dd61e9d211e0b235a4a592a9316a`. The placement figure and the archived CI manifest come from a **separate** build: [GitHub Actions run 34158224984](https://github.com/ECHO-HELLO-WORLD424/tinyint-ttihp26b/actions/runs/34158224984) on commit `b9f03f798978840c8bdc2bb574877408e0f33f4c`, whose GDS, precheck, gate-level, and viewer jobs all succeeded ([manifest](../artifacts/run-34158224984/manifest.json)). The two identities are not mixed. Earlier "v1" full-cycle datasets exist in the repository's history but are not used anywhere on this page.

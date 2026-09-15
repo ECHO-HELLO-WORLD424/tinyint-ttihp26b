@@ -3,6 +3,7 @@
 import hashlib
 import importlib.metadata
 import json
+import os
 from pathlib import Path
 import subprocess
 import xml.etree.ElementTree as ET
@@ -11,7 +12,10 @@ import common as C
 
 root = Path(C.REPO)
 views = Path(C.RUN_DIR)
-run = views.parent
+# RUN_DIR is either a local run's `final/` view (identity files and
+# 54-openroad-stapostpnr/ live in its parent) or an archived run root as staged
+# under artifacts/ (identity files sit next to the views).
+run = views.parent if (views.parent / "resolved.json").exists() else views
 out = Path(C.DATA) / "verification"
 out.mkdir(parents=True, exist_ok=True)
 
@@ -46,10 +50,16 @@ for p in (run / "resolved.json", run / "54-openroad-stapostpnr/summary.rpt"):
 packages = {name: importlib.metadata.version(name) for name in ("cocotb", "gdstk", "klayout", "PyYAML")}
 image = json.loads(subprocess.check_output(["docker", "image", "inspect", C.LL_IMAGE], text=True))[0]
 setup_clean = all(v >= 0 for k, v in metrics.items() if k.startswith("timing__setup__ws"))
+kind = ("local development experiment; not a submitted/green CI build"
+        if C.RUN_ID.startswith("local-") else
+        "archived CI build (run %s) with local verification" % C.RUN_ID)
 manifest = {
-    "kind": "local development experiment; not a submitted/green CI build",
+    "kind": kind,
     "run_id": C.RUN_ID, "build_commit": C.GIT_COMMIT,
-    "analysis_head": git("rev-parse", "HEAD"), "branch": git("branch", "--show-current"),
+    # The working tree's HEAD. Overridable because a container bind mount can
+    # serve a stale copy of .git/refs, which would record the wrong commit.
+    "analysis_head": os.environ.get("TPV_ANALYSIS_HEAD", git("rev-parse", "HEAD")),
+    "branch": git("branch", "--show-current"),
     "analysis_worktree_dirty": bool(git("status", "--porcelain")),
     "source_files_verified_equal_to_build_commit": sources,
     "tool_image": C.LL_IMAGE, "image_id": image["Id"],

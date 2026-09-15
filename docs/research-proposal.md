@@ -1,7 +1,7 @@
 > **Submitted normal operation: 10 MHz**, 50% duty (100 ns period). The 10–50 MHz
 > research sweep deliberately exceeds that timing-safe specification. The design is
 > verified: local hardening, RTL, GL and precheck pass, and canonical CI is all green
-> (GDS run `34158224984`); verification is tracked in
+> (GDS run `35034979531`); verification is tracked in
 > [the attempt log](ci-timing-closure-attempts.md). Earlier physical results below
 > remain historical evidence; fresh results are in `data/safe10/`.
 
@@ -121,19 +121,21 @@ The final 10 MHz build re-verified the same physical result under the submitted
 constraint (run `dev-safe10`, build commit `7b20196`, setup clean at all three
 corners; [its manifest](../data/safe10/verification/local-build-manifest.json)),
 and canonical CI is all green on `b9f03f798978840c8bdc2bb574877408e0f33f4c`
-(GDS run `34158224984`).
+(GDS run `34158224984`). The post-audit `uio_oe` fix was re-verified end to end
+on commit `0a7cd5e` (GDS run `35034979531`); its hashes and signoff are in
+[the final build manifest](../artifacts/run-35034979531/MANIFEST.md).
 
 | Check | Local result |
 | --- | --- |
-| RTL regression | 13 pass |
-| Functional gate-level regression | 9 pass, 4 intentional RTL-only skips |
+| RTL regression | 14 pass |
+| Functional gate-level regression | 10 pass, 4 intentional RTL-only skips |
 | Tiny Tapeout precheck | 10 pass |
 | Routing DRC / Magic DRC / LVS / antenna | 0 violations/errors |
 | Max slew / max capacitance | 0 violations |
-| Hold slack, fast / typical / slow | +0.1315 / +0.2189 / +0.3769 ns |
+| Hold slack, fast / typical / slow | +0.1356 / +0.2258 / +0.3891 ns |
 | Worst case-analyzed control setup slack at 50 MHz | +6.26 ns |
-| Active standard-cell area | 20,990.8 µm²; 12.47% below original |
-| Actual utilization | 72.53%; configured placement density 72% |
+| Active standard-cell area | 21,021.6 µm²; 12.3% below original |
+| Actual utilization | 72.63%; configured placement density 72% |
 | Structural inspection | 384 DUT bank inverters and taps, both RO loops, 17 falling-edge captures preserved |
 
 The approximately 70% utilization is accepted for this merged candidate,

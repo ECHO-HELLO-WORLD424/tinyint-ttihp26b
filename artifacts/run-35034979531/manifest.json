@@ -1,0 +1,304 @@
+{
+  "schema": {
+    "name": "tpv-final-build-manifest",
+    "version": 1,
+    "generated_at": "2026-09-15T23:32:24Z",
+    "notes": "Final submission build identity for PRE_SILICON_ACTION_PLAN item P2.2; hashes cover the staged run-33839023290 artifacts only."
+  },
+  "git": {
+    "git_commit": "0a7cd5edd8cea7a45085898f84db403c93b25af0",
+    "branch": "proposal-canary",
+    "git_dirty": true,
+    "staged_run_commit": "0a7cd5edd8cea7a45085898f84db403c93b25af0"
+  },
+  "ci": {
+    "run_id": "35034979531",
+    "run_url": "https://github.com/ECHO-HELLO-WORLD424/tinyint-ttihp26b/actions/runs/35034979531",
+    "workflow": "gds.yaml",
+    "ci_runner": "GitHub Actions, TinyTapeout/tt-gds-action@ttihp26b (ihp-sg13g2 PDK)",
+    "commit_id_json": {
+      "app": "Tiny Tapeout main 01d5d281",
+      "repo": "https://github.com/ECHO-HELLO-WORLD424/tinyint-ttihp26b",
+      "commit": "0a7cd5edd8cea7a45085898f84db403c93b25af0",
+      "workflow_url": "https://github.com/ECHO-HELLO-WORLD424/tinyint-ttihp26b/actions/runs/35034979531"
+    },
+    "tool_image": "ghcr.io/librelane/librelane:3.0.5",
+    "librelane_version": "3.0.5",
+    "sta_step": "54-openroad-stapostpnr",
+    "sta_step_runtime": "00:00:02.171",
+    "pdk": "ihp-sg13g2",
+    "pdk_ciel_rev": "c4b8b4e5e7a05f375cca3815d51b3a37721fbf5c",
+    "pdk_ciel_rev_source": "resolved.json PDK_ROOT (== tools/common.py)"
+  },
+  "config": {
+    "PDK": "ihp-sg13g2",
+    "DESIGN_NAME": "tt_um_echoworld424_tpv",
+    "CLOCK_PERIOD": 100,
+    "CLOCK_PORT": "clk",
+    "VDD_PIN": "VPWR",
+    "GND_PIN": "VGND",
+    "DIE_AREA": [
+      0,
+      0,
+      202.08,
+      154.98
+    ],
+    "FP_SIZING": "absolute",
+    "FP_CORE_UTIL": 50,
+    "PL_TARGET_DENSITY_PCT": 72,
+    "PL_TIMING_DRIVEN": false,
+    "PL_ROUTABILITY_DRIVEN": true,
+    "GRT_ADJUSTMENT": 0.3,
+    "GRT_LAYER_ADJUSTMENTS": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "GRT_RESIZER_SETUP_SLACK_MARGIN": 0.025,
+    "GRT_RESIZER_HOLD_SLACK_MARGIN": 0.05,
+    "SYNTH_STRATEGY": "AREA 0",
+    "SYNTH_HIERARCHY_MODE": "flatten",
+    "SYNTH_ADDER_TYPE": "YOSYS",
+    "SYNTH_SIZING": false,
+    "SYNTH_DRIVING_CELL": "sg13g2_buf_4/X",
+    "SYNTH_TIE_UNDEFINED": "low",
+    "SYNTH_PARAMETERS": null,
+    "USE_SLANG": false,
+    "RT_MIN_LAYER": "Metal2",
+    "RT_MAX_LAYER": "TopMetal1",
+    "MAX_FANOUT_CONSTRAINT": 10,
+    "MAX_TRANSITION_CONSTRAINT": null,
+    "MAX_CAPACITANCE_CONSTRAINT": null,
+    "CLOCK_UNCERTAINTY_CONSTRAINT": 0.25,
+    "CLOCK_TRANSITION_CONSTRAINT": 0.15,
+    "TIME_DERATING_CONSTRAINT": 5,
+    "IO_DELAY_CONSTRAINT": 20,
+    "DRT_OPT_ITERS": 64,
+    "GRT_OVERFLOW_ITERS": 50,
+    "RUN_TAP_ENDCAP_INSERTION": true,
+    "STA_CORNERS": [
+      "nom_fast_1p32V_m40C",
+      "nom_slow_1p08V_125C",
+      "nom_typ_1p20V_25C"
+    ],
+    "DEFAULT_CORNER": "nom_typ_1p20V_25C",
+    "HOLD_VIOLATION_CORNERS": [
+      "*typ*",
+      "*slow*"
+    ],
+    "SIGNOFF_SDC_FILE": "/home/runner/work/tinyint-ttihp26b/tinyint-ttihp26b/src/pnr.sdc",
+    "VERILOG_FILES": [
+      "tt_um_echoworld424_tpv.v",
+      "tpv_cells.v",
+      "tpv_delay_line.v",
+      "tpv_rca16.v",
+      "tpv_checker.v",
+      "tpv_pattern_gen.v",
+      "tpv_ro_canary.v"
+    ],
+    "SDC_FILE": "src/pnr.sdc",
+    "librelane_meta": {
+      "version": 1,
+      "flow": null,
+      "substituting_steps": null,
+      "step": null,
+      "librelane_version": "3.0.5"
+    }
+  },
+  "signoff": {
+    "corners": {
+      "nom_fast_1p32V_m40C": {
+        "setup_worst_slack_ns": 38.8214449353234,
+        "setup_worst_slack_r2r_ns": 38.821445,
+        "setup_tns_ns": 0,
+        "setup_violations": 0,
+        "hold_worst_slack_ns": 0.1356473027852499,
+        "hold_worst_slack_r2r_ns": 0.135647,
+        "hold_tns_ns": 0,
+        "hold_violations": 0,
+        "max_slew_violations": 0,
+        "max_fanout_violations": 1,
+        "max_cap_violations": 0
+      },
+      "nom_typ_1p20V_25C": {
+        "setup_worst_slack_ns": 33.72316210622192,
+        "setup_worst_slack_r2r_ns": 33.723164,
+        "setup_tns_ns": 0,
+        "setup_violations": 0,
+        "hold_worst_slack_ns": 0.22578745068250408,
+        "hold_worst_slack_r2r_ns": 0.225787,
+        "hold_tns_ns": 0,
+        "hold_violations": 0,
+        "max_slew_violations": 0,
+        "max_fanout_violations": 1,
+        "max_cap_violations": 0
+      },
+      "nom_slow_1p08V_125C": {
+        "setup_worst_slack_ns": 24.62858964257368,
+        "setup_worst_slack_r2r_ns": 24.62859,
+        "setup_tns_ns": 0,
+        "setup_violations": 0,
+        "hold_worst_slack_ns": 0.3891408416756419,
+        "hold_worst_slack_r2r_ns": 0.389141,
+        "hold_tns_ns": 0,
+        "hold_violations": 0,
+        "max_slew_violations": 0,
+        "max_fanout_violations": 1,
+        "max_cap_violations": 0
+      }
+    },
+    "instances": {
+      "total": 2807,
+      "stdcell": 1629,
+      "fill": 1178,
+      "total_area_um2": 28941.5,
+      "stdcell_area_um2": 21021.6
+    },
+    "utilization": {
+      "design": 0.726349,
+      "stdcell": 0.726349
+    },
+    "drc_lvs_antenna": {
+      "magic_drc_errors": 0,
+      "magic_illegal_overlaps": 0,
+      "route_drc_errors": 0,
+      "lvs_errors": 0,
+      "lvs_device_differences": 0,
+      "lvs_net_differences": 0,
+      "lvs_property_fails": 0,
+      "antenna_violating_nets": 0,
+      "antenna_violating_pins": 0,
+      "route_antenna_violations": 0,
+      "power_grid_violations": 0,
+      "note": "all checks clean per staged metrics.json; the DRC/LVS/antenna report files themselves are recorded-in-CI-only at https://github.com/ECHO-HELLO-WORLD424/tinyint-ttihp26b/actions/runs/35034979531",
+      "source": "artifacts/run-35034979531/metrics.json (staged subset)"
+    },
+    "lint": {
+      "errors": 0,
+      "warnings": 106,
+      "inferred_latches": 0
+    },
+    "power_total_w": 0.00022493318829219788
+  },
+  "files": {
+    "54-openroad-stapostpnr/nom_fast_1p32V_m40C/checks.rpt": {
+      "size": 151352,
+      "sha256": "86962dc6016e2ef18257ea68ce54bc1a9d6d47d78d86fd2ea82131c248520602"
+    },
+    "54-openroad-stapostpnr/nom_slow_1p08V_125C/checks.rpt": {
+      "size": 151352,
+      "sha256": "a70959e28f3969e73a5c96fbec445ab29e4b20bf33f792780c798da1558fd629"
+    },
+    "54-openroad-stapostpnr/nom_typ_1p20V_25C/checks.rpt": {
+      "size": 151346,
+      "sha256": "77a3b14196205da157a4e9c585639e965cfd3fd85293acecbf7f55b4d75b45f8"
+    },
+    "54-openroad-stapostpnr/runtime.txt": {
+      "size": 12,
+      "sha256": "fd5d0416857f86640da19bb453f45265c6e63fb1f01502dd8c2007051698d535"
+    },
+    "54-openroad-stapostpnr/summary.rpt": {
+      "size": 2770,
+      "sha256": "650f7e877a1fe3b34237d584279bc919eb85e8b728aee6e3c741987dd22b59e3"
+    },
+    "commit_id.json": {
+      "size": 269,
+      "sha256": "a5c2519054f89400fb3dfac6d099eed0393278ffd01d0b46fc8facadea1ca368"
+    },
+    "def/tt_um_echoworld424_tpv.def": {
+      "size": 1313854,
+      "sha256": "1e76743c60a94a95f7207dd16c83befde733e32458030b8f728407aeaaf7b93e"
+    },
+    "gds/tt_um_echoworld424_tpv.gds": {
+      "size": 2099656,
+      "sha256": "fd04f7da13664cf36ce6bae810139ecca2109f8e6e95e02c70958bd7807e13e5"
+    },
+    "gds/tt_um_echoworld424_tpv.oas": {
+      "size": 98016,
+      "sha256": "74c31c6e732313ee3a86195e89f5e5416e26f3a5bc9d9b4c28787606a95c6516"
+    },
+    "gl/results.xml": {
+      "size": 3365,
+      "sha256": "846bd029d484233e0b0088ad3b3eae0eae72381fb6cf345c6cd559daa8ce2e57"
+    },
+    "lib/nom_fast_1p32V_m40C/tt_um_echoworld424_tpv__nom_fast_1p32V_m40C.lib": {
+      "size": 36915,
+      "sha256": "7220f3fc571d305803fb6315e7bd0a0a270c9f545a35406684b9c7b5984256d3"
+    },
+    "lib/nom_slow_1p08V_125C/tt_um_echoworld424_tpv__nom_slow_1p08V_125C.lib": {
+      "size": 36896,
+      "sha256": "b196fe8ed24bffd1f54e91a34302f8429e7c32bdaf98885f371e7e9046f85c0d"
+    },
+    "lib/nom_typ_1p20V_25C/tt_um_echoworld424_tpv__nom_typ_1p20V_25C.lib": {
+      "size": 36907,
+      "sha256": "d9ecc48779d299a325d4832ce0c831a935019aa94cbd8bd1c8ff1dbd9221d7dd"
+    },
+    "metrics.csv": {
+      "size": 8614,
+      "sha256": "85809c920e5449193fe3a4447b9937d5b065a771d2beb8e1a9799f3571016da4"
+    },
+    "metrics.json": {
+      "size": 9707,
+      "sha256": "122671bd95933ae137af8b7a832ec7a2324932cd97d742a8c0bb4b7a27b21808"
+    },
+    "nl/tt_um_echoworld424_tpv.nl.v": {
+      "size": 260956,
+      "sha256": "e889762e1fffa169edb4342cc126660965f239c851552ebfc2e57f8d7e11c177"
+    },
+    "precheck/results.md": {
+      "size": 455,
+      "sha256": "0a6d2c154345c24333edb313819e818b9ec036d44b1ab9367c67dc292a2207d7"
+    },
+    "precheck/results.xml": {
+      "size": 625,
+      "sha256": "368277ef221e122a93836732c332a945b5c9a80b2b7f829cd306c613850edbc5"
+    },
+    "resolved.json": {
+      "size": 22190,
+      "sha256": "4ae6f6b4fc8e67ba3bae150f12ab480de4db4870d17fec0aef2cab665de08d81"
+    },
+    "sdc/tt_um_echoworld424_tpv.sdc": {
+      "size": 23663,
+      "sha256": "afab0a736ea108a3e765c51469d63240e3352e7b3263acf641c09605b8a7cf0d"
+    },
+    "sdf/nom_fast_1p32V_m40C/tt_um_echoworld424_tpv__nom_fast_1p32V_m40C.sdf": {
+      "size": 825811,
+      "sha256": "b3c7fab2f32fc941766e48478a09044c44e5f0df8093b55c08593b8298e6b6c0"
+    },
+    "sdf/nom_slow_1p08V_125C/tt_um_echoworld424_tpv__nom_slow_1p08V_125C.sdf": {
+      "size": 825811,
+      "sha256": "b470b91529026aa288417d549db3211d2fdcce935f74f644d21bebb7b81b9a1c"
+    },
+    "sdf/nom_typ_1p20V_25C/tt_um_echoworld424_tpv__nom_typ_1p20V_25C.sdf": {
+      "size": 825809,
+      "sha256": "66b167da61678d1021893f69db40629a7f86187b456041541e41136a2a1ecaae"
+    },
+    "spef/nom/tt_um_echoworld424_tpv.nom.spef": {
+      "size": 1064911,
+      "sha256": "6675178aedae05319564d33ea05debf40a491f925f7683aa2bd6f1e9eee8384d"
+    }
+  },
+  "reproduce": [
+    "# RTL regression (devcontainer; /ttsetup/venv active):",
+    "cd test && make clean && make   # inspect test/results.xml",
+    "# Functional gate-level test with the staged final netlist:",
+    "cp artifacts/run-35034979531/nl/tt_um_echoworld424_tpv.nl.v test/gate_level_netlist.v",
+    "cd test && make clean && make GATES=yes",
+    "# Hardening (canonical path): push to proposal-canary; GitHub Actions runs",
+    "# TinyTapeout/tt-gds-action@ttihp26b with the ihp-sg13g2 PDK (gds +",
+    "# precheck + GL tests + viewer). Redownload the archived artifact with:",
+    "gh run download 35034979531 --repo ECHO-HELLO-WORLD424/tinyint-ttihp26b --name GDS_logs --dir /tmp/gds-35034979531",
+    "# Experiment-specific case-analyzed STA (extracted, SPEF):",
+    "python3 tools/run_experiment_sta.py",
+    "# RO canary loop-delay prediction (broken-loop STA, SPEF):",
+    "python3 tools/run_ro_predict.py",
+    "# SDF back-annotated sweep (host-side docker wrapper):",
+    "python3 tools/run_sdfsim.py",
+    "# Rebuild this manifest:",
+    "python3 tools/make_manifest.py"
+  ]
+}

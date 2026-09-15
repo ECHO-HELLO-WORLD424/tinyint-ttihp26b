@@ -4,7 +4,7 @@
 The extracted netlist (Magic spiceextraction) is flat: every standard cell is
 an X-instance at the top level with escaped net names, so both ring oscillators
 are directly visible as cycles over those nets.  Simulating the whole 1x1 chip
-(1637 non-filler instances, transistor level) is unnecessary for an f_osc
+(about 1,600 non-filler instances, transistor level) is unnecessary for an f_osc
 measurement; the ring plus its enable gate and the first counter flop is enough.
 
 The loop is traced explicitly: start at the NAND-gate output (the `nand_out` /
