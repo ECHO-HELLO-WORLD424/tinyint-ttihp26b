@@ -57,7 +57,7 @@ That delay must physically survive synthesis, which would otherwise delete redun
 
 **The shutter.** The trick that makes failures observable is *when* the answer is photographed. New operands launch on a rising edge; the DUT's 17-bit answer is captured **exactly once** on the immediately following falling edge, then held. If it was still settling at that instant, the wrong value is frozen in place and a later, correct result cannot overwrite it. At the next frame boundary — 19 clock cycles after launch — the frozen sample is compared with the reference and an error counter is bumped.
 
-That half-cycle aperture was a deliberate design choice, not a stylistic one: an earlier full-cycle variant put the predicted boundary above the board's frequency range, so halving the aperture moved it into the measurable sweep while keeping the physical delay banks intact ([area and boundary audit](area-temperature-feasibility-audit.md)).
+**How we lowered the required test frequency.** The earlier design gave the adder a full clock cycle to finish. Its longest path was predicted to fail near **61.5 MHz at 25 °C**, above our planned 50 MHz ceiling. Taking the snapshot on the falling edge gives it only half a cycle at 50% duty, so it can miss the deadline at a lower clock speed. With the same delay banks, the new predicted boundary is about **31 MHz at 25 °C**. This makes room-temperature testing plausible without requiring a 125 °C test; the actual silicon boundary still needs measuring ([original audit](area-temperature-feasibility-audit.md), [half-cycle validation](halfcycle-development-validation.md)). Normal operation remains **10 MHz**, giving the adder 50 ns to finish; the **10–50 MHz** sweep deliberately searches for failures.
 
 ![Clock timing: launch on the rising edge, one-shot capture on the falling edge, comparison 19 cycles later](figures/v2/frame-timing.svg)
 
@@ -129,7 +129,17 @@ The carry-free and static cases are honest "not measurable here" results: one li
 
 ## 6. Is the chip physically real?
 
-Yes — as a verified, signoff-clean design, not yet as returned silicon. The build passes **13 RTL tests**, **9 functional gate-level tests with 4 intentional skips**, and **10 Tiny Tapeout prechecks**, covering configuration, error injection, canary masking, capture retention, freeze/resume, and counter behavior ([local build manifest](../data/safe10/verification/local-build-manifest.json)). It uses **72.53%** of the core, with **152 sequential cells** and **2,809 placed instances** (1,637 standard cells plus filler), and reports **zero routing DRC, Magic DRC, LVS, and antenna violations**.
+Yes — as a verified, signoff-clean design, not yet as returned silicon.
+
+**How we lowered area usage.** We simplified the supporting logic while keeping all 384 DUT delay-bank inverters and both oscillator loops:
+
+- Removed a duplicate 16-bit configuration register, reused the startup counter for pin-direction control, and trimmed the measurement-window counter from 16 bits to the 14 it needs.
+- Replaced the step-by-step reference checker and its stored intermediate results with a direct adder. The operands already stay stable until comparison, so this extra storage was unnecessary.
+- Changed the oscillator counters to ripple counters: each bit triggers the next, removing the wide incrementing logic while retaining 16-bit counts.
+
+Together, these changes reduced storage cells from **195 to 152** and active cell area by about **12.5%**. We could then lower the placement-density target from 82% to 72%. Final core utilization fell from **82.86% to 72.53%** in the same tile. The saving comes from smaller circuitry; changing the density setting alone does not remove gates ([development comparison](halfcycle-development-validation.md), [current build metrics](../data/safe10/verification/metrics.json)).
+
+The build passes **13 RTL tests**, **9 functional gate-level tests with 4 intentional skips**, and **10 Tiny Tapeout prechecks**, covering configuration, error injection, canary masking, capture retention, freeze/resume, and counter behavior ([local build manifest](../data/safe10/verification/local-build-manifest.json)). It uses **72.53%** of the core, with **152 sequential cells** and **2,809 placed instances** (1,637 standard cells plus filler), and reports **zero routing DRC, Magic DRC, LVS, and antenna violations**.
 
 | Corner | Worst setup slack at 100 ns | Worst hold slack |
 | --- | ---: | ---: |
