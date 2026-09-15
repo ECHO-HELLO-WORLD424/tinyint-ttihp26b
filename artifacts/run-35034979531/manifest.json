@@ -2,11 +2,11 @@
   "schema": {
     "name": "tpv-final-build-manifest",
     "version": 1,
-    "generated_at": "2026-09-15T23:36:54Z",
+    "generated_at": "2026-09-15T23:37:05Z",
     "notes": "Final submission build identity for PRE_SILICON_ACTION_PLAN item P2.2; hashes cover the staged run-33839023290 artifacts only."
   },
   "git": {
-    "git_commit": "e92926bf0cf280f9c7e80e71a0337cacaedcbe18",
+    "git_commit": "0cf333fad93d5b8461acd099dba8e6d915316e1f",
     "branch": "proposal-canary",
     "git_dirty": false,
     "staged_run_commit": "0a7cd5edd8cea7a45085898f84db403c93b25af0"
