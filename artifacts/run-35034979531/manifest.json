@@ -2,13 +2,13 @@
   "schema": {
     "name": "tpv-final-build-manifest",
     "version": 1,
-    "generated_at": "2026-09-15T23:32:24Z",
+    "generated_at": "2026-09-15T23:36:54Z",
     "notes": "Final submission build identity for PRE_SILICON_ACTION_PLAN item P2.2; hashes cover the staged run-33839023290 artifacts only."
   },
   "git": {
-    "git_commit": "0a7cd5edd8cea7a45085898f84db403c93b25af0",
+    "git_commit": "e92926bf0cf280f9c7e80e71a0337cacaedcbe18",
     "branch": "proposal-canary",
-    "git_dirty": true,
+    "git_dirty": false,
     "staged_run_commit": "0a7cd5edd8cea7a45085898f84db403c93b25af0"
   },
   "ci": {
@@ -217,13 +217,25 @@
       "size": 2099656,
       "sha256": "fd04f7da13664cf36ce6bae810139ecca2109f8e6e95e02c70958bd7807e13e5"
     },
+    "gds/tt_um_echoworld424_tpv.lef": {
+      "size": 11693,
+      "sha256": "337930fa0b7431fe2ea72856190a749ec074ffda8e773a559362421d8108a4be"
+    },
     "gds/tt_um_echoworld424_tpv.oas": {
       "size": 98016,
       "sha256": "74c31c6e732313ee3a86195e89f5e5416e26f3a5bc9d9b4c28787606a95c6516"
     },
+    "gds/tt_um_echoworld424_tpv.v": {
+      "size": 260956,
+      "sha256": "e889762e1fffa169edb4342cc126660965f239c851552ebfc2e57f8d7e11c177"
+    },
     "gl/results.xml": {
       "size": 3365,
       "sha256": "846bd029d484233e0b0088ad3b3eae0eae72381fb6cf345c6cd559daa8ce2e57"
+    },
+    "lef/tt_um_echoworld424_tpv.lef": {
+      "size": 11693,
+      "sha256": "337930fa0b7431fe2ea72856190a749ec074ffda8e773a559362421d8108a4be"
     },
     "lib/nom_fast_1p32V_m40C/tt_um_echoworld424_tpv__nom_fast_1p32V_m40C.lib": {
       "size": 36915,

@@ -1,35 +1,35 @@
 {
-  "run_id": "local-dev-safe10",
-  "build_commit": "7b20196bb74195649679fae6313a891712e87458",
+  "run_id": "35034979531",
+  "build_commit": "0a7cd5edd8cea7a45085898f84db403c93b25af0",
   "corner": "nom_typ_1p20V_25C",
   "sta": [
     {
       "period_ns": 20,
       "duty": 0.5,
-      "slack_ns": -6.13,
-      "required_high_ns": 16.13,
-      "predicted_fmax_mhz": 30.998140111593305
+      "slack_ns": -6.05,
+      "required_high_ns": 16.05,
+      "predicted_fmax_mhz": 31.15264797507788
     },
     {
       "period_ns": 40,
       "duty": 0.5,
-      "slack_ns": 3.87,
-      "required_high_ns": 16.13,
-      "predicted_fmax_mhz": 30.998140111593305
+      "slack_ns": 3.95,
+      "required_high_ns": 16.05,
+      "predicted_fmax_mhz": 31.15264797507788
     },
     {
       "period_ns": 20,
       "duty": 0.4,
-      "slack_ns": -8.13,
-      "required_high_ns": 16.130000000000003,
-      "predicted_fmax_mhz": 24.79851208927464
+      "slack_ns": -8.05,
+      "required_high_ns": 16.05,
+      "predicted_fmax_mhz": 24.922118380062305
     },
     {
       "period_ns": 20,
       "duty": 0.6,
-      "slack_ns": -4.13,
-      "required_high_ns": 16.13,
-      "predicted_fmax_mhz": 37.197768133911964
+      "slack_ns": -4.05,
+      "required_high_ns": 16.05,
+      "predicted_fmax_mhz": 37.38317757009346
     }
   ],
   "sdf": [

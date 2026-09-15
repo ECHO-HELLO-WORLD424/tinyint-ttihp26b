@@ -1,31 +1,31 @@
 plot,x_label,series,y,y_unit
-knee_ladder,0000,nom_fast_1p32V_m40C,126.9,MHz
-knee_ladder,1111,nom_fast_1p32V_m40C,78.86,MHz
-knee_ladder,2222,nom_fast_1p32V_m40C,57.34,MHz
-knee_ladder,3333,nom_fast_1p32V_m40C,45.13,MHz
-knee_ladder,3000,nom_fast_1p32V_m40C,87.26,MHz
-knee_ladder,0003,nom_fast_1p32V_m40C,87.41,MHz
-knee_ladder,2130,nom_fast_1p32V_m40C,66.4,MHz
-knee_ladder,1203,nom_fast_1p32V_m40C,66.49,MHz
-knee_ladder,0000,nom_typ_1p20V_25C,84.46,MHz
-knee_ladder,1111,nom_typ_1p20V_25C,53.48,MHz
-knee_ladder,2222,nom_typ_1p20V_25C,39.19,MHz
-knee_ladder,3333,nom_typ_1p20V_25C,31.0,MHz
-knee_ladder,3000,nom_typ_1p20V_25C,58.96,MHz
-knee_ladder,0003,nom_typ_1p20V_25C,59.1,MHz
-knee_ladder,2130,nom_typ_1p20V_25C,45.21,MHz
-knee_ladder,1203,nom_typ_1p20V_25C,45.29,MHz
-knee_ladder,0000,nom_slow_1p08V_125C,54.05,MHz
-knee_ladder,1111,nom_slow_1p08V_125C,34.22,MHz
-knee_ladder,2222,nom_slow_1p08V_125C,25.14,MHz
-knee_ladder,3333,nom_slow_1p08V_125C,19.9,MHz
-knee_ladder,3000,nom_slow_1p08V_125C,37.76,MHz
-knee_ladder,0003,nom_slow_1p08V_125C,37.88,MHz
-knee_ladder,2130,nom_slow_1p08V_125C,28.99,MHz
-knee_ladder,1203,nom_slow_1p08V_125C,29.04,MHz
-canary_counts,fast 1.32V -40C,ro_gen,1954,edges
-canary_counts,fast 1.32V -40C,ro_mat,771,edges
-canary_counts,typ 1.20V 25C,ro_gen,1333,edges
-canary_counts,typ 1.20V 25C,ro_mat,528,edges
-canary_counts,slow 1.08V 125C,ro_gen,847,edges
-canary_counts,slow 1.08V 125C,ro_mat,338,edges
+knee_ladder,0000,nom_fast_1p32V_m40C,128.5,MHz
+knee_ladder,1111,nom_fast_1p32V_m40C,79.75,MHz
+knee_ladder,2222,nom_fast_1p32V_m40C,57.67,MHz
+knee_ladder,3333,nom_fast_1p32V_m40C,45.33,MHz
+knee_ladder,3000,nom_fast_1p32V_m40C,87.41,MHz
+knee_ladder,0003,nom_fast_1p32V_m40C,88.34,MHz
+knee_ladder,2130,nom_fast_1p32V_m40C,67.02,MHz
+knee_ladder,1203,nom_fast_1p32V_m40C,67.02,MHz
+knee_ladder,0000,nom_typ_1p20V_25C,85.76,MHz
+knee_ladder,1111,nom_typ_1p20V_25C,54.11,MHz
+knee_ladder,2222,nom_typ_1p20V_25C,39.46,MHz
+knee_ladder,3333,nom_typ_1p20V_25C,31.15,MHz
+knee_ladder,3000,nom_typ_1p20V_25C,59.1,MHz
+knee_ladder,0003,nom_typ_1p20V_25C,59.81,MHz
+knee_ladder,2130,nom_typ_1p20V_25C,45.7,MHz
+knee_ladder,1203,nom_typ_1p20V_25C,45.7,MHz
+knee_ladder,0000,nom_slow_1p08V_125C,54.83,MHz
+knee_ladder,1111,nom_slow_1p08V_125C,34.67,MHz
+knee_ladder,2222,nom_slow_1p08V_125C,25.32,MHz
+knee_ladder,3333,nom_slow_1p08V_125C,20.01,MHz
+knee_ladder,3000,nom_slow_1p08V_125C,37.82,MHz
+knee_ladder,0003,nom_slow_1p08V_125C,38.34,MHz
+knee_ladder,2130,nom_slow_1p08V_125C,29.31,MHz
+knee_ladder,1203,nom_slow_1p08V_125C,29.29,MHz
+canary_counts,fast 1.32V -40C,ro_gen,2015,edges
+canary_counts,fast 1.32V -40C,ro_mat,775,edges
+canary_counts,typ 1.20V 25C,ro_gen,1376,edges
+canary_counts,typ 1.20V 25C,ro_mat,533,edges
+canary_counts,slow 1.08V 125C,ro_gen,876,edges
+canary_counts,slow 1.08V 125C,ro_mat,341,edges

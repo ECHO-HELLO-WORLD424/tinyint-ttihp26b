@@ -1,25 +1,26 @@
 <testsuites name="results">
   <testsuite name="all" package="all">
-    <property name="random_seed" value="1788811452" />
-    <testcase name="test_reset_and_config_echo" classname="test" file="/workspaces/tinyint-ttihp26b/test/test.py" lineno="128" time="0.01613926887512207" sim_time_ns="33725.0" ratio_time="2089623.7779386346" />
-    <testcase name="test_functional_no_errors" classname="test" file="/workspaces/tinyint-ttihp26b/test/test.py" lineno="159" time="1.4364674091339111" sim_time_ns="3462300.0" ratio_time="2410287.8895717678" />
-    <testcase name="test_force_err_accounting" classname="test" file="/workspaces/tinyint-ttihp26b/test/test.py" lineno="180" time="0.08411026000976562" sim_time_ns="193525.0" ratio_time="2300848.909247585" />
-    <testcase name="test_force_can_flags" classname="test" file="/workspaces/tinyint-ttihp26b/test/test.py" lineno="200" time="0.014122962951660156" sim_time_ns="33525.0" ratio_time="2373793.6660139104" />
-    <testcase name="test_canary_window_counts" classname="test" file="/workspaces/tinyint-ttihp26b/test/test.py" lineno="216" time="0" sim_time_ns="0" ratio_time="0">
+    <property name="random_seed" value="1789515308" />
+    <testcase name="test_reset_and_config_echo" classname="test" file="/workspaces/tinyint-ttihp26b/test/test.py" lineno="128" time="0.01618027687072754" sim_time_ns="33725.0" ratio_time="2084327.7447874458" />
+    <testcase name="test_uio_oe_handoff" classname="test" file="/workspaces/tinyint-ttihp26b/test/test.py" lineno="159" time="0.002383708953857422" sim_time_ns="5025.0" ratio_time="2108059.371874375" />
+    <testcase name="test_functional_no_errors" classname="test" file="/workspaces/tinyint-ttihp26b/test/test.py" lineno="203" time="1.4377250671386719" sim_time_ns="3462300.0" ratio_time="2408179.4768248643" />
+    <testcase name="test_force_err_accounting" classname="test" file="/workspaces/tinyint-ttihp26b/test/test.py" lineno="224" time="0.08389973640441895" sim_time_ns="193525.0" ratio_time="2306622.264784698" />
+    <testcase name="test_force_can_flags" classname="test" file="/workspaces/tinyint-ttihp26b/test/test.py" lineno="244" time="0.01410531997680664" sim_time_ns="33525.0" ratio_time="2376762.8139684256" />
+    <testcase name="test_canary_window_counts" classname="test" file="/workspaces/tinyint-ttihp26b/test/test.py" lineno="260" time="0" sim_time_ns="0" ratio_time="0">
       <skipped />
     </testcase>
-    <testcase name="test_oneshot_capture_holds" classname="test" file="/workspaces/tinyint-ttihp26b/test/test.py" lineno="236" time="0" sim_time_ns="0" ratio_time="0">
+    <testcase name="test_oneshot_capture_holds" classname="test" file="/workspaces/tinyint-ttihp26b/test/test.py" lineno="280" time="0" sim_time_ns="0" ratio_time="0">
       <skipped />
     </testcase>
-    <testcase name="test_freeze_resume_every_phase" classname="test" file="/workspaces/tinyint-ttihp26b/test/test.py" lineno="279" time="0.3268444538116455" sim_time_ns="757149.9999999995" ratio_time="2316545.351068834" />
-    <testcase name="test_counter_saturation" classname="test" file="/workspaces/tinyint-ttihp26b/test/test.py" lineno="304" time="0" sim_time_ns="0" ratio_time="0">
+    <testcase name="test_freeze_resume_every_phase" classname="test" file="/workspaces/tinyint-ttihp26b/test/test.py" lineno="323" time="0.3260934352874756" sim_time_ns="757150.0" ratio_time="2321880.535045166" />
+    <testcase name="test_counter_saturation" classname="test" file="/workspaces/tinyint-ttihp26b/test/test.py" lineno="348" time="0" sim_time_ns="0" ratio_time="0">
       <skipped />
     </testcase>
-    <testcase name="test_prbs_first_error_capture" classname="test" file="/workspaces/tinyint-ttihp26b/test/test.py" lineno="317" time="0.019344568252563477" sim_time_ns="45050.0" ratio_time="2328819.098561692" />
-    <testcase name="test_freeze_holds_counters" classname="test" file="/workspaces/tinyint-ttihp26b/test/test.py" lineno="344" time="0.061899423599243164" sim_time_ns="150125.0" ratio_time="2425305.298025999" />
-    <testcase name="test_reconfigure_midrun" classname="test" file="/workspaces/tinyint-ttihp26b/test/test.py" lineno="358" time="0.06465816497802734" sim_time_ns="155050.0" ratio_time="2397995.6754524405" />
-    <testcase name="test_frame_strobe_pacing" classname="test" file="/workspaces/tinyint-ttihp26b/test/test.py" lineno="386" time="0.029967308044433594" sim_time_ns="69925.0" ratio_time="2333376.087579162" />
-    <testcase name="test_ro_ripple_counter_wrap" classname="test" file="/workspaces/tinyint-ttihp26b/test/test.py" lineno="400" time="0" sim_time_ns="0" ratio_time="0">
+    <testcase name="test_prbs_first_error_capture" classname="test" file="/workspaces/tinyint-ttihp26b/test/test.py" lineno="361" time="0.019762754440307617" sim_time_ns="45050.0" ratio_time="2279540.543605458" />
+    <testcase name="test_freeze_holds_counters" classname="test" file="/workspaces/tinyint-ttihp26b/test/test.py" lineno="388" time="0.061926841735839844" sim_time_ns="150125.0" ratio_time="2424231.493031493" />
+    <testcase name="test_reconfigure_midrun" classname="test" file="/workspaces/tinyint-ttihp26b/test/test.py" lineno="402" time="0.06448101997375488" sim_time_ns="155050.0" ratio_time="2404583.5513009652" />
+    <testcase name="test_frame_strobe_pacing" classname="test" file="/workspaces/tinyint-ttihp26b/test/test.py" lineno="430" time="0.0302431583404541" sim_time_ns="69925.0" ratio_time="2312093.1753502195" />
+    <testcase name="test_ro_ripple_counter_wrap" classname="test" file="/workspaces/tinyint-ttihp26b/test/test.py" lineno="444" time="0" sim_time_ns="0" ratio_time="0">
       <skipped />
     </testcase>
   </testsuite>
