@@ -13,8 +13,9 @@
  * Pin protocol:
  *  - Reset/config phase (rst_n low): {uio_in, ui_in} = 16-bit config word,
  *    sampled into the config register at reset release. uio is an input.
- *  - Run phase: uio switches to output (status bus), uo shows the readout
- *    pointer and live flags. ui_in[7] = freeze (hold counters/read out).
+ *  - Run phase: uio switches to output (status bus) on the fourth rising edge
+ *    after reset release (one clock after the boot==2 commit edge), uo shows
+ *    the readout pointer and live flags. ui_in[7] = freeze.
  *
  * Config word (LSB = ui_in[0]):
  *  [1:0] seg0, [3:2] seg1, [5:4] seg2, [7:6] seg3 : DUT delay bank taps
@@ -67,6 +68,19 @@ module tt_um_echoworld424_tpv (
     else if (boot != 2'd3) boot <= boot + 2'd1;
   end
 
+  /* uio output enable: asserted only after the boot counter has committed the
+     configuration word (at the boot==2 edge), plus one further clock of dead
+     time. Asserting it on or before the commit edge double-drives the uio pads
+     while the host is still holding the configuration word, and cfg[15:8] is
+     then sampled from a contended bus. The extra cycle gives the host a full
+     clock period, after the commit edge, to release its uio drivers; the uio
+     value is a don't-care once the configuration has been committed. */
+  reg boot_done;
+  always @(posedge clk or negedge rst_n) begin
+    if (!rst_n) boot_done <= 1'b0;
+    else if (boot == 2'd3) boot_done <= 1'b1;
+  end
+
   /* Pins are contractually stable through the third rising edge. Capture
      them directly at boot==2; a duplicate shadow bank is unnecessary. */
   always @(posedge clk or negedge rst_n) begin
@@ -88,8 +102,9 @@ module tt_um_echoworld424_tpv (
   wire       freeze = ui_in[7];
   wire       update_en = ~freeze;  /* clock-enable for all measurement state */
 
-  /* uio switches from config input to status output after reset release. */
-  assign uio_oe = {8{boot[1]}};
+  /* uio switches from config input to status output once the host contract
+     above is satisfied: the fourth rising edge after reset release. */
+  assign uio_oe = {8{boot_done}};
 
   /* ------------------------------------------------------------------ */
   /* Frame timing: one timed operation per 19 cycles                    */

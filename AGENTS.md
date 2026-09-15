@@ -80,6 +80,13 @@ releasing reset. After boot, `uio` changes from input to the status-byte output.
 measurement, `ui_in[7]` is `FREEZE`; keep it low while running and high for quiescent
 readout.
 
+The configuration is committed at the third rising edge after reset release, and the
+chip takes over the `uio` bus on the **fourth** rising edge. The host must therefore
+release its `uio` drivers within the clock period between those two edges; holding them
+longer leaves both sides driving the pads. The configuration is already latched at that
+point, so later `uio` values do not update it. This hand-off is covered by
+`test/test.py::test_uio_oe_handoff`.
+
 The frame counter runs from 0 through 18, so a frame is **19 clock cycles**, not 18.
 Documentation, tests, and analysis must use 19 cycles per timed operation.
 
@@ -115,6 +122,29 @@ sequence. The archived full-cycle design's audited global slow-corner violations
 at static `cfg[8]` and therefore do not meet this standard.
 
 ## Current blocking work
+
+**Open (2026-09-16):** a post-silicon readiness audit (
+`docs/post-silicon-readiness-audit.md`) found one blocking defect plus several
+open measurement risks. The blocking item — **F1: `uio_oe` was asserted one
+clock before the configuration-commit edge**, so the chip drove the `uio` pads
+while the host was still holding the configuration word and `cfg[15:8]` was
+sampled from a contended bus — is **fixed in RTL**, documented in
+`docs/info.md` / `docs/post-silicon-protocol.md`, and covered by
+`test/test.py::test_uio_oe_handoff` (RTL regression is now 14 tests) plus the
+standalone `test/tb_pad_contention.v` pad model, which also runs in the `test`
+CI workflow. The **whole submission flow has been re-run locally on the fixed
+RTL and passes**: LibreLane 3.0.5 hardening, setup/hold clean at all three
+corners, DRC/LVS/antenna/power-grid clean, RO and delay-bank structure
+preserved, precheck 10/10, functional GL 10 pass / 4 skip, RTL 14/14. Hashes
+and provenance are in `docs/post-silicon-readiness-audit.md`. Because `src/`
+changed and the tree is still uncommitted, the **canonical CI run and a
+regenerated `artifacts/run-*/manifest.json` remain outstanding** — commit,
+push, and archive the `tt-gds-action@ttihp26b` run before submission. Findings
+F2–F12 (unsynchronized FREEZE, canary counter aliasing, one-shot canary
+window, RO counters outside timing signoff, `ops_cnt` off-by-one not in the
+datasheet, stale manifest, ignored `MAX_FANOUT_CONSTRAINTS`, stale doc
+references, and the clock/fixture environment requirements) are recorded there
+with evidence but deliberately left unfixed.
 
 **Merged state (2026-09-08):** the verified half-cycle candidate developed on
 `proposal-canary-dev` is merged into this branch (fast-forward to `a35f501`);
@@ -198,6 +228,7 @@ document when a checklist item is genuinely completed.
 | `data/safe10/spice/` | SPICE RO dataset, comparison table, and plots |
 | `test/test.py` | Cocotb RTL and functional gate-level regression |
 | `test/tb.v` | Simulation wrapper and waveform setup |
+| `test/tb_pad_contention.v` | Standalone bidirectional-`uio` hand-off check (not in the cocotb build) |
 | `test/Makefile` | Icarus/cocotb RTL and GL build rules |
 | `test/strip_ro_cells.py` | Removes RO combinational loops for zero-delay GL tests |
 | `.github/workflows/` | RTL, GDS, docs, and optional FPGA CI |
@@ -252,8 +283,9 @@ make clean
 make
 ```
 
-The expected audited baseline is 13 passing cocotb tests (the merged half-cycle
-design; the archived full-cycle design's baseline was 10). Inspect
+The expected audited baseline is 14 passing cocotb tests (13 before
+`test_uio_oe_handoff` was added; the merged half-cycle design's baseline was 13 and
+the archived full-cycle design's was 10). Inspect
 `test/results.xml`; CI
 also checks it explicitly because the simulator make rules may return success even when
 a cocotb test fails.
@@ -276,8 +308,10 @@ make clean
 make GATES=yes
 ```
 
-The audited baseline is 9 passes and 4 intentional skips (13 total; the
-archived full-cycle design's baseline was 8 passes and 2 skips). This is a
+The audited baseline is 10 passes and 4 intentional skips (14 total) — the
+previous 9 pass / 4 skip baseline plus `test_uio_oe_handoff`; measured on the
+netlist regenerated after the F1 `uio_oe` fix. The archived full-cycle design's
+baseline was 8 passes and 2 skips. This is a
 **zero-delay
 functional** GL test:
 

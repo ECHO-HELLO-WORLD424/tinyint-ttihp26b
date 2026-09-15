@@ -157,6 +157,50 @@ async def test_reset_and_config_echo(dut):
 
 
 @cocotb.test()
+async def test_uio_oe_handoff(dut):
+    """The chip must not drive uio while the host still holds the config word.
+
+    The config word is committed at the boot==2 edge, and the host is
+    contractually required to keep driving it until that edge has passed. If
+    uio_oe rises on or before the commit edge, the host driver and the chip's
+    fresh status output contend on the pads and cfg[15:8] is sampled from a
+    contended bus. The stock tb wires uio_in and uio_out as separate nets, so
+    the pad fight cannot be modelled here; the output-enable timing is the
+    property that must hold.
+    """
+    word = cfg_word(seg=(1, 2, 3, 0), pat=1, cansel=2, winsel=0)
+    dut.clk.value = 0
+    dut.rst_n.value = 0
+    dut.ui_in.value = word & 0xFF
+    dut.uio_in.value = (word >> 8) & 0xFF
+    await cyc(dut, 4)
+    dut.rst_n.value = 1
+    await Timer(CLK_HALF / 2, "ns")
+    for edge in range(1, 4):  # boot window: host still drives the config word
+        dut.clk.value = 1
+        await Timer(CLK_HALF, "ns")
+        assert int(dut.uio_oe.value) == 0x00, (
+            f"chip drives uio at rising edge {edge} after reset release; "
+            "the host still holds the configuration word"
+        )
+        dut.clk.value = 0
+        await Timer(CLK_HALF, "ns")
+    # The commit edge has passed: the host releases within the dead cycle.
+    dut.ui_in.value = 0
+    dut.uio_in.value = 0
+    await cyc(dut, 3)
+    assert int(dut.uio_oe.value) == 0xFF, "chip must own uio after the dead cycle"
+
+    await cyc(dut, 20)
+    await freeze(dut, True)
+    s = await read_status(dut)
+    await freeze(dut, False)
+    assert s["cfg_echo"] == (word & 0xFF), hex(s["cfg_echo"])
+    assert (s["stat"] >> 2) & 3 == 2, hex(s["stat"])  # can_sel echoed back
+    assert s["err_cnt"] == 0
+
+
+@cocotb.test()
 async def test_functional_no_errors(dut):
     """DUT + oracle must agree exactly: all patterns x several delay configs."""
     for pat in range(4):

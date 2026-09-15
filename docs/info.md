@@ -56,8 +56,12 @@ capture. Maintain the normal clock waveform through the pending falling edge.
 
 1. Hold `rst_n` low and drive the config word on `ui[7:0]` (LSB) and `uio[7:0]` (MSB).
    Release `rst_n` during the clock LOW phase before the first counted rising edge.
-   Keep the config word stable until three clock cycles after releasing `rst_n`
-   (the on-chip boot counter commits it then), then set `ui[7]` low.
+   Keep the config word stable through the third rising edge after releasing `rst_n`
+   (the on-chip boot counter commits it at that edge), then set `ui[7]` low and
+   release your `uio` drivers **within the following clock period**. The chip takes
+   over the `uio` bus on the fourth rising edge; holding your drivers past it makes
+   both sides drive the pads, causing bus contention. Configuration is already
+   latched at that point; subsequent `uio` values do not update it.
 2. Run the experiment at the target clock frequency/voltage/temperature for a known
    number of operations (19 cycles each). Start at 1.20 V/ambient and a low
    clock frequency. Record the clock high time as well as frequency.

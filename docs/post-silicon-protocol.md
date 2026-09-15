@@ -46,8 +46,15 @@ recorded extension and separately validated canary windows.
 1. Record die/board identity, core voltage, sensor and clock measurements.
 2. Assert reset and drive configuration. Release reset during the clock LOW
    phase with adequate recovery margin before the next rising edge. Hold pins
-   stable through three complete rising edges after release, then release host
-   uio drivers and drive ui[7] low. Observe actual setup/hold constraints.
+   stable through three complete rising edges after release (the configuration
+   commits at the third), then release host uio drivers within the following
+   clock period and drive ui[7] low. The chip takes over the uio bus on the
+   fourth rising edge; holding the host drivers beyond it double-drives the
+   pads, causing bus contention. Configuration is already latched at that point;
+   subsequent uio values do not update it. Observe actual setup/hold constraints.
+   Verify the committed word from the read-back echo (byte 8 = segment taps,
+   byte 9 bits [3:0] = can_sel/win_sel) before trusting a measurement; note
+   that pat_sel, FORCE_CAN and FORCE_ERR have no read-back path.
 3. At 10 MHz, verify configuration echo, FORCE_ERR (errors = completed comparisons),
    FORCE_CAN (both canaries zero/dead), and ordinary zero-error operation.
 4. Attempt the nominal seg3333/worst anchor. Coarse sweep at 10,15,20,25,30,35,

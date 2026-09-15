@@ -19,12 +19,15 @@
  * capture edge. While rst_n is low, uo[0] mirrors clk so the host can align
  * the serial load to the clock.
  *
- * The RTL asserts uio_oe one clock before the cfg capture edge (boot[1]), so
- * on a real board the host driver and the fresh status output would contend
- * on the uio pads during that cycle. The harness samples uio_in while rst_n
- * is low and holds it for the design, which is the documented host contract
- * ("keep configuration pins stable through the first three clocks"); this
- * keeps the FPGA verification deterministic without changing design logic.
+ * The harness samples uio_in while rst_n is low and holds it for the design
+ * ("keep configuration pins stable through the first three clocks"). This was
+ * originally required because the RTL asserted uio_oe one clock before the cfg
+ * capture edge (boot[1]) and the host driver would have contended with the
+ * fresh status output on the uio pads. That defect is fixed: the RTL now
+ * asserts uio_oe on the fourth rising edge after reset release, one full clock
+ * after the commit edge (see docs/post-silicon-readiness-audit.md, finding F1).
+ * Holding the configuration internally remains a valid deterministic model of
+ * the host contract and is kept unchanged.
  */
 `default_nettype none
 

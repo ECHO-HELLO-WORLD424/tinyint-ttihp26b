@@ -37,6 +37,18 @@ jobs:
           paths: "test/results.xml"
         if: always()
 
+      # The cocotb suite wires uio_in and uio_out as separate nets, so it can
+      # only observe the uio output-enable timing. This step models the pads
+      # themselves and fails on any host/chip drive overlap (see
+      # docs/post-silicon-readiness-audit.md, finding F1).
+      - name: Check the uio pad hand-off
+        run: |
+          iverilog -g2012 -o /tmp/tb_pad_contention -DTPV_GDELAY=1 -I src \
+            src/tt_um_echoworld424_tpv.v src/tpv_cells.v src/tpv_delay_line.v \
+            src/tpv_rca16.v src/tpv_checker.v src/tpv_pattern_gen.v \
+            src/tpv_ro_canary.v test/tb_pad_contention.v
+          vvp /tmp/tb_pad_contention
+
       - name: upload waveform and test results
         if: success() || failure()
         uses: actions/upload-artifact@v7
