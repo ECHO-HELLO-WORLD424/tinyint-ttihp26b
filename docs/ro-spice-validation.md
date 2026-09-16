@@ -28,7 +28,7 @@ SDF simulation cannot do this: RO timing arcs are disabled in signoff SDF
 
 > **Dataset revisions.** Revision 1 had floating canary control pins (a
 > deck-generation bug) and produced one anomalous case family; the cause and the
-> corrected numbers are in [`RO-SPICE-SEL0-ANOMALY.md`](../RO-SPICE-SEL0-ANOMALY.md).
+> corrected numbers are in [`RO-SPICE-SEL0-ANOMALY.md`](RO-SPICE-SEL0-ANOMALY.md).
 > Revision 2 drove every control pin and verified it by read-back, but measured
 > on a different build (commit `b9f03f7`) and with the counter held in reset.
 > Revision 3 is the current dataset: current build, counter running, every case

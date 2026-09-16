@@ -1,9 +1,14 @@
-# The `ro_mat can_sel=0` "outlier" was a deck bug
+# Development record: the `ro_mat can_sel=0` "outlier" was a deck bug
 
-Status: **resolved, 2026-09-09.** This note records what looked like an
-unexplained circuit behaviour in the extracted RO transient (SPICE) dataset,
-what it actually was, and how the dataset was corrected. Context:
-[`docs/ro-spice-validation.md`](docs/ro-spice-validation.md).
+**This is a development record, not a status document.** It describes a defect
+found and fixed on 2026-09-09, at dataset revision 2. For the current state of
+the extracted RO validation see [`ro-spice-validation.md`](ro-spice-validation.md)
+(f_osc) and [`ro-counter-spice-validation.md`](ro-counter-spice-validation.md)
+(counter-inclusive); nothing here needs to be re-read to use the current data.
+
+Status at the time: **resolved, 2026-09-09.** This note records what looked like
+an unexplained circuit behaviour in the extracted RO transient (SPICE) dataset,
+what it actually was, and how the dataset was corrected.
 
 ## What was seen
 
@@ -96,21 +101,10 @@ current revision 3 gives −0.58 on the same construction), i.e. the largest
 disagreements are in the mux / gate / full-adder cells, not in the inverter
 chains.
 
-## Lesson
+## Lesson (still enforced)
 
-A ring oscillator simulation will happily oscillate with floating control
-pins. Always read the static control state back from the result and assert it,
-rather than assuming the deck did what it was written to do. This is the check
-that `tools/ro/sweep_ro_spice.py` (retired for f_osc) and
-`tools/ro/run_ro_count_case.py` both perform, and it is why the current
-revision-3 dataset (`data/safe10/spice/`) records `control_pins` per case.
-
-## Where the current decks stand
-
-The deck bug described here is fixed and the check that found it is retained.
-The current f_osc dataset is revision 3 (`data/safe10/spice/spice_ro.csv`),
-measured with the counter-inclusive deck on the submitted build; revision 2 is
-archived under `data/safe10/spice/rev2/`. The 24 case rows, the control-pin
-column, and the counter-inclusive validation live in
-[`docs/ro-spice-validation.md`](docs/ro-spice-validation.md) and
-[`docs/ro-counter-spice-validation.md`](docs/ro-counter-spice-validation.md).
+A ring oscillator simulation will happily oscillate with floating control pins.
+Always read the static control state back from the result and assert it, rather
+than assuming the deck did what it was written to do. The check this prompted is
+retained: `tools/ro/run_ro_count_case.py` performs it on every case, and the
+`control_pins` column is part of the dataset schema.

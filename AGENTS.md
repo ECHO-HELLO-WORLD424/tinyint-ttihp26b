@@ -247,7 +247,7 @@ package are recorded alongside the evidence in
 | `docs/research-proposal.md` | Research framing and experiment plan |
 | `docs/ro-spice-validation.md` | Extracted RO transient (SPICE) f_osc validation record (dataset revision 3) |
 | `docs/ro-counter-spice-validation.md` | Counter-inclusive SPICE validation: does the canary's counter count the ring's edges |
-| `RO-SPICE-SEL0-ANOMALY.md` | Post-mortem: revision-1 SPICE deck bug and the `control_pins` check it prompted |
+| `docs/RO-SPICE-SEL0-ANOMALY.md` | Development record: revision-1 SPICE deck bug and the `control_pins` check it prompted |
 | `tools/ro/extract_ro_loop.py` | Extracts an RO ring from the flat post-route SPICE netlist |
 | `tools/ro/run_ro_spice_case.py` | Builds and runs one ngspice RO transient deck |
 | `tools/ro/sweep_ro_spice.py` | Retired ring-only 24-case sweep (known-bad for `can_sel=2`; refuses to run without `--force-ring-only`) |

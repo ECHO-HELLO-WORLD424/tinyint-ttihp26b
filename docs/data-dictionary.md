@@ -117,7 +117,7 @@ Producers `tools/ro/extract_ro_loop.py`, `tools/ro/run_ro_count_case.py` +
 `tools/ro/sweep_ro_count.py`, `tools/ro/analyse_ro_intervals.py` and
 `tools/ro/compare_ro_spice.py`. Full method and caveats:
 `docs/ro-spice-validation.md`; the deck bug that shaped the `control_pins` check
-is recorded in [`RO-SPICE-SEL0-ANOMALY.md`](../RO-SPICE-SEL0-ANOMALY.md).
+is recorded in [`RO-SPICE-SEL0-ANOMALY.md`](RO-SPICE-SEL0-ANOMALY.md).
 
 The rows are measured with the **counter-inclusive** deck
 (`tools/ro/run_ro_count_case.py`), i.e. with the canary counter running, and the
