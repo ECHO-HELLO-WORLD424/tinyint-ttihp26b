@@ -1,8 +1,6 @@
 # Project Guide for Coding Agents
 
-This file applies to the entire repository. Read it together with
-[`PRE_SILICON_ACTION_PLAN.md`](PRE_SILICON_ACTION_PLAN.md) before changing RTL,
-constraints, tests, or research claims.
+This file applies to the entire repository.
 
 ## Project goal
 
@@ -80,6 +78,16 @@ releasing reset. After boot, `uio` changes from input to the status-byte output.
 measurement, `ui_in[7]` is `FREEZE`; keep it low while running and high for quiescent
 readout.
 
+`FREEZE` has **no on-chip synchronizer**, and that is a settled decision rather than an
+oversight: the host must transition it during the clock HIGH phase (or, if it can only
+act in the LOW phase, leave at least 20 ns at 10 MHz / 10 ns at 50 MHz before the next
+rising edge) and must generate it in the chip's clock domain instead of from an
+OS-scheduled GPIO write. The normative rule is in
+`docs/post-silicon-protocol.md`; do not add a synchronizer as a "fix" without
+re-deciding the contract, because its costs (freeze latency, a timing-dependent
+operation count at the freeze boundary, perturbation of `ro_en`) were weighed in
+`docs/post-silicon-readiness-audit.md` (F2).
+
 The configuration is committed at the third rising edge after reset release, and the
 chip takes over the `uio` bus on the **fourth** rising edge. The host must therefore
 release its `uio` drivers within the clock period between those two edges; holding them
@@ -112,6 +120,11 @@ Preserve these properties unless the task explicitly changes the experiment:
   extracted transient simulation for that purpose.
 - `FORCE_ERR` and `FORCE_CAN` are DFT features and must remain testable.
 - Freeze must stop measurement state without corrupting readout or configuration.
+  `FREEZE` is an intentionally unsynchronized host input: the edge-alignment contract in
+  `docs/post-silicon-protocol.md` is part of the design, not an optional convenience.
+  A change that would sample `FREEZE` asynchronously, or that would add synchronization,
+  is an interface change and must settle the tradeoff explicitly (finding F2 in
+  `docs/post-silicon-readiness-audit.md`).
 - Error and operation counters saturate; do not allow silent wraparound.
 - Keep the normal Tiny Tapeout top-level interface and pin directions intact.
 
@@ -139,8 +152,12 @@ preserved, precheck 10/10, functional GL 10 pass / 4 skip, RTL 14/14. Hashes
 and provenance are in `docs/post-silicon-readiness-audit.md`. Canonical CI is
 now green on the pushed commit `0a7cd5e` (run `35034979531`: gds + precheck +
 gl_test + viewer) and the final build manifest is archived at
-`artifacts/run-35034979531/MANIFEST.md`. Findings
-F2–F12 (unsynchronized FREEZE, canary counter aliasing, one-shot canary
+`artifacts/run-35034979531/MANIFEST.md`. Finding
+**F2 (unsynchronized FREEZE) is settled** as a documented host-side contract — the
+transition rule, clock-domain sourcing requirement, per-session scope check and
+exclusion policy are in `docs/post-silicon-protocol.md`, with the decision and its
+rationale in `docs/post-silicon-readiness-audit.md`; it required no RTL change. Findings
+F3–F12 (canary counter aliasing, one-shot canary
 window, RO counters outside timing signoff, `ops_cnt` off-by-one not in the
 datasheet, stale manifest, ignored `MAX_FANOUT_CONSTRAINTS`, stale doc
 references, and the clock/fixture environment requirements) are recorded there
@@ -174,9 +191,20 @@ public 19-cycle protocol is retained. See
 `docs/halfcycle-development-validation.md` and `data/halfcycle/` for the
 development verification record and `docs/ci-timing-closure-attempts.md` for
 the attempt log. Extracted RO transient validation is **complete**
-(`docs/ro-spice-validation.md`, `data/safe10/spice/`: 24/24 cases, mean
-SPICE/STA frequency ratio 1.119, range 1.04–1.22, no outliers, every case
-passing a control-pin read-back check). Actual board operating limits remain
+(`docs/ro-spice-validation.md`, `data/safe10/spice/` revision 3: 24/24 cases on
+the current build, mean SPICE/STA frequency ratio 1.083, range 1.03–1.14, every
+case passing a control-pin read-back check). **Counter-inclusive RO transient
+validation is also complete** (`docs/ro-counter-spice-validation.md`,
+`data/safe10/count/`: 22/22 cases with the counter's toggle feedback and full
+16-stage ripple inside the deck, decoded count equal to the measured ring-edge
+count within ±1 edge, every ripple stage at its binary-carry rate). That closes
+audit F5 for the RTL/netlist-level counter; counter aliasing (F3) and the
+first-silicon count check remain open. The f_osc table has been
+regenerated as **revision 3** on the same build (24/24 cases, mean SPICE/STA
+ratio 1.083, every case within 1.42% of revision 2, 20/24 single-mode); it is
+measured with the counter-inclusive deck because the ring-only deck is
+non-monotonic in `can_sel` — see `data/safe10/count/FOSC-REGEN-STATUS.md` and
+the archived revision 2 under `data/safe10/spice/rev2/`. Actual board operating limits remain
 open. The
 historical full-cycle completion statements below apply only to the pre-merge
 Git history of this branch.
@@ -191,17 +219,15 @@ reports runtime-sensitizable `u_pat.lfsr/idx -> result_reg` paths (archived v1
 `data/experiment_sta.csv`, run `33839023290`). That v1 pre-silicon prediction
 package (SDF boundary sweep, RO loop model, prediction model and calibration
 protocol, post-silicon protocol, final-build manifest) is complete but
-superseded by the v2 packages (`data/halfcycle/`, `data/safe10/`) — see
-`PRE_SILICON_ACTION_PLAN.md` for the audited state and the
-definition-of-complete checklist.
+superseded by the v2 packages (`data/halfcycle/`, `data/safe10/`).
 
 The remaining pre-silicon work is package maintenance only: re-run the STA/RO/
 SDF/prediction tooling after any RTL or constraint change, and keep
 `artifacts/run-*/manifest.json` regenerated for the final submitted build.
 
-The prioritized fixes, required prediction artifacts, accepted baseline, risks, and
-definition of pre-silicon completion are in `PRE_SILICON_ACTION_PLAN.md`. Update that
-document when a checklist item is genuinely completed.
+The prioritized fixes, open measurement risks, and the audited state of each
+package are recorded alongside the evidence in
+`docs/post-silicon-readiness-audit.md` and the validation records it links.
 
 ## Repository map
 
@@ -219,14 +245,20 @@ document when a checklist item is genuinely completed.
 | `info.yaml` | Tiny Tapeout submission metadata and source list |
 | `docs/info.md` | User-facing datasheet and operating protocol |
 | `docs/research-proposal.md` | Research framing and experiment plan |
-| `docs/ro-spice-validation.md` | Extracted RO transient (SPICE) validation record |
+| `docs/ro-spice-validation.md` | Extracted RO transient (SPICE) f_osc validation record (dataset revision 3) |
+| `docs/ro-counter-spice-validation.md` | Counter-inclusive SPICE validation: does the canary's counter count the ring's edges |
 | `RO-SPICE-SEL0-ANOMALY.md` | Post-mortem: revision-1 SPICE deck bug and corrected dataset |
 | `tools/ro/extract_ro_loop.py` | Extracts an RO ring from the flat post-route SPICE netlist |
 | `tools/ro/run_ro_spice_case.py` | Builds and runs one ngspice RO transient deck |
 | `tools/ro/sweep_ro_spice.py` | Runs the 24-case (corner x can_sel x canary) sweep |
 | `tools/ro/analyse_spice_raw.py` | Measures f_osc from an ngspice rawfile |
 | `tools/ro/compare_ro_spice.py` | SPICE vs broken-loop STA comparison and plots |
-| `data/safe10/spice/` | SPICE RO dataset, comparison table, and plots |
+| `tools/ro/run_ro_count_case.py` | Counter-inclusive transient deck (counter running); the deck revision 3 is measured with |
+| `tools/ro/analyse_ro_count.py` | Decodes the counter and checks it against the measured ring edges |
+| `tools/ro/analyse_ro_intervals.py` | Period/jitter/mode characterisation (is the ring single-valued?) |
+| `tools/ro/sweep_ro_count.py` | Counter-inclusive sweep (12 cases) |
+| `data/safe10/spice/` | SPICE RO f_osc dataset (revision 3), comparison table, and plots; revision 2 archived under `rev2/` |
+| `data/safe10/count/` | Counter-inclusive validation dataset, cross-check, and the f_osc regeneration record |
 | `test/test.py` | Cocotb RTL and functional gate-level regression |
 | `test/tb.v` | Simulation wrapper and waveform setup |
 | `test/tb_pad_contention.v` | Standalone bidirectional-`uio` hand-off check (not in the cocotb build) |
@@ -469,9 +501,9 @@ not process-distribution characterization.
 ## Definition of done
 
 A change is complete only when its relevant tests pass and its claims are supported by
-artifacts from the same source revision. The overall pre-silicon project is not complete
-until every item in the definition-of-complete checklist in
-`PRE_SILICON_ACTION_PLAN.md` is satisfied, including one-shot capture, experiment STA,
-sensitizing timed simulation, extracted RO prediction, frozen analysis/data protocols,
-and an archived final build manifest.
+artifacts from the same source revision. Every check in the verification table above,
+and every claim in `docs/`, `data/`, or `artifacts/`, must be backed by an artifact from
+the revision it describes: one-shot capture, experiment STA, sensitizing timed
+simulation, extracted RO prediction (f_osc and counter-inclusive), frozen analysis/data
+protocols, and an archived final build manifest.
 

@@ -109,10 +109,31 @@ def main():
     ap.add_argument("--periods", type=float, default=150.0)
     ap.add_argument("--tstop-cap-ns", type=float, default=2000.0)
     ap.add_argument("--only", default=None, help="canary:can_sel filter")
+    ap.add_argument("--force-ring-only", action="store_true",
+                    help="run despite the known ring-only extraction defect "
+                         "(non-monotonic f_osc in can_sel; see "
+                         "data/safe10/count/FOSC-REGEN-STATUS.md)")
     a = ap.parse_args()
+    if not a.force_ring_only:
+        raise SystemExit(
+            "sweep_ro_spice.py is the ring-only f_osc sweep and is currently "
+            "KNOWN BAD: for can_sel=2 the extracted loop can close through the "
+            "wrong tap, the resulting f_osc is not monotonic in can_sel, and two "
+            "runs of the same deck gave 215.3 and 499.4 MHz for one case. Use "
+            "tools/ro/sweep_ro_count.py (counter-inclusive, the deck the revision-3 "
+            "dataset was measured with) instead, or pass --force-ring-only if you "
+            "are deliberately investigating the ring-only extraction. See "
+            "data/safe10/count/FOSC-REGEN-STATUS.md.")
 
     with open(a.predict) as fh:
         rows = list(csv.DictReader(fh))
+    loop_nodes = {}
+    meta = os.path.join(run_case.LOOPS, "ro_loop.json")
+    if os.path.exists(meta):
+        with open(meta) as fh:
+            for key, entry in json.load(fh)["canaries"].items():
+                loop_nodes[(entry["canary"], entry["can_sel"])] = \
+                    entry["loop_node"]
     jobs = []
     for r in rows:
         canary = r["canary"]
@@ -124,8 +145,15 @@ def main():
                 continue
         loop_period = float(r["loop_delay_ns"]) * 2.0 * 1e-9
         tstop = planned_tstop(loop_period, a.periods, a.tstop_cap_ns)
-        loop_node = {"ro_gen": "v(x1._1351_\\/CLK)",
-                     "ro_mat": "v(x1._1367_\\/CLK)"}[canary]
+        # The loop node is the RO gate's output net.  Its flat name is
+        # synthesis-assigned and changes between builds, so read it from the
+        # extraction metadata instead of hard-coding it (`_1351_/CLK` was the
+        # name in CI run 34158224984, `_1347_/CLK` in run 35034979531).
+        loop_net = loop_nodes.get((canary, can_sel))
+        if loop_net is None:
+            raise SystemExit(f"no loop node for {canary} sel{can_sel} in "
+                             f"{run_case.LOOPS}/ro_loop.json")
+        loop_node = "v(x1.%s)" % run_case.escape_node(loop_net)
         vdd = run_case.CORNERS[corner]["vdd"]
         jobs.append((canary, can_sel, corner, a.outdir, tstop, a.tstep_ps,
                      a.solver, loop_node, vdd))

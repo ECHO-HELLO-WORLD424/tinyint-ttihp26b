@@ -35,6 +35,9 @@ time is the measurement aperture**. Shorten the period (or slow the corner) and
 the ripple carry arrives late, the one-shot capture keeps the stale value, and
 the independent oracle flags an error.
 
+Neither backend validates the host-side `FREEZE` (`ui_in[7]`) transition contract; see
+"FREEZE timing is a host obligation the emulator cannot check" under Python API below.
+
 ### What PVT simulation is and is not
 
 * Real: per-cell IOPATH delays from the LibreLane corner SDF (typ / slow /
@@ -241,6 +244,24 @@ Protocol API: `await chip.configure(...)`, `await chip.run_ops(n)`,
 `await chip.measure(ops, ...)`, `await chip.sweep_period(...)`,
 `await chip.find_failure_period(p_fail, p_pass, ops=...)`.
 
+### FREEZE timing is a host obligation the emulator cannot check
+
+The chip samples `ui_in[7]` with no synchronizer, so the host must transition it during
+the clock **HIGH** phase — which leaves between half and one full period of settling
+(50–100 ns at 10 MHz, 10–20 ns at 50 MHz) — or, if it can only act in the LOW phase,
+at least 20 ns (10 MHz) / 10 ns (50 MHz) before the next rising edge. The normative
+rule, its rationale, the per-session scope check and the exclusion policy are in
+`docs/post-silicon-protocol.md` (§ FREEZE interface contract).
+
+Both backends here are functional about freeze: the RTL backend is zero-delay, and the
+SDF backend's 1 ps pin settle is a same-timestamp race workaround, not setup margin. So
+`set_freeze()`, `measure()` and the `freeze` REPL command all land the `ui_in[7]` write
+**1 ps before a rising edge** — the one pattern the hardware contract forbids. Treat
+them as protocol/counter models and as a way to exercise host software, never as
+evidence that a host satisfies the contract; that evidence is the scope check on real
+hardware. A host script that passes every scenario here can still fabricate an error on
+silicon by mishandling the FREEZE edge.
+
 ## Adding another PVT corner
 
 The SDF backend needs three same-build artifacts: a post-route netlist, a corner
@@ -277,7 +298,9 @@ a source hash changes.
   there are 0 by construction, not a measurement.
 * Pin changes are applied 1 ps before the next rising edge so a same-timestamp
   pin/clock write cannot race the edge; the clock high time (the aperture) is
-  unaffected.
+  unaffected. For `FREEZE` (`ui_in[7]`) that 1 ps is also the entire setup margin,
+  which no real host can promise — see "FREEZE timing is a host obligation the emulator
+  cannot check" under Python API above.
 * `read_status()` samples all 16 bytes through the auto-incrementing pointer and
   fails loudly if any pointer is missed, so a truncated readout cannot be
   mistaken for a measurement.

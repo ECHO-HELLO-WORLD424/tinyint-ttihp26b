@@ -38,7 +38,7 @@ physical-design evidence comes from the CI artifacts of the submitted commit.
 | # | Severity | Finding | Status |
 | --- | --- | --- | --- |
 | F1 | **Blocking** | `uio_oe` asserted one clock before the configuration-commit edge → guaranteed host/chip pad contention and a corrupted `cfg[15:8]` | **Fixed** (RTL + docs + test) |
-| F2 | High | `FREEZE` (`ui_in[7]`) has no synchronizer and the host contract does not require clock-aligned changes → possible spurious error counts | Open |
+| F2 | High | `FREEZE` (`ui_in[7]`) has no synchronizer and the host contract does not require clock-aligned changes → possible spurious error counts | **Settled** (documented host contract; no RTL change) |
 | F3 | Medium | Canary counters silently alias above 65535 for most window/frequency combinations; no overflow flag | Open |
 | F4 | Medium | The canary window is one-shot and cannot be re-armed without reset; the datasheet calls it "continuous" | Open |
 | F5 | Medium | RO ripple counters are excluded from all timing signoff and are never exercised at speed | Open |
@@ -173,7 +173,7 @@ file header, and the now-obsolete workaround note in `fpga/tt_fpga_pico2ice.v`.
 
 ---
 
-## F2 — `FREEZE` is not synchronized and the host contract does not require edge alignment
+## F2 — `FREEZE` is not synchronized and the host contract does not require edge alignment — SETTLED
 
 `src/tt_um_echoworld424_tpv.v`: `wire freeze = ui_in[7]; wire update_en = ~freeze;`
 drives the clock-enable of `frame_cnt`, `win_cnt`, `err_cnt`, `ops_cnt`, `started` and
@@ -193,6 +193,55 @@ the synchronized version), or an explicit documented requirement to change `FREE
 while the clock is low and at least ~20 ns before the next rising edge. If neither is
 done, treat "error count non-zero on a config that should be error-free" as a
 freeze-transition artefact before recording it.
+
+### Decision (2026-09-16): documented host contract, no synchronizer
+
+The paragraphs above describe the state at audit time. The second option was taken, and
+the contract is now normative in `docs/post-silicon-protocol.md` (§ "FREEZE interface
+contract (`ui[7]`)") and stated for users in `docs/info.md`:
+
+- The host must transition `FREEZE` — assert **and** release — during the clock HIGH
+  phase, which guarantees between half and one full period of settling ahead of the
+  sampling edge (50–100 ns at 10 MHz, 10–20 ns at 50 MHz). A host that can only act in
+  the LOW phase must still land the transition at least 20 ns (10 MHz) or 10 ns
+  (50 MHz) before the next rising edge, proven on a scope. Both floors exceed the 4 ns
+  input-path budget `src/pnr.sdc` already places on `ui_in[7]` with
+  `set_input_delay 4.0000`. The HIGH-phase rule is stated rather than a single
+  nanosecond figure because it is frequency-independent: one rule covers the whole
+  10–50 MHz sweep, and a flat figure cannot (20 ns is unreachable inside a 10 ns LOW
+  phase at 50 MHz).
+- `FREEZE` must be generated in the chip's clock domain. An OS-scheduled software GPIO
+  write is explicitly disqualified, because it cannot bound its own jitter to a
+  sub-100 ns window.
+- A per-session scope check of `clk` against `ui[7]`, recorded with `host_fw` in the run
+  notes, discharges the obligation for that session.
+- Escalation rule: a nonzero error count on a configuration that the model and the
+  `alt`/`hold` controls say is error-free is a suspected freeze-transition artefact
+  until the scope check is on record; an operating point whose host cannot satisfy the
+  rule is excluded with a reason code rather than reported as data.
+
+Rationale for **not** synchronizing in RTL: a two-flop synchronizer would add two cycles
+of freeze latency, make the operation count at the freeze boundary timing-dependent by
+one (interacting with F6's `ops_cnt` definition), and change when `ro_en` stops the ring
+— perturbing a quantity the experiment measures — while `src/pnr.sdc` already assumes a
+synchronous input. The trade was moved to the host, where it is enforceable and
+re-checkable every session, rather than into RTL that cannot be changed after tapeout.
+
+Consequences recorded deliberately: this is a **host-side obligation, not a hardware
+guarantee**, so the chip in isolation is not certified against the F2 failure mode, and
+a host that ignores the contract reproduces the exposure exactly. The obligation is also
+not discharged by the reference harness, which routes host GPIO `ui_cfg` straight to
+`ui[7]` in the run phase (`fpga/tt_fpga_pico2ice.v:68`) and synchronizes nothing.
+
+Consistency with the regression: `test/test.py::test_freeze_resume_every_phase`
+transitions FREEZE at mid-HIGH phase (exactly half a period before the next rising edge)
+and the `freeze()` helper transitions at mid-LOW phase. Both exercise **functional**
+freeze semantics in a zero-delay simulator, which does not model setup/hold and so
+cannot validate the host timing contract in either direction — the same caveat is now
+recorded in `tools/emulator/README.md` for the host driver, whose pin writes land 1 ps
+before a rising edge. Nothing in the regression contradicts the contract; the contract's
+evidence is the host-side scope check. No RTL was changed, so this decision required no
+re-hardening run and no re-run of the prediction packages; what remains is host-side.
 
 ## F3 — canary counters silently alias, with no overflow flag
 
@@ -243,6 +292,24 @@ counting test runs only with `TPV_GDELAY=1` (≈10 MHz equivalent) at `can_sel=3
 "counts correctly at speed" and "counts correctly at `can_sel` 0–2" are both currently
 unverified. First-silicon check: `can_sel=0`, `win_sel=0`, `FORCE_CAN=0` → expect a
 plausible, non-zero, ratio-consistent `gen_cnt`/`mat_cnt`.
+
+**Correction and closure (2026-09-16).** The second sentence above overstates what the
+f_osc decks do. The extracted ring subcircuit contains the counter's first flop as a
+load, but not its toggle inverter or the other 15 ripple stages, so the flop's `D` pin
+and the shared reset tree became deck control pins — and every revision-2 deck drove
+both to 0 V, i.e. **the counter was held in reset**, not merely static. A separate
+procedure was therefore required rather than a re-reading of the existing one:
+`tools/ro/extract_ro_loop.py --counter`, `tools/ro/run_ro_count_case.py`,
+`tools/ro/analyse_ro_count.py`; dataset `data/safe10/count/`; record
+`docs/ro-counter-spice-validation.md`. Building it surfaced the trap this finding
+implies: the counter's toggle feedback must be inside the subcircuit *and* its reset
+tree must be walked back to `rst_n`; otherwise the deck drives a buffer output against
+the tree and silently reproduces the defect. **Status: closed for the RTL/netlist-level
+counter** (all 12 corner × canary × `can_sel` cases count the ring's edges, with the
+ring frequency unchanged by the running counter). F3 (counter aliasing over a full
+2^8…2^14 window) remains open. First-silicon check unchanged: `can_sel=0`,
+`win_sel=0`, `FORCE_CAN=0` → expect a plausible, non-zero, ratio-consistent
+`gen_cnt`/`mat_cnt`.
 
 ## F6 — `ops_cnt` counts launches, not comparisons, and the datasheet does not say so
 
@@ -492,7 +559,10 @@ and SDF tools default to the submitted netlist and SPEF.
    devcontainer's bind mount can serve a stale copy of `.git/refs`, and
    `tools/verify_safe10.sh` now regenerates the RTL baseline too, so the recorded test
    counts cannot go stale again.
-3. Decide F2 (synchronizer vs. documented edge-alignment rule) before the campaign.
+3. F2 decided (2026-09-16): documented host contract, no synchronizer — see the F2
+   decision block. The remaining action is host-side: generate FREEZE in the chip's
+   clock domain and record the per-session scope check. No RTL change, so no
+   re-hardening or prediction-package re-run follows from it.
 4. Correct the datasheet gaps F4 and F6; fix F8 and F9 opportunistically.
 5. Fold F3/F5/F10–F12 into the post-silicon protocol as pre-declared measurement
    limits and first-silicon checks.
@@ -504,3 +574,4 @@ and SDF tools default to the submitted netlist and SPEF.
 | 2026-09-16 | Initial audit; F1 fixed in `src/tt_um_echoworld424_tpv.v`, documented in `docs/info.md` / `docs/post-silicon-protocol.md` / `AGENTS.md`, covered by `test/test.py::test_uio_oe_handoff` and by the new `test/tb_pad_contention.v` pad model, which is also run in the `test` CI workflow |
 | 2026-09-16 | Full submission flow re-run locally on the fixed RTL (LibreLane 3.0.5, PDK rev `c4b8b4e5…`): hardening, signoff, structure, precheck 10/10, GL 10 pass / 4 skip, RTL 14/14 — all pass; artifact hashes recorded above |
 | 2026-09-16 | Fix committed and pushed as `0a7cd5e`; CI run `35034979531` green and archived as `artifacts/run-35034979531/`. CI artifact cross-checked against the local build: netlist/OAS/LEF byte-identical, GDS `LayoutDiff` identical, all signoff metrics equal to full precision (F7 resolved) |
+| 2026-09-16 | F2 settled as the documented host contract (no RTL synchronizer): FREEZE HIGH-phase transition rule (LOW-phase transitions only with a proven 20 ns/10 ns margin), chip-clock-domain sourcing requirement, per-session scope check and exclusion policy added to `docs/post-silicon-protocol.md`, `docs/info.md` and `tools/emulator/README.md`; F2 status updated in the findings table, the required-follow-ups list and `AGENTS.md`. Docs-only change — no RTL, constraints, or tests touched, so the archived build `0a7cd5e` remains the current artifact |

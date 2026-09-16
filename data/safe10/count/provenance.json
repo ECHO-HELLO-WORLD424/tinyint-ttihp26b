@@ -1,0 +1,47 @@
+{
+ "kind": "counter-inclusive extracted RO transient (SPICE) validation",
+ "created": "2026-09-16",
+ "revision": 2,
+ "purpose": "show that the canary's ripple edge counter counts the ring's edges at speed; the f_osc dataset holds the counter in reset and cannot answer this",
+ "design": {
+  "source_commit": "0a7cd5edd8cea7a45085898f84db403c93b25af0",
+  "branch": "proposal-canary",
+  "ci_run": "35034979531",
+  "ci_run_url": "https://github.com/ECHO-HELLO-WORLD424/tinyint-ttihp26b/actions/runs/35034979531",
+  "extracted_netlist": "tt_um_echoworld424_tpv.spice",
+  "extracted_netlist_sha256": "18a5657c79f34f010205499071f65990377e0d3be1e5451d6e61c1a8aaefe000",
+  "tool_image": "ghcr.io/librelane/librelane:3.0.5",
+  "pdk_rev": "c4b8b4e5e7a05f375cca3815d51b3a37721fbf5c"
+ },
+ "tools": {
+  "extract": "tools/ro/extract_ro_loop.py --counter",
+  "deck": "tools/ro/run_ro_count_case.py",
+  "sweep": "tools/ro/sweep_ro_count.py",
+  "analyse": "tools/ro/analyse_ro_count.py",
+  "compare": "tools/ro/compare_ro_count.py",
+  "stdcell_spice_sha256": "2b6d4e3cb169bdbb1350e01e213ffe7bb4bad261821a51a2fe38a5c92211975a"
+ },
+ "method": {
+  "extraction": "ring subtree plus the full 16-stage ripple counter, its toggle inverters, clock drivers and the reset buffer tree walked back to rst_n",
+  "deck": "reset driven as PWL (assert then release); all 16 counter bits saved; counter outputs never driven; X-instance node order taken from the .subckt declaration",
+  "analysis": "period from the loop node; counter decoded after bit 0's last falling edge; checked against ring edges, the period estimate, and per-stage ripple rates"
+ },
+ "files": {
+  "count_vs_fosc.csv": "30f13f5336aa359d2a63d96664619612cb11099a7f64d6f5f5c0edd6ac2d126c",
+  "count_vs_fosc.json": "e23ff4635f5b0f4ae5ef961d199d8b2b80b1b2f1c02610488cf0c64ce6125e82",
+  "ro_count.csv": "fce0e55fa24e70ee4dc198e8f0c176378f961e73d8599e412af8345e989ad757",
+  "ro_count.json": "3eac7d92dc20200d4699e4423bb1df7feafdf6eb94c8a207ae837b1f2bd587db"
+ },
+ "comparison_with_fosc": {
+  "fosc_dataset": "../spice/spice_ro.csv",
+  "fosc_dataset_sha256": "110d9f03f9dd112ae955d23828ac00db0fa1e58c9655bbc38e38830853e7add3",
+  "cross_check": "count_vs_fosc.json"
+ },
+ "revision_note": "Revision 1 was assembled from two batches of decks: one written before the X-instance port-order, reset-driver-chain and structural control-role fixes in run_ro_count_case.py/extract_ro_loop.py, and one after. Mixing them made two cases (nom_slow_1p08V_125C ro_mat can_sel 2/3) look like counting failures when the deck had pinned the counter or mis-driven the reset. Revision 2 is the consistent dataset: 12 cases at 16-period/10 ps, 9 at 32-period/5 ps and 1 outlier case re-run over 48 periods at 5 ps; all 22 pass. The pre-fix raws are kept under runs/count-sweep/ (ignored) and excluded from this dataset.",
+ "notes": [
+  "case count: 22 (3 corners x 2 canaries x 4 can_sel)",
+  "all cases: counter final value equals the ring-edge count within +/-1 edge; every ripple stage at its binary-carry rate",
+  "the 2 slow-corner ro_mat can_sel=2/3 cases show a large f_osc difference from the revision-2 f_osc dataset; that is a tap-selection/open-item difference, not a counting failure, and is flagged in count_vs_fosc.json",
+  "windows differ per batch (16 periods/10 ps, 32 periods/5 ps, one 48 periods/5 ps); the count result does not depend on window length, but the f_osc column does"
+ ]
+}

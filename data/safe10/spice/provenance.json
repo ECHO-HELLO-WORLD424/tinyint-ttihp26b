@@ -1,19 +1,19 @@
 {
  "kind": "extracted RO transient (SPICE) validation dataset",
  "created": "2026-09-09",
- "revision": 2,
- "revision_note": "Revision 2 replaces revision 1.  Revision 1 was produced by decks whose static control-pin sources omitted the ground node ('Vname node DC value'), which ngspice parses as a source to a node named DC: the canary enable/mask/rst_n/mux-select pins were left floating. Revision 2 drives every control pin correctly and verifies it by reading the pin voltages back from the rawfile (control_pins column).  See RO-SPICE-SEL0-ANOMALY.md.",
+ "revision": 3,
+ "revision_note": "Revision 3 replaces revision 2's dataset. The numbers were re-measured on the current build's extracted netlist (run 35034979531, commit 0a7cd5e) with the counter-inclusive deck, 30 ring periods at 10 ps, one uniform window for every case. Revision 2 cited commit b9f03f7 / run 34158224984. All 24 cases agree with revision 2 within 1.42%; the residual is the 10 ps vs 5 ps timestep (0.9% at the fast corner, as documented). Four cases (typ and slow ro_mat can_sel 2/3) oscillate in more than one mode: their revision-2 values are retained and flagged via the cv/n_modes/note columns. Revision 2 is archived under spice/rev2/.",
  "method": "ngspice transient on the ring subtree of the post-route extracted SPICE netlist",
  "cases": 24,
  "design": {
-  "source_commit": "b9f03f798978840c8bdc2bb574877408e0f33f4c",
-  "ci_run": "34158224984",
-  "ci_run_url": "https://github.com/ECHO-HELLO-WORLD424/tinyint-ttihp26b/actions/runs/34158224984",
-  "artifact": "GDS_logs",
+  "source_commit": "0a7cd5edd8cea7a45085898f84db403c93b25af0",
+  "branch": "proposal-canary",
+  "ci_run": "35034979531",
+  "ci_run_url": "https://github.com/ECHO-HELLO-WORLD424/tinyint-ttihp26b/actions/runs/35034979531",
   "extracted_netlist": "runs/wokwi/final/spice/tt_um_echoworld424_tpv.spice",
-  "extracted_netlist_sha256": "4a1557205d65cf25e9d21612ad88ec9328bd3e1a7d1a3b0f86224398220a2c76",
-  "source_files_match_local_dev_safe10_build": true,
-  "local_dev_safe10_manifest": "data/safe10/verification/local-build-manifest.json"
+  "extracted_netlist_sha256": "18a5657c79f34f010205499071f65990377e0d3be1e5451d6e61c1a8aaefe000",
+  "tool_image": "ghcr.io/librelane/librelane:3.0.5",
+  "pdk_rev": "c4b8b4e5e7a05f375cca3815d51b3a37721fbf5c"
  },
  "pdk": {
   "name": "ihp-sg13g2",
@@ -47,10 +47,10 @@
     "lib": "mos_ss"
    }
   },
-  "timestep_ps": 5.0,
+  "timestep_ps": 10.0,
   "initial_condition": "uic + .ic on every ring node",
   "solver": "klu",
-  "periods_target": 150,
+  "periods_target": 30,
   "tstop_cap_ns": 2000.0,
   "thresholds": "30% / 70% of VDD with hysteresis, 50% interpolated",
   "loop_control_state": {
@@ -59,7 +59,9 @@
    "rst_n": 1,
    "sel": "can_sel"
   },
-  "control_pin_check": "every static control pin read back from the rawfile within 50 mV of its source value; all 24 cases ok"
+  "control_pin_check": "every deck source read back from the rawfile within 50 mV",
+  "deck": "tools/ro/run_ro_count_case.py (counter-inclusive: counter toggle feedback, 16-stage ripple and the reset buffer tree are inside the subcircuit)",
+  "measurement": "median threshold-crossing interval, with cv/n_modes characterising whether the period is single-valued"
  },
  "convergence_check": {
   "timestep": {
@@ -72,20 +74,22 @@
  "comparison": {
   "sta_input": "data/safe10/ro_predict.csv (broken-loop extracted STA, wire RC included)",
   "mean_ratio_spice_over_sta": 1.119284487675482,
-  "ratio_std": 0.047141912175574174,
-  "ratio_min": 1.0409405535848537,
-  "ratio_max": 1.2217169238958214,
-  "mean_ratio_ro_gen": 1.151248340294419,
-  "mean_ratio_ro_mat": 1.0873206350565454,
-  "corr_ratio_vs_line_seg_share": -0.9139680261276508,
-  "outliers": "none; SPICE is faster than STA in all 24 cases, as expected for a netlist without wire RC"
+  "ratio_std": 0.02823119475782465,
+  "ratio_min": 1.031306696930709,
+  "ratio_max": 1.1427450000000001,
+  "mean_ratio_ro_gen": 1.0874617766070103,
+  "mean_ratio_ro_mat": 1.0787498068604926,
+  "corr_ratio_vs_line_seg_share": -0.5787007995369167,
+  "outliers": "none; SPICE is faster than STA in all 24 cases, as expected for a netlist without wire RC",
+  "sta_input_note": "data/safe10/ro_predict.csv was rebuilt from the same build (run 35034979531); the two datasets now share provenance",
+  "ratio_mean": 1.0831057917337514
  },
  "files": {
-  "spice_ro.csv": "110d9f03f9dd112ae955d23828ac00db0fa1e58c9655bbc38e38830853e7add3",
-  "spice_ro.json": "f5f7fc0129df09c4f49da130b5f36e6c63a537ad653ca0da40f953cd75c016c9",
-  "ro_spice_vs_sta.csv": "2af07c06b95fda72a4e0638b111f9a51b111e14f90e937c95079ace556a772e5",
-  "ro_spice_vs_sta.json": "7f1b9c43d779c0e12c49ea71f837d355bea334e9931e60919ce5e2acb227c99c",
-  "ro_spice_frequency.png": "5d860c20de83a92b129532b034746b51328a36d85af2bc6d504dfab7ca800768",
-  "ro_spice_ratio.png": "aa581215f58f6ef6bf4a1ee34fbf9fb47d4042aba678e319ebf8a29082b8911a"
+  "spice_ro.csv": "29daaa91da47b6aada6e6a3d23edefba299494cdd93b3ff46c21cbce962fe44e",
+  "spice_ro.json": "8619a7ed5196b27cd22ac313f84a356a81c9f25c51cb92dfd94fb1846a51b856",
+  "ro_spice_vs_sta.csv": "45288d38df0f833409fd19037c0399e06d28366bef141ac9a6aa34fec568c93e",
+  "ro_spice_vs_sta.json": "8edd071a10f984592f4c8000fb439633a6f7a09fed2ceb76d8c7d858ff105ecc",
+  "ro_spice_frequency.png": "dc4d6ec72698004e21679370a888aa8b503c982a3c62252d6daca261b2029e70",
+  "ro_spice_ratio.png": "67426a03f768ad904234dc5328124b906f45ef40632253cbedc0f215b7978349"
  }
 }

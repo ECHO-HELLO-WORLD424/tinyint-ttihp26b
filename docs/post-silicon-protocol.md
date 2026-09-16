@@ -41,6 +41,59 @@ clock-cycle based. For ordinary measurement use the 10–50 MHz range and check
 telemetry for overflow risk. Boundary values below 10 MHz require a prospectively
 recorded extension and separately validated canary windows.
 
+## FREEZE interface contract (`ui[7]`)
+
+`FREEZE` is sampled directly by the clock enables of `frame_cnt`, `ops_cnt`,
+`err_cnt`, `win_cnt`/`win_done`, `started`, `capture_pending` and `ro_en`, with **no
+synchronizer** (`src/tt_um_echoworld424_tpv.v`: `wire freeze = ui_in[7]; wire
+update_en = ~freeze;`). The host therefore has to supply the edge alignment that
+`src/pnr.sdc` already assumes when it constrains `ui_in[7]` with
+`set_input_delay 4.0000 -clock clk`. Normative for this campaign:
+
+1. Transition `FREEZE` — assert **and** release — during the clock **HIGH** phase
+   (between a rising edge and the following falling edge). That always leaves between
+   half and one full clock period of settling ahead of the edge that samples it:
+   50–100 ns at 10 MHz, 10–20 ns at 50 MHz. Never transition it close to a rising edge.
+2. If the host can only act in the clock LOW phase, the transition must still land at
+   least 20 ns (10 MHz) or 10 ns (50 MHz) before the next rising edge, proven by the
+   rule-4 scope check. Both floors exceed the 4 ns input-path budget in `pnr.sdc`, and
+   the HIGH-phase rule meets them at every frequency in the 10–50 MHz sweep without
+   per-frequency arithmetic. At 50 MHz the LOW phase is only 10 ns long, so the HIGH
+   phase is the only comfortable window there. Keep the clock waveform uninterrupted
+   across the transition (procedure step 6).
+3. `FREEZE` must originate in the chip's clock domain: a host FPGA register or PIO
+   clocked with `clk`, or equivalent hardware. **Do not drive it from an OS-scheduled
+   software GPIO write** — no such write bounds its own jitter to a sub-100 ns window.
+   The reference harness `fpga/tt_fpga_pico2ice.v` routes host GPIO `ui_cfg` straight
+   to `ui[7]` in the run phase and synchronizes nothing, so compliance is the
+   firmware's obligation, not the harness's.
+4. Check rules 1–2 once per session on a scope: probe `clk` and `ui[7]`, confirm every
+   FREEZE transition clears the applicable margin ahead of the following rising edge,
+   and record `host_fw` and the check in the run notes.
+
+Consequence, stated so it cannot be discovered after the fact: if a transition violates
+rules 1–2, `update_en` can resolve differently per register on that edge. The frame
+counter can then stop away from the frame/ops/err relationship the analysis assumes, and
+`dut_err` can compare the held `result_reg` against a *new* operand pair and count a
+**fabricated error** — the primary measured quantity.
+
+- A nonzero error count on a configuration that the model and the `alt`/`hold` controls
+  say is error-free is a **suspected freeze-transition artefact** until the rule-4
+  scope check is on record for that run. Hold the raw record and re-run the point.
+- If a host at some operating point cannot satisfy rules 1–3, that point is not
+  measurable with FREEZE; record it as excluded with a reason code rather than
+  reporting the count as data.
+- The RTL regression and the `tools/emulator` host driver are **zero-delay functional**
+  models: they exercise freeze semantics but do not model setup/hold, so passing them
+  is not evidence that a host satisfies rules 1–2.
+
+This settles finding F2 of the post-silicon readiness audit as the documented
+host-contract option, not an RTL synchronizer. A two-flop synchronizer would add two
+cycles of freeze latency, make the operation count at the freeze boundary
+timing-dependent by one, and perturb when `ro_en` stops the ring — while `pnr.sdc`
+already assumes a synchronous input. Do not add one without re-deciding this contract
+and re-running the data packages it affects.
+
 ## Procedure
 
 1. Record die/board identity, core voltage, sensor and clock measurements.
@@ -64,12 +117,14 @@ recorded extension and separately validated canary windows.
    the four points bounding the transition, collect 3e6 comparisons for the
    1e-6 threshold. Split large counts into reset batches below counter saturation,
    preserving the fixed deterministic workload and recording every batch.
-6. Set FREEZE high; keep clocking for two full cycles. A launch accepted just
-   before FREEZE completes its immediate falling-edge sample; no later sample
-   replaces it. Read all 16 bytes only after this settling interval. Never stop
+6. Set FREEZE high under the interface contract above — during the clock HIGH phase —
+   then keep clocking for two full cycles. A launch
+   accepted just before FREEZE completes its immediate falling-edge sample; no later
+   sample replaces it. Read all 16 bytes only after this settling interval. Never stop
    the clock high inside an in-flight measurement aperture.
 7. Check configuration/flags, append raw data, then resume or reset for the next
-   point. Freeze/resume does not create an additional timing capture.
+   point. Release FREEZE under the same contract. Freeze/resume does not create an
+   additional timing capture.
 8. Extract the anchor before looking at held-out boundaries. If no boundary is
    observable by 50 MHz, record right censoring and calibration unavailable.
    Do not heat the chip to force an anchor. Continue to preserve negative data.

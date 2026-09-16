@@ -52,21 +52,38 @@ falling-edge capture even if FREEZE rises during the high phase. Keep clocking f
 two complete cycles after asserting FREEZE before reading. Resume never repeats a
 capture. Maintain the normal clock waveform through the pending falling edge.
 
+`ui[7]` has **no on-chip synchronizer**, so the host must transition it as if it were
+synchronous: assert or release FREEZE during the clock **HIGH** phase. That leaves
+between half and one full clock period of settling ahead of the edge that samples it -
+50-100 ns at 10 MHz, 10-20 ns at 50 MHz - comfortably beyond the 4 ns input-path budget
+`src/pnr.sdc` already assumes with `set_input_delay 4.0000` on `ui_in[7]`. A host that
+can only act in the LOW phase must still land the transition at least 20 ns (10 MHz) or
+10 ns (50 MHz) before the next rising edge, and prove it on a scope. FREEZE must be
+generated in the chip's clock domain (host FPGA register, PIO, or equivalent hardware);
+an OS-scheduled software GPIO write does not bound its own jitter to that window and is
+not an acceptable source. A transition landing inside the setup/hold aperture of a
+rising edge can make `update_en` resolve differently per register, which corrupts the
+19-cycle frame alignment and can count a fabricated error. The normative rule, its scope
+check, and the exclusion policy are in
+[the post-silicon protocol](post-silicon-protocol.md).
+
 ## How to test
 
 1. Hold `rst_n` low and drive the config word on `ui[7:0]` (LSB) and `uio[7:0]` (MSB).
    Release `rst_n` during the clock LOW phase before the first counted rising edge.
    Keep the config word stable through the third rising edge after releasing `rst_n`
-   (the on-chip boot counter commits it at that edge), then set `ui[7]` low and
-   release your `uio` drivers **within the following clock period**. The chip takes
+   (the on-chip boot counter commits it at that edge), then set `ui[7]` low - obeying
+   the FREEZE transition rule above - and release your `uio` drivers **within the
+   following clock period**. The chip takes
    over the `uio` bus on the fourth rising edge; holding your drivers past it makes
    both sides drive the pads, causing bus contention. Configuration is already
    latched at that point; subsequent `uio` values do not update it.
 2. Run the experiment at the target clock frequency/voltage/temperature for a known
    number of operations (19 cycles each). Start at 1.20 V/ambient and a low
    clock frequency. Record the clock high time as well as frequency.
-3. Set `ui[7]` high, allow two complete clocks for pending capture and ripple
-   settling, then read the 16 status bytes: `uio[7:0]`
+3. Set `ui[7]` high during the clock HIGH phase (the FREEZE transition rule above),
+   allow two complete clocks for pending capture and
+   ripple settling, then read the 16 status bytes: `uio[7:0]`
    is the data byte selected by `uo[3:0]` (auto-incrementing pointer). Byte map:
    0-1 = DUT error count (saturating), 2-3/4-5 = generic/matched RO edge counts
    (16-bit, wrap mod 65536 -- telemetry, not saturating), 6-7 = op count (saturating),

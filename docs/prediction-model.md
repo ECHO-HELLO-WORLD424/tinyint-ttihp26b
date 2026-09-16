@@ -76,8 +76,10 @@ free-running SDF RO simulation would be invalid, but an extracted
 transistor-level transient simulation is valid: `docs/ro-spice-validation.md`
 reports 24/24 cases (3 corners x 4 selections x 2 canaries) on the same
 post-route extracted netlist, with a mean SPICE/STA frequency ratio of
-**1.119** (generic canary 1.151, matched canary 1.087; range 1.04–1.22, no
-outliers). SPICE is faster than STA in every case, as expected for a netlist
+**1.083** (generic canary 1.087, matched canary 1.079; range 1.03–1.14, no
+outliers; dataset revision 3, measured on the current build with the
+counter-inclusive deck, and 20/24 cases single-mode with the rest flagged —
+see `data/safe10/spice/provenance.json`). SPICE is faster than STA in every case, as expected for a netlist
 without wire RC. The two remain independent pre-silicon predictions: the SPICE
 run has **no wire RC**, so it is not a correction to the STA model, and the STA
 model was **not tuned** to the SPICE result. The SDF sweep still masks the ROs.
