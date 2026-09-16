@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # SPDX-FileCopyrightText: (c) 2026 ECHO-HELLO-WORLD424
 # SPDX-License-Identifier: Apache-2.0
-"""Pre-silicon prediction package builder (PRE_SILICON_ACTION_PLAN P1.1).
+"""Pre-silicon prediction package builder.
 
 Joins the pinned pre-silicon inputs -- the case-analyzed experiment STA table
 ($TPV_DATA/experiment_sta.csv), the extracted RO canary table
@@ -751,7 +751,7 @@ def have_matplotlib():
 
 def main():
     ap = argparse.ArgumentParser(
-        description="Build the frozen pre-silicon prediction package (P1.1).")
+        description="Build the frozen pre-silicon prediction package.")
     ap.add_argument("--outdir", default=os.path.join(C.DATA, "predict"),
                     help="output directory (default: data/predict)")
     args = ap.parse_args()

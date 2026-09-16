@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # SPDX-FileCopyrightText: (c) 2026 ECHO-HELLO-WORLD424
 # SPDX-License-Identifier: Apache-2.0
-"""Build the final-submission build manifest (PRE_SILICON_ACTION_PLAN P2.2).
+"""Build the final-submission build manifest.
 
 Records the build identity of the final hardening run (CI run 33839023290,
 commit 1e31757e50080b19fa7642b8b9cd6822f64b1d11, branch proposal-canary) whose
@@ -367,8 +367,7 @@ def main():
             "name": "tpv-final-build-manifest",
             "version": 1,
             "generated_at": utc_now_iso(),
-            "notes": ("Final submission build identity for "
-                      "PRE_SILICON_ACTION_PLAN item P2.2; hashes cover the "
+            "notes": ("Final submission build identity; hashes cover the "
                       "staged run-33839023290 artifacts only."),
         },
         "git": dict(git_identity(), staged_run_commit=C.GIT_COMMIT),

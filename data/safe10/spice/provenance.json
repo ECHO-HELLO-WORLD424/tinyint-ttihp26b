@@ -73,7 +73,6 @@
  },
  "comparison": {
   "sta_input": "data/safe10/ro_predict.csv (broken-loop extracted STA, wire RC included)",
-  "mean_ratio_spice_over_sta": 1.119284487675482,
   "ratio_std": 0.02823119475782465,
   "ratio_min": 1.031306696930709,
   "ratio_max": 1.1427450000000001,
@@ -82,7 +81,11 @@
   "corr_ratio_vs_line_seg_share": -0.5787007995369167,
   "outliers": "none; SPICE is faster than STA in all 24 cases, as expected for a netlist without wire RC",
   "sta_input_note": "data/safe10/ro_predict.csv was rebuilt from the same build (run 35034979531); the two datasets now share provenance",
-  "ratio_mean": 1.0831057917337514
+  "n_cases": 24,
+  "ratio_mean": 1.0831057917337514,
+  "single_mode_cases": 20,
+  "multi_mode_cases": 4,
+  "multi_mode_note": "typ and slow ro_mat can_sel 2/3 oscillate in more than one mode; they keep their revision-2 values and are flagged in the CSV's cv/n_modes/note columns"
  },
  "files": {
   "spice_ro.csv": "29daaa91da47b6aada6e6a3d23edefba299494cdd93b3ff46c21cbce962fe44e",

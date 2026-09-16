@@ -1,4 +1,4 @@
-# RO canary loop-delay prediction (PRE_SILICON_ACTION_PLAN P1.3).
+# RO canary loop-delay prediction.
 #
 # The ring-oscillator loops are intentionally excluded from synchronous STA in
 # src/pnr.sdc (free-running loops are not valid STA objects and P&R must not
@@ -26,8 +26,7 @@
 #   ES_RO_MODE=gate : break at u_close A->Y; report the gate-return segment
 #                     from u_a2/A through u_a2 A->X and u_a3 B->X to nand_out
 #                     (u_a3/X). The two gate cells at the loop break are part
-#                     of the physical loop and must be counted (see
-#                     PRE_SILICON_ACTION_PLAN P1.3 refinement).
+#                     of the physical loop and must be counted.
 #
 # Note on accuracy: this is a static, levelized delay estimate (like a
 # first-order RO model): it neglects dynamic effects (input slew dependence

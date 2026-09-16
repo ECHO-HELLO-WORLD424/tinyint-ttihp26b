@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # SPDX-FileCopyrightText: (c) 2026 ECHO-HELLO-WORLD424
 # SPDX-License-Identifier: Apache-2.0
-"""Experiment-specific case-analyzed STA (PRE_SILICON_ACTION_PLAN P0.2).
+"""Experiment-specific case-analyzed STA.
 
 For every (segment-delay configuration, pattern class) in the predeclared
 measurement matrix and every PVT corner, this flow case-analyzes the static

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # SPDX-FileCopyrightText: (c) 2026 ECHO-HELLO-WORLD424
 # SPDX-License-Identifier: Apache-2.0
-"""SDF-annotated timing simulation sweep (P1.2) + RO cross-check (P1.3).
+"""SDF-annotated timing simulation sweep, plus an RO cross-check.
 
 Compiles the post-route netlist with the timing-safe stdcell library
 (IOPATH arcs kept, timing checks removed -- see tools/sdf/make_sdf_lib.py)

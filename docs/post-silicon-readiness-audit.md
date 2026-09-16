@@ -41,11 +41,11 @@ physical-design evidence comes from the CI artifacts of the submitted commit.
 | F2 | High | `FREEZE` (`ui_in[7]`) has no synchronizer and the host contract does not require clock-aligned changes → possible spurious error counts | **Settled** (documented host contract; no RTL change) |
 | F3 | Medium | Canary counters silently alias above 65535 for most window/frequency combinations; no overflow flag | Open |
 | F4 | Medium | The canary window is one-shot and cannot be re-armed without reset; the datasheet calls it "continuous" | Open |
-| F5 | Medium | RO ripple counters are excluded from all timing signoff and are never exercised at speed | Open |
+| F5 | Medium | RO ripple counters are excluded from all timing signoff and are never exercised at speed | **Resolved** (counter-inclusive SPICE, `data/safe10/count/`) |
 | F6 | Medium | `ops_cnt` counts launches, not comparisons; the datasheet byte map omits the −1 | Open (docs) |
 | F7 | Medium | The archived final-build manifest describes a different commit than the submitted tree | **Resolved** (run `35034979531` archived) |
 | F8 | Low | `MAX_FANOUT_CONSTRAINTS` is not a LibreLane variable and is silently ignored | Open |
-| F9 | Low | Stale documentation references (`chk_start`; `PRE_SILICON_ACTION_PLAN.md` missing) | Open |
+| F9 | Low | Stale documentation references (`chk_start`; `PRE_SILICON_ACTION_PLAN.md` missing) | **Resolved** (2026-09-16) |
 | F10 | Medium | Environment: the aperture is the clock HIGH time, and the demo-board clock's HIGH time is an integer-division artefact that must be measured, not assumed 50 % | Open (campaign) |
 | F11 | Medium | Environment: voltage sweep and uio drive/release need a fixture beyond the standard demo board | Open (campaign) |
 | F12 | Low | RF on `uio` during the RO window; power/IR numbers exclude the ROs | Open (campaign) |
@@ -355,13 +355,19 @@ constraint.
 
 ## F9 — stale documentation references
 
-- `docs/data-dictionary.md` describes the DUT capture as "one-shot `result_reg`
-  capture at frame cycle 0 (`chk_start`)" — `chk_start` is a v1/full-cycle signal that
-  no longer exists; the half-cycle design uses `capture_pending`.
-- `AGENTS.md` requires reading `PRE_SILICON_ACTION_PLAN.md` and points at its
-  definition-of-complete checklist, but **that file is not in the working tree** (it
-  exists only in git history). Either restore it or remove the references.
-- `docs/info.md` "continuous delay telemetry" — see F4.
+All three items are fixed (2026-09-16):
+
+- `docs/data-dictionary.md` now describes the half-cycle one-shot capture
+  (`load` -> `capture_pending` -> falling-edge `result_reg`) instead of the v1
+  `chk_start` signal.
+- The `PRE_SILICON_ACTION_PLAN.md` references were removed rather than restored:
+  `AGENTS.md`, `README.md`, and the tool docstrings in `tools/make_manifest.py`,
+  `tools/predict_model.py`, `tools/run_experiment_sta.py`,
+  `tools/ro/ro_predict.tcl` and `tools/sdf/tb_sdfsim.v` now describe what they do
+  without citing a document that is not in the tree. The plan's item IDs survive
+  only where they are frozen inside already-published artifact text (the `notes`
+  field of `artifacts/run-*/manifest.json`), which must not be rewritten.
+- `docs/info.md` "continuous delay telemetry" — see F4, still open.
 
 ## F10 — environment: the aperture is the clock HIGH time, so the clock source is an instrument
 

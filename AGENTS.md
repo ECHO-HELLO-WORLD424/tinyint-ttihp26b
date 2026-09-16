@@ -247,10 +247,11 @@ package are recorded alongside the evidence in
 | `docs/research-proposal.md` | Research framing and experiment plan |
 | `docs/ro-spice-validation.md` | Extracted RO transient (SPICE) f_osc validation record (dataset revision 3) |
 | `docs/ro-counter-spice-validation.md` | Counter-inclusive SPICE validation: does the canary's counter count the ring's edges |
-| `RO-SPICE-SEL0-ANOMALY.md` | Post-mortem: revision-1 SPICE deck bug and corrected dataset |
+| `RO-SPICE-SEL0-ANOMALY.md` | Post-mortem: revision-1 SPICE deck bug and the `control_pins` check it prompted |
 | `tools/ro/extract_ro_loop.py` | Extracts an RO ring from the flat post-route SPICE netlist |
 | `tools/ro/run_ro_spice_case.py` | Builds and runs one ngspice RO transient deck |
-| `tools/ro/sweep_ro_spice.py` | Runs the 24-case (corner x can_sel x canary) sweep |
+| `tools/ro/sweep_ro_spice.py` | Retired ring-only 24-case sweep (known-bad for `can_sel=2`; refuses to run without `--force-ring-only`) |
+| `tools/ro/compare_ro_count.py`, `make_count_provenance.py` | Counter dataset cross-check and provenance |
 | `tools/ro/analyse_spice_raw.py` | Measures f_osc from an ngspice rawfile |
 | `tools/ro/compare_ro_spice.py` | SPICE vs broken-loop STA comparison and plots |
 | `tools/ro/run_ro_count_case.py` | Counter-inclusive transient deck (counter running); the deck revision 3 is measured with |

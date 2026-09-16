@@ -8,8 +8,8 @@
 
 Status: diagnosis of the `data/sdfsim.csv` RO cross-check row (slow corner,
 `cansel=3`, `winsel=0`, FORCE_CAN off, 30 frames) against the STA prediction in
-`data/ro_predict.csv` (run `33839023290`). The SDF-sim tooling itself is owned by
-the P1.2 stream; this note only explains the discrepancy and scopes the fix.
+`data/ro_predict.csv` (run `33839023290`). The SDF-sim tooling itself is
+`tools/run_sdfsim.py`; this note only explains the discrepancy and scopes the fix.
 
 ## Observed discrepancy
 
@@ -76,7 +76,7 @@ to `0.100:0.100:0.100` (258 arcs, done on a scratch copy, tooling untouched):
   kick-start via `rst_n`/`en` works (first edges at t≈141 ns, right after
   `ro_en` rises).
 
-## Fix direction (P1.2/P1.3 follow-up, owner: SDF-sim stream)
+## Fix direction (follow-up owner: the SDF-sim stream)
 
 The RO cell delays must come from a source that is not filtered by the loop
 disable, e.g.:

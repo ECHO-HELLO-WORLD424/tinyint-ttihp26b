@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # SPDX-FileCopyrightText: (c) 2026 ECHO-HELLO-WORLD424
 # SPDX-License-Identifier: Apache-2.0
-"""RO canary loop-delay prediction driver (P1.3).
+"""RO canary loop-delay prediction driver.
 
 For every PVT corner and canary tap selection (can_sel 0..3), measures the
 extracted loop delay of both canary ring oscillators (broken-loop STA with

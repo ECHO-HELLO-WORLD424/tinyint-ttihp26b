@@ -43,7 +43,7 @@ producer's own precision.
 | Convention | Value | Mirror |
 | --- | --- | --- |
 | Frame length | 19 clk cycles (`frame_cnt` runs 0..18, `FRAME_LAST = 18`); one timed DUT operation per frame | `src/tt_um_echoworld424_tpv.v` |
-| DUT capture | one-shot `result_reg` capture at frame cycle 0 (`chk_start`); holds until compare | `src/tt_um_echoworld424_tpv.v` |
+| DUT capture | one-shot `result_reg` capture on the falling edge immediately after an accepted rising-edge launch (`load` -> `capture_pending`); holds the first sample until compare | `src/tt_um_echoworld424_tpv.v` |
 | Config word | 16 bits: `[1:0]`/`[3:2]`/`[5:4]`/`[7:6]` = seg0..seg3 taps, `[9:8]` = pattern, `[11:10]` = can_sel, `[13:12]` = win_sel, `[14]` = FORCE_CAN, `[15]` = FORCE_ERR | `src/tt_um_echoworld424_tpv.v` config capture |
 | Delay-bank tap | tap n = n x 16 inverter pairs (`seg0..seg3` = cfg bits `[1:0]`..`[7:6]`) | `src/tpv_delay_line.v` |
 | Canary window | win W = `2^(8 + 2*W)` clk cycles: {0:256, 1:1024, 2:4096, 3:16384} | `src/tt_um_echoworld424_tpv.v` |
@@ -61,7 +61,7 @@ asserts they agree across all inputs and fails loudly otherwise.
 
 ## `data/experiment_sta.csv` (96 rows)
 
-Producer: `tools/run_experiment_sta.py` (P0.2). Case-analyzed post-route
+Producer: `tools/run_experiment_sta.py`. Case-analyzed post-route
 extracted STA (SPEF, per-corner Liberty) of the runtime path from the pattern
 generator registers (`u_pat.lfsr`/`u_pat.idx`) to the one-shot DUT capture
 registers (`result_reg`), one row per corner x seg-config x pattern.
@@ -94,7 +94,7 @@ registers (`result_reg`), one row per corner x seg-config x pattern.
 
 ## `data/ro_predict.csv` (24 rows)
 
-Producer `tools/run_ro_predict.py` (P1.3): broken-loop extracted STA of both
+Producer `tools/run_ro_predict.py`: broken-loop extracted STA of both
 ring oscillators with SPEF parasitics; 3 corners x 4 can_sel x 2 canaries.
 
 | Field | Unit | Meaning |
@@ -111,12 +111,21 @@ ring oscillators with SPEF parasitics; 3 corners x 4 can_sel x 2 canaries.
 | `sat_win0..3` | - | model flag: 1 if the predicted count would exceed the 16-bit counter range (wrap mod 65536 in hardware; host-side unwrapping needed), else 0. NOT an RTL flag -- the hardware counters simply wrap |
 | provenance columns | - | as above |
 
-## `data/safe10/spice/` (extracted RO transient check)
+## `data/safe10/spice/` (extracted RO transient check, revision 3)
 
-Producers `tools/ro/extract_ro_loop.py`, `tools/ro/run_ro_spice_case.py`,
-`tools/ro/sweep_ro_spice.py`, `tools/ro/analyse_spice_raw.py` and
+Producers `tools/ro/extract_ro_loop.py`, `tools/ro/run_ro_count_case.py` +
+`tools/ro/sweep_ro_count.py`, `tools/ro/analyse_ro_intervals.py` and
 `tools/ro/compare_ro_spice.py`. Full method and caveats:
-`docs/ro-spice-validation.md`.
+`docs/ro-spice-validation.md`; the deck bug that shaped the `control_pins` check
+is recorded in [`RO-SPICE-SEL0-ANOMALY.md`](../RO-SPICE-SEL0-ANOMALY.md).
+
+The rows are measured with the **counter-inclusive** deck
+(`tools/ro/run_ro_count_case.py`), i.e. with the canary counter running, and the
+frequency is the *median* rising-edge interval, not the mean. The retired
+ring-only sweep (`tools/ro/sweep_ro_spice.py`) is kept for investigating the
+ring-only extraction but refuses to run without `--force-ring-only`: it can
+close the loop through the wrong tap for `can_sel=2` and is therefore not an
+f_osc source.
 
 | File | Contents |
 | --- | --- |
@@ -137,17 +146,56 @@ Key columns of `spice_ro.csv`:
 | `tstop_ns`, `tstep_ps`, `solver` | ns / ps / - | transient setup (`uic`, `.ic` on all loop nodes) |
 | `control_pins` | - | `ok` when every static control pin read back from the rawfile settled within 50 mV of its deck value; otherwise the offending pins. This check caught a revision-1 deck bug (floating control pins), see `RO-SPICE-SEL0-ANOMALY.md` |
 | `vmin`, `vmax` | V | measured loop-node excursion |
+| `period_median_ns`, `period_mean_ns`, `period_std_ns` | ns | interval statistics; `f_osc_mhz = 1000 / period_median_ns` |
+| `cv` | - | coefficient of variation of the rising-edge intervals; `< 0.01` marks a single-mode ring |
+| `n_modes`, `modes` | - | interval-histogram modes (`{period_ns, share}`), for rings whose period is not single-valued |
+| `measurement_source` | - | which deck produced the row, and whether a multi-mode case kept its revision-2 value |
+| `note` | - | free text; multi-mode substitutions and other per-case caveats are recorded here |
+| `run_id`, `git_commit`, `librelane_image`, `pdk_rev` | - | build identity of the netlist the row was measured on (currently run `35034979531`, commit `0a7cd5e`) |
 
 **Method caveat:** the transient runs use the cell-level Magic spiceextraction
 (transistor-level cells, cell-internal parasitics, **no interconnect RC**),
 while `ro_predict.csv` includes SPEF wire parasitics. SPICE running faster than
 STA is therefore expected; the two are independent predictions, not a
-correction. Revision 2 of the dataset has no outliers (mean SPICE/STA ratio
-1.119, range 1.04–1.22) and every case passes the control-pin read-back check.
+correction. Revision 3 of the dataset (current build, counter-inclusive deck)
+has no outliers (mean SPICE/STA ratio 1.083, range 1.03–1.14), every case passes
+the control-pin read-back check, and 20/24 cases are single-mode — the four
+multi-mode configurations are flagged in the CSV's `cv`/`n_modes`/`note` columns.
+Revision 2 was measured on commit `b9f03f7` with the counter held in reset and is
+archived, unchanged, under `data/safe10/spice/rev2/`.
+
+## `data/safe10/count/` (counter-inclusive RO transient check)
+
+Producers `tools/ro/extract_ro_loop.py --counter`,
+`tools/ro/run_ro_count_case.py`, `tools/ro/sweep_ro_count.py`,
+`tools/ro/analyse_ro_count.py`, `tools/ro/compare_ro_count.py` and
+`tools/ro/make_count_provenance.py`. Full method and results:
+`docs/ro-counter-spice-validation.md`; the deck defects found while building it
+and the f_osc regeneration record: `FOSC-REGEN-STATUS.md`.
+
+| File | Contents |
+| --- | --- |
+| `ro_count.csv` / `ro_count.json` | one row per case: measured ring frequency and period, `q0_negedges`, decoded `counter_final`, `ring_edges_in_count_window`, `count_error_edges`, `count_matches_ring_edges`, `count_matches_period_estimate`, `ripple_stage_rates_ok`, the counting window and sampling time, and the per-stage transition counts |
+| `count_vs_fosc.csv` / `.json` | the counter rows joined with `data/safe10/spice/spice_ro.csv`: the two frequencies, their difference, and the counting checks. A frequency difference is reported as a note, not a failure — it means the two decks selected different taps |
+| `provenance.json` | commit/run/netlist identity, PDK and tool roles, file hashes, and the revision notes |
+| `FOSC-REGEN-STATUS.md` | record of the f_osc regeneration: the driver bug, the window artefact, the ring-only deck defect, and the multi-mode configurations |
+
+Key columns of `ro_count.csv`:
+
+| Field | Unit | Meaning |
+| --- | --- | --- |
+| `status` | - | `ok` when the count matched the ring edges and every stage rippled correctly |
+| `f_osc_mhz`, `period_ns` | MHz / ns | ring frequency from the same rawfile, for the cross-check |
+| `q0_negedges` | - | bit-0 falling edges, i.e. counter increments, in the window |
+| `counter_final` | - | the 16 saved bits decoded after bit 0's last edge |
+| `ring_edges_in_count_window` | - | ring rising edges measured independently over the same window |
+| `count_error_edges` | edges | `counter_final - ring_edges_in_count_window` |
+| `count_matches_ring_edges`, `count_matches_period_estimate`, `ripple_stage_rates_ok` | - | the three independent checks |
+| `count_window_ns`, `sample_time_ns` | ns | the counting window and when the counter was read |
 
 ## `data/sdfsim.csv` (one row per SDF-sim probe point)
 
-Producer `tools/run_sdfsim.py` (P1.2): SDF-annotated full-chip timing
+Producer `tools/run_sdfsim.py`: SDF-annotated full-chip timing
 simulation of the seg3333/worst boundary sweep (IOPATH-only annotation; see
 limitations in `docs/prediction-model.md`).
 
@@ -174,7 +222,7 @@ limitations in `docs/prediction-model.md`).
 
 ## `data/predict/predictions.csv` (288 rows = 96 cells x 3 predictors)
 
-Producer `tools/predict_model.py` (P1.1). Long format: one row per corner x
+Producer `tools/predict_model.py`. Long format: one row per corner x
 seg-config x pattern x predictor, with canary telemetry joined per corner at
 the predeclared readout (can_sel=3, win0).
 

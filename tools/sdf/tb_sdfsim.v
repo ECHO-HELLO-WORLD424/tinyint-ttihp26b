@@ -1,8 +1,8 @@
 `default_nettype none
 `timescale 1ns / 1ps
 
-/* SDF-annotated timing simulation of the full post-route design
- * (PRE_SILICON_ACTION_PLAN P1.2, and an RO cross-check for P1.3).
+/* SDF-annotated timing simulation of the full post-route design, and an RO
+ * cross-check for the broken-loop canary prediction.
  *
  * Unlike the zero-delay functional GL suite (test/, specify blocks stripped,
  * RO loops removed), this testbench:
