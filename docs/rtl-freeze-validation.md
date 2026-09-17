@@ -78,10 +78,19 @@ the phase at gate close. Across all 42 archived window cases the phase takes
 driven by the 20/100 ns host clocks and the per-`can_sel` ring period.
 
 The stop transient itself is now classified rather than assumed.
-`tools/ro/classify_stop_transient.py` measures the peak of every rising pulse on
-the loop node (full ≥ 85 % of the rail, runt 15–85 %, sub-threshold ≤ 15 %).
-Across **73 343 crossings in those 42 cases: 0 runt pulses, 0 sub-threshold
-glitches, 0 crossings after the gate closes.** The "marginal-width clock pulse as
+`tools/ro/classify_stop_transient.py` measures the peak of every excursion above
+a 15 % floor of the rail (full ≥ 85 %, runt 15–85 %, below the floor excluded by
+design, since a level below 15 % cannot switch an input whose threshold is near
+mid-rail). The floor is load-bearing: the first revision reused the analyzer's
+30 %→70 % hysteresis detector, which raises no crossing for a pulse peaking below
+70 %, so a genuinely marginal pulse was invisible to the classification. That was
+found in a second review pass and is fixed and fixture-covered
+(`data/safe10/freeze/stop_transient_fixtures.json`); re-running the corrected tool
+over the archive and the sweep leaves the result unchanged. Across **73 343
+excursions in those 42 cases: 0 runt pulses, 0 sub-threshold glitches, 0
+crossings after the gate closes.** 18 of the 42 cases have a pulse that straddles
+the close — the ring still running as the gate shuts, which is the stop transient
+itself, not an extra edge — and in no case does a pulse *begin* after the close. The "marginal-width clock pulse as
 `en` falls" that this gap named does not occur at any of the 30 phases tested —
 the gated loop stops cleanly, and the last pulse before the close is a
 full-amplitude pulse in every case. The ±1-edge gate-boundary ambiguity above
@@ -299,6 +308,19 @@ analyzer defects recorded under gate 1: the pre-fix analyzer called it a
 `mismatch` and reported `f_count_from_counter_mhz` as 3.2×10¹² MHz. The archived
 result was regenerated from the stored rawfile with the fixed analyzer
 (`tools/ro/reanalyse_carry_result.py`) rather than re-simulated.
+
+**Frequency-field intervals.** Two conventions exist in the analyzer's output and
+both are now stated rather than implied: `f_count_from_counter_mhz`, `f_count_mhz`
+and `f_steady_mhz` divide by the first-to-last offered-edge span (so the three are
+comparable and free of the half-period sampling bias), while `count_window_ns` and
+`f_count_over_window_mhz` use the declared gate-open duration and are reported
+only for a single contiguous window. The `short_window` fixture requires the two
+to differ by more than 2 % so a silent change of convention fails the suite. On
+the 40 archived window cases with a contiguous window the two differ by a median
+of 0.03 %, but up to 60 % where few edges fall inside the window (the bias is
+bounded by half an edge period per window, so it grows as the window shortens
+relative to the ring period) — which is exactly why the span-based field is the
+one to quote as a frequency.
 
 **Settling versus readout.** Per-stage ripple delay measured in that run is
 0.135–0.139 ns, so a full 15-stage ripple needs ≈ 2.1 ns — an order of magnitude

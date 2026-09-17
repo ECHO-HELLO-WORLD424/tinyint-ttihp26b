@@ -328,6 +328,8 @@ def main():
                    stop_phase_runt_pulses=stop_phase.get("total_runt_pulses"),
                    stop_phase_crossings_after_close=stop_phase.get(
                        "total_crossings_after_close"),
+                   stop_phase_straddling_close=stop_phase.get(
+                       "total_pulses_straddling_close"),
                    stop_phase_sweep_phases=stop_sweep.get("n_phases"),
                    stop_phase_sweep_all_count_ok=stop_sweep.get("all_count_ok"),
                    wrap_run_present=bool(wrap),
@@ -387,6 +389,7 @@ def main():
               # stop-transient amplitude classification, the targeted sweep and
               # the archival tool that builds stop_phase_coverage.json.
               "measure_stop_phase.py", "classify_stop_transient.py",
+              "test_classify_stop_transient.py",
               "sweep_stop_phase.py", "archive_stop_phase.py",
               "reanalyse_carry_result.py",
               "summarise_freeze.py"):

@@ -116,6 +116,8 @@ def main():
         total_runt_pulses=sum(r["n_runt"] for r in good),
         total_noise_glitches=sum(r["n_noise"] for r in good),
         total_crossings_after_close=sum(r["crossings_after_close"] for r in good),
+        total_pulses_straddling_close=sum(r.get("pulses_straddling_close", 0)
+                                          for r in good),
         by_configuration=by_config,
         cases=rows)
     os.makedirs(os.path.dirname(a.json), exist_ok=True)

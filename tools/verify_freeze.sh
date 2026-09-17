@@ -16,6 +16,9 @@ export RUNS
 echo "== analyzer fixtures (gate 1) =="
 python3 tools/ro/test_analyse_ro_count.py
 
+echo "== stop-transient classifier fixtures (gate 3) =="
+python3 tools/ro/test_classify_stop_transient.py
+
 echo "== wire-capacitance generator fixture (gate 2) =="
 python3 tools/ro/test_add_wire_caps.py
 
@@ -38,6 +41,8 @@ keys = ("n_cases", "n_measured", "stop_phase_spread", "n_distinct_phases",
 bad = [k for k in keys if a.get(k) != b.get(k)]
 if a["total_runt_pulses"] or a["total_crossings_after_close"]:
     bad.append("runt/after-close pulses present")
+if a.get("total_pulses_straddling_close") is None:
+    bad.append("straddling-close count missing")
 if bad:
     print("stop-phase re-check FAILED: " + ", ".join(bad))
     sys.exit(1)

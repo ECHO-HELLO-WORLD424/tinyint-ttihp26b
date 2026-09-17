@@ -279,6 +279,46 @@ def main():
                            r["wraps"] == r["want_wraps"] and
                            r["count_ok"])]
 
+    # Short-window interval convention.  With few edges the count-over-window
+    # quotient and the count-over-edge-span quotient differ by a few percent, so
+    # one short fixture pins down which interval each field uses: the window
+    # frequency must equal edges/window and the counter-derived field must equal
+    # edges/(first-to-last edge span).  `classify_stop_transient` and the
+    # sweeps read both, so a silent change of convention is a real defect.
+    sig, t_end, _ = build("short_window", n_edges=20, period=1e-9)
+    path = os.path.join(a.workdir, "fixture_short_window.raw")
+    write_raw(path, sig, t_end)
+    sw = ana.analyse(path, vdd=VDD)
+    win_ns = sw.get("count_window_ns")
+    span_ns = sw.get("count_elapsed_ns")
+    f_win = sw.get("f_count_over_window_mhz")
+    f_span = sw.get("f_count_from_counter_mhz")
+    n_edges = sw.get("ring_edges_in_window")
+    # The counter-derived field uses the reconstructed *counter* edge count,
+    # which can differ from `ring_edges_in_window` by one at the window edges
+    # (the counter sees every offered edge; the window count is bounded by the
+    # gate interval).  Asserting against the wrong one is what makes this a
+    # sharp fixture.
+    n_recon = sw.get("counter_edges_reconstructed")
+    short_window = dict(
+        fixture="short_window", n_edges=n_edges,
+        counter_edges=n_recon,
+        count_window_ns=win_ns, edge_span_ns=span_ns,
+        f_over_window_mhz=f_win, f_from_counter_mhz=f_span,
+        window_ok=(win_ns is not None and abs(win_ns - 20.0) < 0.1),
+        # Each field must equal the count over the interval it declares:
+        # `count_window_ns` for the window field, the first-to-last edge span
+        # for the counter-derived field.
+        window_freq_ok=(f_win is not None and win_ns and
+                        abs(f_win - n_edges * 1e-6 / (win_ns * 1e-9)) < 1e-6),
+        span_freq_ok=(f_span is not None and span_ns and
+                      abs(f_span - n_recon * 1e-6 / (span_ns * 1e-9)) < 1e-6),
+        distinguishes=(f_win is not None and f_span is not None and
+                       abs(f_win - f_span) / f_win > 0.02))
+    short_failed = [] if all(short_window[k] for k in
+                             ("window_ok", "window_freq_ok", "span_freq_ok",
+                              "distinguishes")) else ["short_window"]
+
     # Known-bad fixtures, one defect each.
     for name, status, kw in [
         ("missing_edges", "mismatch", dict(drop_every=4)),
@@ -316,13 +356,14 @@ def main():
     failed = ([r["fixture"] for r in rows
                if not (r["status_ok"] and r["exit_ok"])] +
               [f"intervals:{r['case']}" for r in ivl_rows if not r["ok"]] +
-              freq_failed)
+              freq_failed + short_failed)
     summary = dict(
         tool="tools/ro/test_analyse_ro_count.py",
         purpose="Gate 1 analyzer fixtures (known-good and known-bad waveforms)",
         vdd=VDD, ring_period_ns=PERIOD_S * 1e9,
         fixtures=rows, interval_classifier=ivl_rows,
         frequency_from_counter=freq_rows,
+        short_window_interval=short_window,
         passed=not failed, failures=failed,
         good_fixture=dict(status=good.get("status"),
                           counter_final=good.get("counter_final"),
@@ -342,6 +383,11 @@ def main():
               f"f={r['f_counter_mhz']:.1f} MHz "
               f"(want {r['f_expected_mhz']:.1f}) ok="
               f"{r['within_1pct'] and r['recon_matches']}")
+    print(f"  short_window         window={short_window['count_window_ns']} ns "
+          f"span={short_window['edge_span_ns']:.1f} ns  "
+          f"f_window={short_window['f_over_window_mhz']:.1f} MHz "
+          f"f_span={short_window['f_from_counter_mhz']:.1f} MHz  ok="
+          f"{not short_failed}")
     print(f"summary: {a.summary}")
     if failed:
         print("FAILED: " + ", ".join(failed))

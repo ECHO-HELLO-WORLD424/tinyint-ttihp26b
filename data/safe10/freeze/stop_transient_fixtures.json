@@ -1,0 +1,164 @@
+{
+ "tool": "tools/ro/test_classify_stop_transient.py",
+ "purpose": "stop-transient classifier fixtures: every pulse above the low threshold must be classified by its peak, including pulses that never reach the analyzer's 70 % rise threshold",
+ "vdd": 1.2,
+ "cases": [
+  {
+   "fixture": "all_full",
+   "result": {
+    "n_rise_crossings": 14,
+    "n_full": 14,
+    "n_runt": 0,
+    "n_noise": 0,
+    "crossings_after_close": 0,
+    "pulses_straddling_close": 0,
+    "error": null
+   },
+   "checks": [
+    {
+     "check": "n_runt=0",
+     "ok": true,
+     "got": 0
+    },
+    {
+     "check": "n_noise=0",
+     "ok": true,
+     "got": 0
+    },
+    {
+     "check": "n_full>=14",
+     "ok": true,
+     "got": 14
+    },
+    {
+     "check": "crossings_after_close==0",
+     "ok": true,
+     "got": 0
+    },
+    {
+     "check": "pulses_straddling_close==0",
+     "ok": true,
+     "got": 0
+    }
+   ],
+   "ok": true
+  },
+  {
+   "fixture": "marginal_60pct",
+   "result": {
+    "n_rise_crossings": 16,
+    "n_full": 14,
+    "n_runt": 2,
+    "n_noise": 0,
+    "crossings_after_close": 0,
+    "pulses_straddling_close": 0,
+    "error": null
+   },
+   "checks": [
+    {
+     "check": "n_runt=2",
+     "ok": true,
+     "got": 2
+    }
+   ],
+   "ok": true
+  },
+  {
+   "fixture": "marginal_75pct",
+   "result": {
+    "n_rise_crossings": 16,
+    "n_full": 14,
+    "n_runt": 2,
+    "n_noise": 0,
+    "crossings_after_close": 0,
+    "pulses_straddling_close": 0,
+    "error": null
+   },
+   "checks": [
+    {
+     "check": "n_runt=2",
+     "ok": true,
+     "got": 2
+    }
+   ],
+   "ok": true
+  },
+  {
+   "fixture": "step_below_threshold",
+   "result": {
+    "n_rise_crossings": 14,
+    "n_full": 14,
+    "n_runt": 0,
+    "n_noise": 0,
+    "crossings_after_close": 0,
+    "pulses_straddling_close": 0,
+    "error": null
+   },
+   "checks": [
+    {
+     "check": "n_runt=0",
+     "ok": true,
+     "got": 0
+    },
+    {
+     "check": "n_noise=0",
+     "ok": true,
+     "got": 0
+    }
+   ],
+   "ok": true
+  },
+  {
+   "fixture": "truncated_at_close",
+   "result": {
+    "n_rise_crossings": 15,
+    "n_full": 14,
+    "n_runt": 1,
+    "n_noise": 0,
+    "crossings_after_close": 0,
+    "pulses_straddling_close": 1,
+    "error": null
+   },
+   "checks": [
+    {
+     "check": "n_runt=1",
+     "ok": true,
+     "got": 1
+    },
+    {
+     "check": "crossings_after_close==0",
+     "ok": true,
+     "got": 0
+    },
+    {
+     "check": "pulses_straddling_close==1",
+     "ok": true,
+     "got": 1
+    }
+   ],
+   "ok": true
+  },
+  {
+   "fixture": "after_close",
+   "result": {
+    "n_rise_crossings": 15,
+    "n_full": 15,
+    "n_runt": 0,
+    "n_noise": 0,
+    "crossings_after_close": 1,
+    "pulses_straddling_close": 0,
+    "error": null
+   },
+   "checks": [
+    {
+     "check": "crossings_after_close>=1",
+     "ok": true,
+     "got": 1
+    }
+   ],
+   "ok": true
+  }
+ ],
+ "passed": true,
+ "failures": []
+}

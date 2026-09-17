@@ -3,7 +3,7 @@
 ## Decision and scope
 
 **Status: the gates are complete for the RTL question — the current RTL is the
-freeze candidate, and no RTL change is required (2026-09-17). Five
+freeze candidate, and no RTL change is required (2026-09-17). Seven
 validation-tool defects were found and fixed, the corrected wire-capacitance
 sensitivity run is complete, and the stop-phase coverage is measured rather than
 assumed; the full `0xFFFF` wrap in SPICE is now measured too, so none of the
@@ -18,7 +18,8 @@ completion claims using the latest review of the data and raw waveforms.
 
 A 2026-09-17 reviewer pass re-tested this checklist's own evidence and found
 **no new RTL defect**, but the validation tools did prove able to pass invalid
-evidence or mis-report valid evidence. Five defect classes were found and fixed:
+evidence or mis-report valid evidence. Seven defect classes were found and
+fixed:
 `add_wire_caps.py` emitted capacitor values without a SPICE scale suffix (10¹²
 too large, which invalidated the wire-capacitance sensitivity decks);
 `analyse_ro_count.py` accepted a counter bit stuck at mid-rail because it
@@ -27,11 +28,19 @@ found while building the full-width wrap test, the same analyzer compared the
 decoded 16-bit counter against the edge count without allowing for the counter's
 wrap (so a *correct* wrapped run was reported as `mismatch`), computed
 `f_count_from_counter_mhz` with an inverted scale, and derived that frequency
-from the raw counter value instead of the reconstructed edge count. All five are
-fixed, covered by fixtures and re-checked against the archived waveforms
+from the raw counter value instead of the reconstructed edge count. A second
+review pass then found two more in the stop-phase tools: the stop-transient
+classifier derived its pulses from the analyzer's 30 %→70 % hysteresis detector,
+so a pulse peaking *below* 70 % of the rail raised no crossing and was invisible
+to the classification (a 0.6 V pulse on a 1.2 V rail produced `n_runt=0`), and
+the counter-derived frequency's comment and flag claimed the whole counting
+interval while the code divided by the first-to-last edge span, leaving the field
+convention ambiguous. All seven are fixed, covered by fixtures and re-checked
+against the archived waveforms
 (`data/safe10/freeze/analyzer_recheck.json`,
-`data/safe10/count/analyzer_fixtures.json`); the claims that rested on them are
-withdrawn in place rather than deleted.
+`data/safe10/count/analyzer_fixtures.json`,
+`data/safe10/freeze/stop_transient_fixtures.json`); the claims that rested on
+them are withdrawn in place rather than deleted.
 
 The last three were latent — they cannot be triggered below 65 536 edges, which
 is why the existing 64 archived records and the fixture suite passed over them —
@@ -157,6 +166,37 @@ window the hardware actually uses. Evidence:
   The fixture's own synthetic counter also had to model the wrap (its upper stage
   was left at the unwrapped level), which is what makes `freq_wrap` a real
   16-bit test rather than a 17-bit one.
+- [x] Fix the stop-transient classifier's detection floor, which the second
+  review pass exposed. `classify_stop_transient.py` derived pulses from
+  `analyse_ro_count.rise_edges`, whose hysteresis band is 30 %→70 % of the rail,
+  so a pulse peaking between 30 % and 70 % raised **no crossing at all** and
+  contributed nothing to `n_runt` — precisely the marginal pulse the tool exists
+  to find. It now scans for excursions above a 15 % floor and classifies each by
+  its measured peak, and it reports `pulses_straddling_close` separately from
+  `crossings_after_close` so a pulse that begins before the gate closes and is
+  still high at the close is not confused with an extra edge. Covered by
+  `tools/ro/test_classify_stop_transient.py`
+  (`data/safe10/freeze/stop_transient_fixtures.json`, 6 fixtures): a 50 % and a
+  75 % pulse are both caught as runts (the pre-fix detector reported 0 for
+  both), a 10 % level stays excluded by design, and a truncated pulse at the
+  gate close is counted as a runt that straddles the close with no post-close
+  edge. Re-running the corrected tool over the archive and the sweep changes
+  nothing: **73 343 crossings in the 42 archived cases and 251 in the 12-phase
+  sweep, 0 runts, 0 sub-threshold glitches, 0 crossings after close** — the
+  earlier conclusion holds under a detector that sees pulses down to 15 % of the
+  rail instead of 70 %.
+- [x] State the frequency-field interval convention explicitly instead of
+  leaving it to a comment. `f_count_from_counter_mhz`, `f_count_mhz` and
+  `f_steady_mhz` all use the offered-edge span (the first divides the
+  reconstructed count by it, the other two measure `edges-1` intervals over the
+  same span), which is the estimator without the half-period sampling bias. The
+  declared gate-open duration is now reported separately as `count_window_ns`
+  with its own quotient `f_count_over_window_mhz`, defined **only** for a single
+  contiguous window (`n_en_rise <= 1`, `n_reset_releases <= 1`, gate closed
+  within the run) because `t_en_fall − t_en_rise` spans the paused intervals of a
+  FREEZE case; `f_count_over_window_defined` says whether it applies. The
+  `short_window` fixture pins both to the interval each declares and requires them
+  to differ by more than 2 % so a silent change of convention fails the suite.
 - [x] Replace the permissive ripple-rate check with explicit per-bit coverage:
   `per_bit_coverage[b] = {expected, observed, exercised, rate_ok,
   last_transition_ns}`, and `coverage_complete` requires every stage to have
@@ -177,8 +217,9 @@ window the hardware actually uses. Evidence:
   both below and across the 16-bit wrap — plus no-oscillation and
   missing-gate-waveform cases. Each fixture is checked for both its returned
   status and the process exit code by `tools/ro/test_analyse_ro_count.py`, and
-  the two frequency fixtures additionally assert the value to 1 %
-  (12 fixtures + 4 interval-classifier cases, all behaving as declared; the
+  the two frequency fixtures additionally assert the value to 1 %, and a
+  `short_window` fixture pins the two frequency-interval conventions
+  (13 fixtures + 4 interval-classifier cases, all behaving as declared; the
   harness's quadratic wave-table lookup was also fixed, so the suite now
   completes in seconds instead of being abandoned as too slow. `freq_wrap` is
   the only fixture that makes the analyzer's synthetic counter wrap, and it is
@@ -358,14 +399,21 @@ not validate the full 16-stage ripple under counting conditions.
     the phase spread comes from the host clock period and the `can_sel` tap, not
     from `release_phase`.
   * *What the stop transient does.* `tools/ro/classify_stop_transient.py`
-    classifies every rising crossing of the loop node by pulse amplitude
-    (full ≥ 85 % of the rail, runt 15–85 %, sub-threshold ≤ 15 %). Across
-    **73 343 crossings in those 42 cases there are 0 runt pulses and 0
+    classifies every excursion above a 15 % floor of the rail by its measured
+    peak (full ≥ 85 %, runt 15–85 %, below the floor excluded by design, since a
+    level below 15 % cannot switch an input whose threshold is near mid-rail).
+    **The floor matters:** the first revision reused the analyzer's 30 %→70 %
+    hysteresis detector, which raises no crossing for a pulse peaking below
+    70 %, so a genuinely marginal pulse was invisible to the classification —
+    the second review pass caught this and it is fixed (see gate 1). Across
+    **73 343 excursions in those 42 cases there are 0 runt pulses and 0
     sub-threshold glitches**, and 0 crossings after the gate closes: the gated
     loop stops cleanly at every phase tested, so the "marginal-width clock
     pulse as `en` falls" that this gate named is not merely uncounted, it does
     not occur. The last pulse before the gate closes is a full-amplitude pulse
-    in every case (peaks 1.01–1.05× the rail from the loop's own overshoot).
+    in every case (peaks 1.01–1.05× the rail from the loop's own overshoot), and
+    in no case does a pulse begin after the close (18 of the 42 do straddle it,
+    which is the ring still running as the gate shuts, not an extra edge).
   * *Targeted sweep.* `tools/ro/sweep_stop_phase.py` places `en` fall at
     `periods + phase` ring periods after `en` rise, so the stop phase is swept
     directly rather than through the host clock (which can only reach the
@@ -525,7 +573,7 @@ change is traceable to the regenerated raw reports and build hashes.
 | Gates 1–4 evidence links and verdicts | G1 **pass** (`data/safe10/count/analyzer_fixtures.json`, now including the mid-rail readout fixture and the wrap/frequency regressions); G2 **pass**, including the corrected lumped wire-capacitance sensitivity run (`data/safe10/freeze/wirecap_sensitivity_corrected.json`, `docs/rtl-freeze-validation.md`); G3 **pass for stages 0–15, `0x7FFF→0x8000` and the full `0xFFFF` wrap (65 715 edges, decoded 179, 0 circular error), with stop-phase coverage measured (30 archived phases + a 12-phase targeted sweep, 0 runt pulses)** (`data/safe10/freeze/carry.json`, `wrap_result.json`, `control.json`, `matrix_windows.csv`, `stop_phase_coverage.json`, `stop_phase_sweep.json`); G4 **pass** (`data/safe10/experiment_sta_launch_pins.json`, `tools/sta/verify_launch_coverage.py`) |
 | Operating envelope and accepted limitations | Envelope: 10–50 MHz host clock, 1.08/1.20/1.32 V, −40/25/125 °C simulation corners, `can_sel` 0–3, `win_sel=0`. Accepted limitations: (1) transient decks are cell-level — the corrected lumped-capacitance run measures the omission at 8–10 % of ring frequency (extracted 399 fF/549 fF per ring; revision-1 injection was invalid because of the capacitor-unit bug), while a distributed-RC deck is still open work, so the absolute frequencies remain cell-level transient results; (2) the bulk timestep is 10 ps, inside the predeclared 1 % band but 0.9–1.2 % from the 2–5 ps references; (3) the counter aliases above 65535 with no on-chip flag (audit F3) and the RO window is one-shot per reset (F4) — both documented in `docs/info.md`; (4) silicon startup jitter, board clock/voltage/thermal qualification and the FREEZE host contract remain campaign obligations; (5) FPGA validation unrun; (6) stop-transient cleanliness is demonstrated at 42 measured phases (plus the 12-phase sweep) rather than proved analytically for all phases; (7) the wrap run uses the 20 ps step of the original carry test, so its exact edge count carries that step's few-percent rate offset — the wrap verdict rests on the count decoding, not on the frequency |
 | Manifest and durable raw-data location | `data/safe10/freeze/manifest.json` (archived datasets, decks, tools, build inputs, sha256). Raw waveforms: `runs/freeze-validation/**/*.raw` (git-ignored, large; reproducible from the archived decks plus `tools/ro/sweep_ro_count.py`/`run_ro_carry_test.py`); the level re-check is reproducible with `tools/ro/recheck_archived_counts.py`, the stop-phase evidence with `tools/ro/archive_stop_phase.py`, the targeted sweep with `tools/ro/sweep_stop_phase.py`, and the corrected sensitivity run with `tools/ro/run_wirecap_sensitivity.py --jobs 8` |
-| Reviewer/date and final decision | 2026-09-17, coding-agent review session (extended in the same session for the wrap/stop-phase work). **Decision: the current RTL is the approved freeze candidate — no RTL defect was demonstrated and no RTL change is required.** The review found five validation-tool defects (capacitor units; mid-rail readout levels; `count_ok` not wrap-aware; `f_count_from_counter_mhz` inverted scale; `f_count_from_counter_mhz` using the raw wrapped counter) instead of RTL defects; all are fixed, fixture-covered and re-checked against every archived waveform (64/64 records, 0 verdict changes), the corrected wire-capacitance sensitivity run is complete (8–10 % period effect, count exact), the stop phase is measured from the archived waveforms and swept directly (0 runt pulses in 73 343 crossings), the full `0xFFFF` wrap is measured in SPICE (65 715 edges, decoded 179, one inferred wrap, 0 circular error), and the documentation that overstated completion is corrected in place. **Not claimed by this decision:** distributed-RC signoff and any silicon behaviour — those are listed as coverage/campaign restrictions above, not as established results. Keep the settled contracts (third-edge configuration capture, fourth-edge `uio` hand-off, one-shot falling-edge DUT capture, 19-cycle frame, host-synchronous FREEZE) unchanged. |
+| Reviewer/date and final decision | 2026-09-17, coding-agent review session (extended in the same session for the wrap/stop-phase work). **Decision: the current RTL is the approved freeze candidate — no RTL defect was demonstrated and no RTL change is required.** The two review passes found seven validation-tool defects (capacitor units; mid-rail readout levels; `count_ok` not wrap-aware; `f_count_from_counter_mhz` inverted scale; `f_count_from_counter_mhz` using the raw wrapped counter; the stop-transient classifier's 70 % detection floor; the frequency fields' unstated interval convention) instead of RTL defects; all are fixed, fixture-covered and re-checked against every archived waveform (64/64 records, 0 verdict changes), the corrected wire-capacitance sensitivity run is complete (8–10 % period effect, count exact), the stop phase is measured from the archived waveforms and swept directly (0 runt pulses in 73 343 crossings), the full `0xFFFF` wrap is measured in SPICE (65 715 edges, decoded 179, one inferred wrap, 0 circular error), and the documentation that overstated completion is corrected in place. **Not claimed by this decision:** distributed-RC signoff and any silicon behaviour — those are listed as coverage/campaign restrictions above, not as established results. Keep the settled contracts (third-edge configuration capture, fourth-edge `uio` hand-off, one-shot falling-edge DUT capture, 19-cycle frame, host-synchronous FREEZE) unchanged. |
 
 The record is complete as of the commit that carries it: keep the current RTL
 as the frozen candidate and make only changes justified by new validation

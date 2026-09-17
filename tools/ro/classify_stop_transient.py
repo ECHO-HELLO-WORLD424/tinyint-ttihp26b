@@ -39,6 +39,43 @@ LOW = 0.15
 HIGH = 0.85
 
 
+def excursions(t, v, vdd, low=LOW, min_width=2e-12):
+    """Every upward excursion above `low`*vdd, as (start, end, peak_volts).
+
+    This must not be built on `analyse_ro_count.rise_edges`: that detector uses a
+    30 %->70 % hysteresis band, so a pulse that peaks between 30 % and 70 % of
+    the rail raises no crossing at all and would be *invisible* to the
+    classification below -- exactly the marginal pulse this tool exists to find.
+    Instead, take the low threshold as the boundary of interest: an excursion
+    starts when the signal crosses `low`*vdd upward and ends when it crosses back
+    down, and its peak is the maximum in between.  A full-swing pulse yields
+    exactly one excursion, and a sub-70 % pulse yields one too.
+    """
+    lo_v = low * vdd
+    n = len(v)
+    out = []
+    i = 1
+    while i < n:
+        if v[i - 1] <= lo_v < v[i]:
+            # Upward crossing of the low threshold: interpolate the start.
+            frac = (lo_v - v[i - 1]) / (v[i] - v[i - 1]) if v[i] != v[i - 1] else 0
+            t0 = t[i - 1] + frac * (t[i] - t[i - 1])
+            j = i
+            peak, peak_i = v[i], i
+            while j < n and v[j] > lo_v:
+                if v[j] > peak:
+                    peak, peak_i = v[j], j
+                j += 1
+            # `j == n` means the run ends with the signal still high.
+            t1 = t[j] if j < n else t[-1]
+            if t1 - t0 >= min_width:
+                out.append((t0, t1, peak))
+            i = j + 1
+        else:
+            i += 1
+    return out
+
+
 def classify(raw, vdd, loop_node, tail=12):
     names, cols = ana.raw_io.read_raw(raw)
     t = cols[0]
@@ -51,43 +88,29 @@ def classify(raw, vdd, loop_node, tail=12):
     if il is None or ie is None:
         return dict(raw=os.path.basename(raw), error="missing vector")
     loop = cols[il]
-    rises = ana.rise_edges(t, loop, vdd)
-    falls = ana.negedges(t, loop, vdd)
+    pulses = excursions(t, loop, vdd)
     t_fall = ana.negedges(t, cols[ie], vdd)
-    if len(rises) < tail or not falls or not t_fall:
+    if len(pulses) < tail or not t_fall:
         return dict(raw=os.path.basename(raw), error="too few edges")
     t_close = t_fall[-1]
-    # Peak of each pulse = max between a rising and the next falling crossing.
-    order = sorted([(x, 1) for x in rises] + [(x, -1) for x in falls])
-    peaks = []
-    for k, (t0, kind) in enumerate(order):
-        if kind != 1:
-            continue
-        t1 = order[k + 1][0] if k + 1 < len(order) else t[-1]
-        lo = _index(t, t0)
-        hi = _index(t, t1)
-        if hi <= lo:
-            continue
-        peaks.append((t0, max(loop[lo:hi + 1])))
-    if not peaks:
-        return dict(raw=os.path.basename(raw), error="no pulses")
-    cls = [(tt, v) for tt, v in peaks]
+    cls = [(t0, peak) for t0, _t1, peak in pulses]
     n_full = sum(1 for _, v in cls if v >= HIGH * vdd)
     n_runt = sum(1 for _, v in cls if LOW * vdd < v < HIGH * vdd)
     n_noise = sum(1 for _, v in cls if v <= LOW * vdd)
     last = [(round(tt * 1e9, 4), round(v / vdd, 4)) for tt, v in cls[-tail:]]
-    after = [tt for tt, v in cls if tt > t_close]
+    # Pulses *starting* after the gate closes: a pulse that begins before the
+    # close and is still high when it closes is reported separately, because it
+    # is the stop transient itself rather than an extra edge clocking a settled
+    # counter.
+    after = [t0 for t0, _t1, _p in pulses if t0 > t_close]
+    straddling = [t0 for t0, t1, _p in pulses if t0 <= t_close < t1]
     return dict(raw=os.path.basename(raw), vdd=vdd,
                 n_rise_crossings=len(cls), n_full=n_full, n_runt=n_runt,
                 n_noise=n_noise,
                 t_en_fall_ns=round(t_close * 1e9, 3),
                 crossings_after_close=len(after),
+                pulses_straddling_close=len(straddling),
                 last_pulse_peaks_over_vdd=last)
-
-
-def _index(t, x):
-    import bisect
-    return bisect.bisect_left(t, x)
 
 
 def vdd_from_name(path):

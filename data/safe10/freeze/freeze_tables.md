@@ -201,6 +201,7 @@ _(no data)_
   "stop_phase_crossings": 73343,
   "stop_phase_runt_pulses": 0,
   "stop_phase_crossings_after_close": 0,
+  "stop_phase_straddling_close": 18,
   "stop_phase_sweep_phases": 12,
   "stop_phase_sweep_all_count_ok": true,
   "wrap_run_present": true,

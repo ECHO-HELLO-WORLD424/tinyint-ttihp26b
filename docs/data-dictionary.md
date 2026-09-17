@@ -217,7 +217,10 @@ vocabulary documented in `docs/rtl-freeze-validation.md`):
 | `count_error_circular` | edges | the wrap-aware distance used for the verdict, `min(|counter_final - edges % 65536|, 65536 - that)`, so a correct wrapped run is not called a mismatch |
 | `count_aliased` | - | true when more than 65536 edges were offered, i.e. the counter wrapped |
 | `counter_wraps_inferred`, `counter_edges_reconstructed` | - / edges | the wrap count (0–2) that best matches the independently measured edges, and `counter_final + wraps*65536` |
-| `f_count_from_counter_mhz` | MHz | reconstructed edge count over the counting interval (the direct count-over-window reading; the span-based `f_count_mhz`/`f_steady_mhz` is the stable estimator) |
+| `f_count_from_counter_mhz` | MHz | reconstructed edge count divided by the **first-to-last offered-edge span** — the same interval `f_count_mhz`/`f_steady_mhz` use, so the three are directly comparable |
+| `count_window_ns` | ns | the declared gate-open duration, `t_en_fall - t_en_rise`; `null` unless the window is a single contiguous one (`n_en_rise <= 1`, `n_reset_releases <= 1`, gate closed in the run), because it would otherwise span the paused intervals of a FREEZE case |
+| `f_count_over_window_mhz` | MHz | the count divided by `count_window_ns`; biased by up to one edge over the window (the first edge falls somewhere inside the first period), so it is reported for completeness rather than as the frequency estimate |
+| `f_count_over_window_defined` | - | whether `count_window_ns` applies to this case |
 | `count_matches_ring_edges`, `count_matches_period_estimate`, `ripple_stage_rates_ok` | - | the three independent checks |
 | `count_window_ns`, `sample_time_ns` | ns | the counting window and when the counter was read |
 
@@ -241,6 +244,7 @@ analysis JSONs, tables and hashes are archived here). Full method and verdicts:
 | `wrap_result.json` | the full-width wrap run on the same configuration with the gate open 55.2 µs (20 ps step): 65 715 edges offered, decoded 179, one inferred wrap, reconstructed 65 715, circular error 0, every stage exercised at its binary-carry rate. Regenerated from the stored rawfile by `tools/ro/reanalyse_carry_result.py` after the wrap-aware analyzer fixes |
 | `control.json` | FORCE_CAN hold, FREEZE/resume and reset-during-window cases |
 | `convergence.csv` / `.json` | 5/10/20/40 ps and 2 ps timestep comparison at fixed 1 µs windows |
+| `stop_transient_fixtures.json` | `tools/ro/test_classify_stop_transient.py`: 6 synthetic waveforms pinning the stop-transient classifier, including 50 % and 75 % marginal pulses (invisible to the pre-fix detector, which reused the analyzer's 30 %→70 % hysteresis), a 10 % level that is excluded by design, and a truncated pulse at the gate close |
 | `analyzer_recheck.json` | every archived counter waveform re-analysed by `tools/ro/recheck_archived_counts.py`, A/B against the pre-fix analyzer revision: per-case decode-point levels of all 16 bits, validity against the 15 %/85 % band, and before/after verdicts (64/64 valid, 0 verdict changes) |
 | `wirecap_generation_fixture.json` | `tools/ro/test_add_wire_caps.py`: the emitted wire capacitors of a synthetic 2 fF/1 fF loop, parsed with SPICE scale suffixes and compared with the requested farads (the check that catches the missing-`p`-suffix defect) |
 | `wirecap_sensitivity_corrected.json` | the valid wire-capacitance sensitivity run (`tools/ro/run_wirecap_sensitivity.py --capdir .../wirecap-correction --jobs 8`, 400 ns window, 5 ps): each corner with and without the full extracted lumped capacitance, with the per-case counts and the frequency delta. The invalid revision-1 runs stay under `runs/freeze-validation/wirecap_sensitivity.json` |

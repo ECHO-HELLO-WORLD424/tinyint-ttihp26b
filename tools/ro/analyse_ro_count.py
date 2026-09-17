@@ -172,6 +172,8 @@ def analyse(raw, vdd=1.2, loop_node=None, en_node="sense_en",
         f = negedges(times, cols[i_en], vdd)
         t_en_rise = r[0] if r else None
         t_en_fall = f[-1] if f else None
+        out["n_en_rise"] = len(r)
+        out["n_en_fall"] = len(f)
         en_edge_ns = settle_time(times, cols[i_en], vdd) * 1e9
     n_rst_releases = 0
     if i_rst is not None:
@@ -456,16 +458,33 @@ def analyse(raw, vdd=1.2, loop_node=None, en_node="sense_en",
     out["f_count_from_counter_mhz"] = (
         (out["counter_edges_reconstructed"] * 1e-6 /
          (offered[-1] - offered[0])) if elapsed_ns > 0 else None)
-    # Two definitions of "frequency" are reported and they are not identical:
-    # this one divides the reconstructed edge count by the whole counting
-    # interval (which starts at the gate edge, so it includes the sub-period gap
-    # between the gate opening and the first edge), while `f_count_mhz` and
-    # `f_steady_mhz` divide by the span between the first and last edge -- i.e.
-    # they measure (edges-1) intervals.  With few edges in a short window the
-    # two differ by a few percent, so the span-based pair is the stable
-    # estimator and this is the direct count-over-window reading; neither is a
-    # substitute for the counter's own clock-rate claim.
-    out["f_count_counter_over_window_definition"] = True
+    # Interval convention, stated exactly because two different intervals are in
+    # play and confusing them is easy:
+    #   * `f_count_from_counter_mhz`, `f_count_mhz` and `f_steady_mhz` all use
+    #     the offered-edge span, `offered[-1] - offered[0]`.  The first divides
+    #     the reconstructed count by it and the other two measure (edges-1)
+    #     intervals over the same span, so they are directly comparable and both
+    #     are free of the half-period sampling bias a window-duration quotient
+    #     carries on a short run.
+    #   * `count_window_ns` is the declared gate-open duration, `t_en_fall -
+    #     t_en_rise`, and `f_count_over_window_mhz` is the count divided by it.
+    #     That quotient is biased by up to one edge over the window (the first
+    #     edge falls somewhere inside the first period), which is a few percent
+    #     on a short window -- so it is reported for completeness, not as the
+    #     frequency estimate.
+    # For the freeze/reset control cases the window is not contiguous, and
+    # `t_en_fall - t_en_rise` spans the paused intervals too, so the
+    # window-duration quotient is only defined for a single, contiguous window.
+    contiguous = (out.get("n_reset_releases", 0) <= 1
+                  and out.get("n_en_rise", 0) <= 1
+                  and out.get("gate_closed_within_run"))
+    window_ns = (t_en_fall - t_en_rise) * 1e9 if contiguous else None
+    out["count_window_ns"] = window_ns
+    out["f_count_over_window_mhz"] = (
+        n_edges * 1e-6 / (window_ns * 1e-9)
+        if window_ns and window_ns > 0 else None)
+    out["f_count_over_window_defined"] = bool(
+        window_ns and window_ns > 0)
 
     # A decode taken while the ripple is still moving, or from a node that is
     # not at a valid logic level, is invalid, so both take priority over the

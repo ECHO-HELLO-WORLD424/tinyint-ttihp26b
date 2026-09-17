@@ -283,6 +283,19 @@
    "recon_matches": true
   }
  ],
+ "short_window_interval": {
+  "fixture": "short_window",
+  "n_edges": 19,
+  "counter_edges": 20,
+  "count_window_ns": 19.9999999999999,
+  "edge_span_ns": 17.999999999999922,
+  "f_over_window_mhz": 950.0000000000045,
+  "f_from_counter_mhz": 1111.1111111111159,
+  "window_ok": true,
+  "window_freq_ok": true,
+  "span_freq_ok": true,
+  "distinguishes": true
+ },
  "passed": true,
  "failures": [],
  "good_fixture": {
