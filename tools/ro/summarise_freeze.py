@@ -295,7 +295,9 @@ def main():
               "summarise_freeze.py"):
         p = os.path.join(HERE, t)
         if os.path.exists(p):
-            manifest["tools"][t] = sha256(p)
+            # Repo-relative keys: a bare basename does not tell a reviewer
+            # where the tool lives.
+            manifest["tools"][os.path.relpath(p, REPO)] = sha256(p)
     for t in ("tools/sta/experiment_sta.tcl", "tools/run_experiment_sta.py",
               "tools/sta/verify_launch_coverage.py", "tools/common.py",
               "tools/verify_freeze.sh"):
