@@ -12,6 +12,29 @@
   "passed": true,
   "failures": []
  },
+ "stop_phase_coverage": {
+  "n_cases": 42,
+  "n_measured": 42,
+  "stop_phase_min": 0.0911,
+  "stop_phase_max": 0.9831,
+  "stop_phase_spread": 0.892,
+  "n_distinct_phases": 30,
+  "total_rise_crossings": 73343,
+  "total_runt_pulses": 0,
+  "total_noise_glitches": 0,
+  "total_crossings_after_close": 0
+ },
+ "stop_phase_sweep": {
+  "n_phases": 12,
+  "periods": 20.0,
+  "period_ns": 14.6,
+  "all_count_ok": true,
+  "all_settled": true,
+  "all_levels_valid": true,
+  "statuses": [
+   "ok_partial_coverage"
+  ]
+ },
  "window_probe": [
   {
    "cfg": "0x0C00",
@@ -86,7 +109,22 @@
   "control_all_count_ok": true,
   "settle_within_readout_fraction": 1.0,
   "matrix_runs": 18,
-  "matrix_acceptance": "pass"
+  "matrix_acceptance": "pass",
+  "stop_phase_spread": 0.892,
+  "stop_phase_distinct": 30,
+  "stop_phase_crossings": 73343,
+  "stop_phase_runt_pulses": 0,
+  "stop_phase_crossings_after_close": 0,
+  "stop_phase_sweep_phases": 12,
+  "stop_phase_sweep_all_count_ok": true,
+  "wrap_run_present": true,
+  "wrap_count_ok": true,
+  "wrap_edges": 65715,
+  "wrap_counter_final": 179,
+  "wrap_wraps_inferred": 1,
+  "wrap_circular_error": 0,
+  "wrap_coverage_complete": true,
+  "wrap_gate_open_ns": 55200.0
  },
  "interconnect": {
   "measured": {

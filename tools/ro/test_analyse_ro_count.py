@@ -144,6 +144,11 @@ def build(name, n_edges=3000, t_rst=50e-9, t_en_rise=100e-9, en=True,
     # Counter bits: after `accepted` edges bit b holds bit b of the count, so
     # bit b toggles floor(accepted / 2**b) times.  `drop_every` removes toggles
     # from the clock itself, which is the "counter misses edges" defect.
+    #
+    # The count is a real 16-bit counter, so its state is `accepted % 65536`:
+    # past 0xFFFF it wraps.  The toggle times below are the k-th edge clocking
+    # the counter from k-1 to k, which is right regardless of wrapping; only the
+    # ending *level* needs the modulus (see the `want_level` correction below).
     accepted = 0
     toggles = {b: [] for b in range(bits)}
     for k, te in enumerate(edges, start=1):
@@ -159,6 +164,15 @@ def build(name, n_edges=3000, t_rst=50e-9, t_en_rise=100e-9, en=True,
         for t in toggles[b]:
             lvl = VDD if lvl == 0.0 else 0.0
             q.set(t, lvl)
+        # A stage that wrapped must be left at the state the counter actually
+        # holds.  The toggle-count model above is exact only while the counter
+        # does not wrap: past 0xFFFF the count is `accepted % 65536`, whose bit b
+        # can differ in parity from the unwrapped `accepted` bit, so the last
+        # transition is forced rather than inferred.  Without this the analysed
+        # count disagrees with the edges offered by a whole power of two.
+        want_level = ((accepted % (1 << bits)) >> b) & 1
+        if int(lvl / VDD) != want_level:
+            q.set(t_end - 5e-9, VDD * want_level)
         sig[f"v(Q{b})"] = q
     if still_toggling:
         q = sig["v(Q15)"]
@@ -224,6 +238,47 @@ def main():
     rows.append(r)
     good = res
 
+    # Frequency-from-counter regression pair.  The reported counter-derived
+    # frequency used to be scaled by 1e-6 in the wrong direction (a
+    # seconds->megaseconds error), and it used the raw 16-bit counter value, so
+    # it inflated without bound once the counter wrapped.  Neither defect
+    # changed `count_ok`, which is why only an explicit frequency assertion can
+    # catch them.  A 0.1 ns period keeps the wrap file small enough to build in
+    # seconds; the ring's real period is irrelevant to what is being checked.
+    freq_rows = []
+    for name, n_edges in (("freq_units", 20000), ("freq_wrap", 66536)):
+        # These two assert the derived frequency, not the status vocabulary:
+        # `freq_wrap` does not wrap in CLI terms (count_ok still holds) and its
+        # coverage is deliberately partial at 0.1 ns.  The CLI must still exit
+        # cleanly and agree with the in-process verdict.
+        sig, t_end, _ = build(name, n_edges=n_edges, period=0.1e-9)
+        path = os.path.join(a.workdir, f"fixture_{name}.raw")
+        write_raw(path, sig, t_end)
+        res = ana.analyse(path, vdd=VDD)
+        cli = subprocess.run(
+            [sys.executable, os.path.join(HERE, "analyse_ro_count.py"), path,
+             "--vdd", str(VDD), "--json",
+             os.path.join(a.workdir, f"fixture_{name}.json")],
+            capture_output=True, text=True)
+        want_mhz = 1e3 / 0.1               # 0.1 ns period -> 10000 MHz
+        got = res.get("f_count_from_counter_mhz")
+        wraps = res.get("counter_wraps_inferred")
+        recon = res.get("counter_edges_reconstructed")
+        want_wraps = 1 if n_edges > 65535 else 0
+        freq_rows.append(dict(
+            fixture=name, n_edges=n_edges, status=res.get("status"),
+            exit_code=cli.returncode, count_ok=res.get("count_ok"),
+            counter_final=res.get("counter_final"),
+            reconstructed=recon, wraps=wraps, want_wraps=want_wraps,
+            f_counter_mhz=got, f_expected_mhz=want_mhz,
+            within_1pct=(got is not None and
+                         abs(got - want_mhz) / want_mhz < 0.01),
+            recon_matches=(recon == n_edges)))
+    freq_failed = [r["fixture"] for r in freq_rows
+                   if not (r["within_1pct"] and r["recon_matches"] and
+                           r["wraps"] == r["want_wraps"] and
+                           r["count_ok"])]
+
     # Known-bad fixtures, one defect each.
     for name, status, kw in [
         ("missing_edges", "mismatch", dict(drop_every=4)),
@@ -260,12 +315,14 @@ def main():
 
     failed = ([r["fixture"] for r in rows
                if not (r["status_ok"] and r["exit_ok"])] +
-              [f"intervals:{r['case']}" for r in ivl_rows if not r["ok"]])
+              [f"intervals:{r['case']}" for r in ivl_rows if not r["ok"]] +
+              freq_failed)
     summary = dict(
         tool="tools/ro/test_analyse_ro_count.py",
         purpose="Gate 1 analyzer fixtures (known-good and known-bad waveforms)",
         vdd=VDD, ring_period_ns=PERIOD_S * 1e9,
         fixtures=rows, interval_classifier=ivl_rows,
+        frequency_from_counter=freq_rows,
         passed=not failed, failures=failed,
         good_fixture=dict(status=good.get("status"),
                           counter_final=good.get("counter_final"),
@@ -279,12 +336,18 @@ def main():
               f"exit={r['exit_code']} ok={r['status_ok'] and r['exit_ok']}")
     for r in ivl_rows:
         print(f"  intervals:{r['case']:16s} got={r['got']:16s} ok={r['ok']}")
+    for r in freq_rows:
+        print(f"  {r['fixture']:22s} edges={r['n_edges']:6d} "
+              f"final={r['counter_final']:5d} wraps={r['wraps']} "
+              f"f={r['f_counter_mhz']:.1f} MHz "
+              f"(want {r['f_expected_mhz']:.1f}) ok="
+              f"{r['within_1pct'] and r['recon_matches']}")
     print(f"summary: {a.summary}")
     if failed:
         print("FAILED: " + ", ".join(failed))
         return 1
-    print(f"all {len(rows)} fixtures and {len(ivl_rows)} interval cases behaved "
-          f"as declared")
+    print(f"all {len(rows)} fixtures, {len(freq_rows)} frequency regressions "
+          f"and {len(ivl_rows)} interval cases behaved as declared")
     return 0
 
 

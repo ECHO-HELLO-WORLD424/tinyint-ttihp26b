@@ -1,14 +1,17 @@
 # RTL freeze validation record (gates 1–3)
 
-Status: **complete for the window/count gates (2026-09-17)**. The
-wire-capacitance sensitivity experiment recorded below was **invalidated by a
-generator unit bug** in the same review session; the generator is fixed, the
-experiment was re-run, and the corrected measurement (8.3–10.1 % slower ring,
-counter exact) is recorded there. Data:
+Status: **complete (2026-09-17)**. The wire-capacitance sensitivity experiment
+recorded below was **invalidated by a generator unit bug** in the same review
+session; the generator is fixed, the experiment was re-run, and the corrected
+measurement (8.3–10.1 % slower ring, counter exact) is recorded there. Both
+coverage items this record previously left open — the stop-phase sweep and the
+full `0xFFFF` counter wrap — were subsequently closed by measurement (the
+stop-phase sections below and `wrap_result.json`). Data:
 `data/safe10/freeze/`
 (`freeze_summary.json`, `freeze_tables.md`, the per-case CSV/JSON files,
 `analyzer_recheck.json`, `wirecap_generation_fixture.json`,
-`wirecap_sensitivity_corrected.json` and
+`wirecap_sensitivity_corrected.json`, `stop_phase_coverage.json`,
+`stop_phase_sweep.json`, `wrap_result.json` and
 `manifest.json`); the transient decks, rawfiles and ngspice logs live under
 `runs/freeze-validation/` and are reproducible from the archived decks. Gate 1
 and Gate 4 are complete (see [`rtl-freeze-checklist.md`](rtl-freeze-checklist.md));
@@ -56,21 +59,48 @@ follows is the gate-boundary one: at most one ring edge
 (`edge_ambiguity_edges`, derived per case from the measured `en` transition and
 the ring period). Startup *jitter* on silicon remains a campaign measurement.
 
-**Retained coverage gap: the stop phase is not varied (gate 3).** Shifting the
+**Stop phase: the reasoning is now measured, not argued (gate 3).** Shifting the
 host release phase does not shift gate closure relative to the running
-oscillator either. The ring restarts from the same state at the same `en` edge,
-and `en` falls a fixed 253 clock periods later, so all three startups close the
-gate at the *same* point of the ring period; they vary the host phase, not the
-stop phase. The three mid-window control cases (`FORCE_CAN`, `FREEZE`, reset)
-close the gate at other points of the window, but each is still one fixed,
-deterministic phase of its own deck. What is therefore untested is whether the
-loop's stopping transient — in the worst case a marginal-width clock pulse as
-`en` falls — can be captured inconsistently by the ripple stages at an arbitrary
-stop phase, including one that lands on a carry boundary. The ±1-edge
-gate-boundary ambiguity above bounds *which* edges fall inside the window; it
-does not bound runt-pulse capture. A deck whose `en` fall is offset by fractions
-of the measured ring period is the right experiment and is outstanding; the
-RTL-level counter behaviour (including the full `0xFFFF` wrap) stays covered by
+oscillator. The ring restarts from the same state at the same `en` edge, and `en`
+falls a fixed 253 clock periods later, so all three startups close the gate at
+the *same* point of the ring period. That claim was previously only argued;
+`tools/ro/measure_stop_phase.py` now reads the phase directly out of each
+archived waveform
+(`stop_phase = ((t_en_fall − t_last_ring_edge) mod period) / period`) and
+confirms it exactly: **every three-startup group has a spread of 0.0000**
+(`data/safe10/freeze/stop_phase_coverage.json`).
+
+What the earlier record missed is that the stop phase is nonetheless well
+covered, by the *host clock period* rather than by `release_phase`: because `en`
+rise→fall is a fixed number of ring periods, changing the clock period changes
+the phase at gate close. Across all 42 archived window cases the phase takes
+**30 distinct values spanning 0.091–0.983, a spread of 0.892 of a ring period**,
+driven by the 20/100 ns host clocks and the per-`can_sel` ring period.
+
+The stop transient itself is now classified rather than assumed.
+`tools/ro/classify_stop_transient.py` measures the peak of every rising pulse on
+the loop node (full ≥ 85 % of the rail, runt 15–85 %, sub-threshold ≤ 15 %).
+Across **73 343 crossings in those 42 cases: 0 runt pulses, 0 sub-threshold
+glitches, 0 crossings after the gate closes.** The "marginal-width clock pulse as
+`en` falls" that this gap named does not occur at any of the 30 phases tested —
+the gated loop stops cleanly, and the last pulse before the close is a
+full-amplitude pulse in every case. The ±1-edge gate-boundary ambiguity above
+still bounds *which* edges fall inside the window; the amplitude classification
+bounds runt-pulse capture.
+
+A targeted sweep is now run rather than deferred:
+`tools/ro/sweep_stop_phase.py` places the `en` fall at `periods + phase` ring
+periods after the rise, sweeping the stop phase directly instead of indirectly
+through the host clock (which can only reach the phases a given clock period
+happens to produce). Twelve phases were run on the slow-corner matched canary
+(`ro_mat`, `can_sel=3`, 40 ring periods at 5 ps); the achieved stop phases span
+**0.069–0.986 of a period**, and at every one the decoded count equals the ring
+edges offered (20–21 edges), the ripple settles, every bit is at a valid rail
+level, and **no crossing follows the gate close**
+(`data/safe10/freeze/stop_phase_sweep.json`). The per-phase coverage is partial
+by design — a 40-period window exercises only the low stages, which the carry
+test covers — so the sweep is a stop-transient test, not a carry test. The
+RTL-level counter behaviour is additionally covered by
 `test/test.py::test_ro_ripple_counter_wrap`.
 
 ## Interconnect capacitance: measured, and now simulated (lumped)
@@ -253,9 +283,22 @@ between decks, not as instability.
 **Carry coverage.** The extended-gate carry run (fast corner, `ro_gen`,
 `can_sel=0`, 29 µs open gate) offers **34 524** ring edges and the counter
 decodes **34 524** — zero error — with every stage at its binary-carry rate
-(bit 15 toggles exactly once, so `0x7FFF → 0x8000` is covered). `0xFFFF → 0x0000`
-is not claimed: no run crosses 65 536 edges, and the wrap remains covered only by
-the RTL regression `test_ro_ripple_counter_wrap`.
+(bit 15 toggles exactly once, so `0x7FFF → 0x8000` is covered).
+
+**Full-width wrap.** The same configuration was then run with the gate open for
+55.2 µs (20 ps step; 11 316 s wall) so that more than 65 536 edges are offered
+(`data/safe10/freeze/wrap_result.json`). The counter decodes **179** (`0xb3`)
+against **65 715** measured ring edges: one wrap is inferred, the reconstructed
+edge count is 179 + 65 536 = 65 715, and the circular error is **0**. Every one
+of the 16 stages is exercised and runs at its binary-carry rate (bit 15 toggles
+twice), all bits are at a rail, the ripple is settled at the decode point, and
+the ring is single-mode at 1190.476 MHz (0.840 ns) — so `0xFFFF → 0x0000` is
+now measured in SPICE as well as in the RTL regression
+`test_ro_ripple_counter_wrap`. This run is what exposed the two wrap-related
+analyzer defects recorded under gate 1: the pre-fix analyzer called it a
+`mismatch` and reported `f_count_from_counter_mhz` as 3.2×10¹² MHz. The archived
+result was regenerated from the stored rawfile with the fixed analyzer
+(`tools/ro/reanalyse_carry_result.py`) rather than re-simulated.
 
 **Settling versus readout.** Per-stage ripple delay measured in that run is
 0.135–0.139 ns, so a full 15-stage ripple needs ≈ 2.1 ns — an order of magnitude
@@ -295,7 +338,7 @@ new `midrail_level` fixture, which the pre-fix analyzer accepted.
 | Gate | Verdict | Basis |
 | --- | --- | --- |
 | 2 — matched-canary window behaviour | **Pass**, with the uncertainty quantified and the wire-RC omission bounded by the corrected lumped-capacitance run | every primary case accepted; counts repeat exactly across startups; the previously flagged multi-mode configurations are single-valued; timestep uncertainty 0.9–1.2 % at the bulk 10 ps step (2 ps→5 ps→10 ps ladder measured); gate-boundary ambiguity ±1 edge per case; injected extracted wire capacitance costs 8.3–10.1 % of ring frequency with the count still exact, and the capacitance-free decks reproduce the f_osc dataset within 0.4–0.9 %. **Withdrawn:** the revision-1 injection result — the generator omitted the SPICE scale suffix, so those decks were 10¹² too large. **Still open:** a distributed-RC deck |
-| 3 — carries, stop/readout, controls | **Pass** for stages 0–15 and `0x7FFF→0x8000`; **not claimed** for the full `0xFFFF` wrap, and stop-phase coverage retained as a gap | 34 524/34 524 edges counted with per-bit coverage; settling ≪ readout interval; control cases hold/restart correctly; 24-case matrix complete. The three startups shift the host release phase, not the gate-closure phase relative to the oscillator, so an arbitrary stop phase is untested |
+| 3 — carries, stop/readout, controls | **Pass** for stages 0–15, `0x7FFF→0x8000` and the full `0xFFFF` wrap (65 715 edges, decoded 179, 0 circular error). Stop phase is measured, not assumed | 34 524/34 524 edges counted with per-bit coverage; settling ≪ readout interval; control cases hold/restart correctly; 24-case matrix complete. The three startups of a configuration do shift only the host release phase and close the gate at the *same* ring phase (measured spread 0.0000), but the archive as a whole covers 30 distinct stop phases (0.091–0.983) and a further 12 were swept directly (0.069–0.986); across 73 343 classified crossings there are 0 runt pulses and 0 crossings after the gate closes |
 | 4 — experiment STA | Pass (see the checklist and `docs/experiment-sta-launch-coverage.md`) | 18 launch pins resolved structurally, 96 cases, gap 0.000 ns, control margin positive |
 
 

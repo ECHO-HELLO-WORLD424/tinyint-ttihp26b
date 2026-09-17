@@ -413,21 +413,59 @@ def analyse(raw, vdd=1.2, loop_node=None, en_node="sense_en",
     # ------------------------------------------------------------- verdicts --
     out["ring_edges_in_window"] = n_edges
     out["counter_mod_65536"] = final % COUNT_MODULUS
+    out["count_aliased"] = n_edges > COUNT_MODULUS
+    # `count_error_edges` keeps its raw, unwrapped meaning: how far the 16-bit
+    # counter's value sits from the offered edge count.  On an aliased run it is
+    # large by construction, so it must not decide `count_ok` -- the counter can
+    # only ever display `n_edges % 65536`, and a raw comparison would report a
+    # mismatch for a perfectly correct run that happened to wrap.  The verdict
+    # therefore uses the circular distance on the 16-bit ring.
     out["count_error_edges"] = final - n_edges
-    out["count_ok"] = abs(final - n_edges) <= out["tol_edges"]
+    circ = abs(final - (n_edges % COUNT_MODULUS))
+    circ = min(circ, COUNT_MODULUS - circ)
+    out["count_error_circular"] = circ
+    out["count_ok"] = circ <= out["tol_edges"]
     # The period-estimate comparison is retained as a second, independent view,
     # but it can only be evaluated when a single period exists.
     if out.get("steady_f_mhz"):
         exp_periods = int((offered[-1] - offered[0]) /
                           (out["steady_period_ns"] * 1e-9))
         out["expected_periods_in_window"] = exp_periods
+        ecirc = abs(final - (exp_periods % COUNT_MODULUS))
         out["count_matches_period_estimate"] = \
-            abs(final - exp_periods) <= out["tol_edges"]
+            min(ecirc, COUNT_MODULUS - ecirc) <= out["tol_edges"]
     else:
         out["expected_periods_in_window"] = None
         out["count_matches_period_estimate"] = None
+    # The counter is 16 bits and wraps, so `final` alone is not an edge count
+    # once more than 65535 edges have been offered: a run that wrapped reports a
+    # small `final` and this quotient would be nonsense (it inflated the
+    # full-width wrap run by the wrap count).  Reconstruct the edge count the
+    # counter actually represents by adding the wrap count that matches the
+    # independently measured edges, and say which one was used.
+    elapsed_ns = (offered[-1] - offered[0]) * 1e9
+    wraps_best, err_best = None, None
+    for w in (0, 1, 2):
+        err = abs(final + w * COUNT_MODULUS - n_edges)
+        if err_best is None or err < err_best:
+            wraps_best, err_best = w, err
+    out["counter_wraps_inferred"] = wraps_best
+    out["counter_edges_reconstructed"] = final + wraps_best * COUNT_MODULUS
+    # seconds -> microseconds is a division by 1e-6 (== * 1e6); the earlier
+    # revision multiplied by 1e-6 here, which is a seconds->megaseconds scale.
     out["f_count_from_counter_mhz"] = (
-        final / ((offered[-1] - offered[0]) * 1e-6))
+        (out["counter_edges_reconstructed"] * 1e-6 /
+         (offered[-1] - offered[0])) if elapsed_ns > 0 else None)
+    # Two definitions of "frequency" are reported and they are not identical:
+    # this one divides the reconstructed edge count by the whole counting
+    # interval (which starts at the gate edge, so it includes the sub-period gap
+    # between the gate opening and the first edge), while `f_count_mhz` and
+    # `f_steady_mhz` divide by the span between the first and last edge -- i.e.
+    # they measure (edges-1) intervals.  With few edges in a short window the
+    # two differ by a few percent, so the span-based pair is the stable
+    # estimator and this is the direct count-over-window reading; neither is a
+    # substitute for the counter's own clock-rate claim.
+    out["f_count_counter_over_window_definition"] = True
 
     # A decode taken while the ripple is still moving, or from a node that is
     # not at a valid logic level, is invalid, so both take priority over the

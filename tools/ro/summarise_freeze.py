@@ -254,6 +254,16 @@ def main():
                                      "analyzer_recheck.json"), {})
     wirecap_fixture = load_json(os.path.join(
         REPO, "data/safe10/freeze/wirecap_generation_fixture.json"), {})
+    stop_phase = load_json(os.path.join(REPO, "data/safe10/freeze",
+                                        "stop_phase_coverage.json"), {})
+    stop_sweep = load_json(os.path.join(REPO, "data/safe10/freeze",
+                                        "stop_phase_sweep.json"), {})
+    # The full-width wrap run: the same fast/shortest-ring configuration with the
+    # gate open long enough to cross 0xFFFF (regenerated from its stored rawfile
+    # by tools/ro/reanalyse_carry_result.py after the analyzer fixes).
+    wrap = load_json(os.path.join(REPO, "data/safe10/freeze",
+                                  "wrap_result.json"), [])
+    wrap = wrap[0] if isinstance(wrap, list) and wrap else {}
     summary = dict(
         purpose="RTL freeze validation (gates 1-3 of docs/rtl-freeze-checklist.md)",
         analyzer_recheck={k: recheck.get(k) for k in
@@ -264,6 +274,21 @@ def main():
             passed=wirecap_fixture.get("passed"),
             failures=wirecap_fixture.get("failures", []))
         if wirecap_fixture else {},
+        # Gate 3 stop-phase evidence, from the archived waveforms: the phase at
+        # gate close and the amplitude of the stop transient.  The claim being
+        # checked is that no marginal-width clock pulse reaches the counter.
+        stop_phase_coverage={k: stop_phase.get(k) for k in
+                             ("n_cases", "n_measured", "stop_phase_min",
+                              "stop_phase_max", "stop_phase_spread",
+                              "n_distinct_phases", "total_rise_crossings",
+                              "total_runt_pulses", "total_noise_glitches",
+                              "total_crossings_after_close")}
+        if stop_phase else {},
+        stop_phase_sweep={k: stop_sweep.get(k) for k in
+                          ("n_phases", "periods", "period_ns",
+                           "all_count_ok", "all_settled", "all_levels_valid",
+                           "statuses")}
+        if stop_sweep else {},
         window_probe=probe,
         gate1=dict(analyzer_fixtures_passed=gate1_ok,
                    n_fixtures=len(fixtures.get("fixtures", [])),
@@ -291,7 +316,28 @@ def main():
                    matrix_acceptance=(
                        "pass" if matrix and all(r.get("accepted")
                                                 for r in matrix)
-                       else "incomplete")),
+                       else "incomplete"),
+                   # The stop-phase question: every archived window case was
+                   # classified by pulse amplitude, so `runt_pulses == 0` means
+                   # no marginal-width clock pulse reached the counter at any of
+                   # the phases tested; the targeted sweep then varies the phase
+                   # directly.  `wrap` is the full 0xFFFF wrap run.
+                   stop_phase_spread=stop_phase.get("stop_phase_spread"),
+                   stop_phase_distinct=stop_phase.get("n_distinct_phases"),
+                   stop_phase_crossings=stop_phase.get("total_rise_crossings"),
+                   stop_phase_runt_pulses=stop_phase.get("total_runt_pulses"),
+                   stop_phase_crossings_after_close=stop_phase.get(
+                       "total_crossings_after_close"),
+                   stop_phase_sweep_phases=stop_sweep.get("n_phases"),
+                   stop_phase_sweep_all_count_ok=stop_sweep.get("all_count_ok"),
+                   wrap_run_present=bool(wrap),
+                   wrap_count_ok=wrap.get("count_ok"),
+                   wrap_edges=wrap.get("ring_edges_in_window"),
+                   wrap_counter_final=wrap.get("counter_final"),
+                   wrap_wraps_inferred=wrap.get("counter_wraps_inferred"),
+                   wrap_circular_error=wrap.get("count_error_circular"),
+                   wrap_coverage_complete=wrap.get("coverage_complete"),
+                   wrap_gate_open_ns=wrap.get("gate_open_ns")),
         # Interconnect: what the SPEF says the cell-level decks omit, the
         # invalid revision-1 injection attempt, and the corrected re-run.
         interconnect=dict(
@@ -337,6 +383,12 @@ def main():
               "add_wire_caps.py", "run_wirecap_sensitivity.py",
               "analyse_loop_rc.py", "test_analyse_ro_count.py",
               "test_add_wire_caps.py", "recheck_archived_counts.py",
+              # Gate 3 stop-phase evidence: the phase at gate close, the
+              # stop-transient amplitude classification, the targeted sweep and
+              # the archival tool that builds stop_phase_coverage.json.
+              "measure_stop_phase.py", "classify_stop_transient.py",
+              "sweep_stop_phase.py", "archive_stop_phase.py",
+              "reanalyse_carry_result.py",
               "summarise_freeze.py"):
         p = os.path.join(HERE, t)
         if os.path.exists(p):

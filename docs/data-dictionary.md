@@ -199,7 +199,7 @@ the revision-1 record rather than regenerated.
 | --- | --- |
 | `ro_count.csv` / `ro_count.json` | one row per case: measured ring frequency and period, `q0_negedges`, decoded `counter_final`, `ring_edges_in_count_window`, `count_error_edges`, `count_matches_ring_edges`, `count_matches_period_estimate`, `ripple_stage_rates_ok`, the counting window and sampling time, and the per-stage transition counts |
 | `count_vs_fosc.csv` / `.json` | the counter rows joined with `data/safe10/spice/spice_ro.csv`: the two frequencies, their difference, and the counting checks. A frequency difference is reported as a note, not a failure — it means the two decks selected different taps |
-| `analyzer_fixtures.json` | the gate-1 fixture results: ten synthesised known-good/known-bad rawfiles (including `midrail_level`, a counter bit quiet at 0.6 V on a 1.2 V rail) plus four interval-classifier cases, each with the expected and observed status and process exit code |
+| `analyzer_fixtures.json` | the gate-1 fixture results: twelve synthesised fixtures (ten known-good/known-bad, including `midrail_level`, a counter bit quiet at 0.6 V on a 1.2 V rail, plus `freq_units` and `freq_wrap`, which assert the counter-derived frequency below and across the 16-bit wrap) and four interval-classifier cases, each with the expected and observed status and process exit code |
 | `provenance.json` | commit/run/netlist identity, PDK and tool roles, file hashes, and the revision notes |
 | `FOSC-REGEN-STATUS.md` | record of the f_osc regeneration: the driver bug, the window artefact, the ring-only deck defect, and the multi-mode configurations |
 
@@ -213,7 +213,11 @@ vocabulary documented in `docs/rtl-freeze-validation.md`):
 | `q0_negedges` | - | bit-0 falling edges, i.e. counter increments, in the window |
 | `counter_final` | - | the 16 saved bits decoded after bit 0's last edge |
 | `ring_edges_in_count_window` | - | ring rising edges measured independently over the same window |
-| `count_error_edges` | edges | `counter_final - ring_edges_in_count_window` |
+| `count_error_edges` | edges | `counter_final - ring_edges_in_count_window`, unwrapped: large by construction on a run that wrapped |
+| `count_error_circular` | edges | the wrap-aware distance used for the verdict, `min(|counter_final - edges % 65536|, 65536 - that)`, so a correct wrapped run is not called a mismatch |
+| `count_aliased` | - | true when more than 65536 edges were offered, i.e. the counter wrapped |
+| `counter_wraps_inferred`, `counter_edges_reconstructed` | - / edges | the wrap count (0–2) that best matches the independently measured edges, and `counter_final + wraps*65536` |
+| `f_count_from_counter_mhz` | MHz | reconstructed edge count over the counting interval (the direct count-over-window reading; the span-based `f_count_mhz`/`f_steady_mhz` is the stable estimator) |
 | `count_matches_ring_edges`, `count_matches_period_estimate`, `ripple_stage_rates_ok` | - | the three independent checks |
 | `count_window_ns`, `sample_time_ns` | ns | the counting window and when the counter was read |
 
@@ -234,11 +238,14 @@ analysis JSONs, tables and hashes are archived here). Full method and verdicts:
 | `repeatability.csv` / `.json` | count spread across startup phases per configuration, against the 1 % criterion |
 | `coverage.csv` / `.json` | per-case ring-edge count, highest exercised ripple stage, unexercised bits |
 | `carry.json` | the extended-gate carry test (fastest ring, crosses 2^15) |
+| `wrap_result.json` | the full-width wrap run on the same configuration with the gate open 55.2 µs (20 ps step): 65 715 edges offered, decoded 179, one inferred wrap, reconstructed 65 715, circular error 0, every stage exercised at its binary-carry rate. Regenerated from the stored rawfile by `tools/ro/reanalyse_carry_result.py` after the wrap-aware analyzer fixes |
 | `control.json` | FORCE_CAN hold, FREEZE/resume and reset-during-window cases |
 | `convergence.csv` / `.json` | 5/10/20/40 ps and 2 ps timestep comparison at fixed 1 µs windows |
 | `analyzer_recheck.json` | every archived counter waveform re-analysed by `tools/ro/recheck_archived_counts.py`, A/B against the pre-fix analyzer revision: per-case decode-point levels of all 16 bits, validity against the 15 %/85 % band, and before/after verdicts (64/64 valid, 0 verdict changes) |
 | `wirecap_generation_fixture.json` | `tools/ro/test_add_wire_caps.py`: the emitted wire capacitors of a synthetic 2 fF/1 fF loop, parsed with SPICE scale suffixes and compared with the requested farads (the check that catches the missing-`p`-suffix defect) |
 | `wirecap_sensitivity_corrected.json` | the valid wire-capacitance sensitivity run (`tools/ro/run_wirecap_sensitivity.py --capdir .../wirecap-correction --jobs 8`, 400 ns window, 5 ps): each corner with and without the full extracted lumped capacitance, with the per-case counts and the frequency delta. The invalid revision-1 runs stay under `runs/freeze-validation/wirecap_sensitivity.json` |
+| `stop_phase_coverage.json` | gate 3 stop-phase evidence derived from the archived window waveforms by `tools/ro/archive_stop_phase.py` (no new simulation): per case, the ring period, the ring phase at gate close (`stop_phase`), the number of crossings after the gate closes, and the stop-transient amplitude classification (`n_full` / `n_runt` / `n_noise`). 42 cases, 30 distinct phases spanning 0.892 of a period, 73 343 crossings, 0 runt pulses |
+| `stop_phase_sweep.json` | the targeted stop-phase sweep (`tools/ro/sweep_stop_phase.py`), which places the `en` fall at `periods + phase` ring periods after the rise so the stop phase is varied directly instead of through the host clock period; one record per phase with the analyzer verdict |
 | `freeze_tables.md` | the same data as markdown tables, quoted in the validation record |
 | `manifest.json` | sha256 of every archived file and of the analysis tools that produced them |
 

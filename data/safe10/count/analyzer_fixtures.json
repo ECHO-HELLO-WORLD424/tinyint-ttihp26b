@@ -251,6 +251,38 @@
    "ok": true
   }
  ],
+ "frequency_from_counter": [
+  {
+   "fixture": "freq_units",
+   "n_edges": 20000,
+   "status": "ok_partial_coverage",
+   "exit_code": 0,
+   "count_ok": true,
+   "counter_final": 20000,
+   "reconstructed": 20000,
+   "wraps": 0,
+   "want_wraps": 0,
+   "f_counter_mhz": 10001.000100011302,
+   "f_expected_mhz": 10000.0,
+   "within_1pct": true,
+   "recon_matches": true
+  },
+  {
+   "fixture": "freq_wrap",
+   "n_edges": 66536,
+   "status": "ok",
+   "exit_code": 0,
+   "count_ok": true,
+   "counter_final": 1000,
+   "reconstructed": 66536,
+   "wraps": 1,
+   "want_wraps": 1,
+   "f_counter_mhz": 10000.300598186368,
+   "f_expected_mhz": 10000.0,
+   "within_1pct": true,
+   "recon_matches": true
+  }
+ ],
  "passed": true,
  "failures": [],
  "good_fixture": {

@@ -195,7 +195,22 @@ _(no data)_
   "control_all_count_ok": true,
   "settle_within_readout_fraction": 1.0,
   "matrix_runs": 18,
-  "matrix_acceptance": "pass"
+  "matrix_acceptance": "pass",
+  "stop_phase_spread": 0.892,
+  "stop_phase_distinct": 30,
+  "stop_phase_crossings": 73343,
+  "stop_phase_runt_pulses": 0,
+  "stop_phase_crossings_after_close": 0,
+  "stop_phase_sweep_phases": 12,
+  "stop_phase_sweep_all_count_ok": true,
+  "wrap_run_present": true,
+  "wrap_count_ok": true,
+  "wrap_edges": 65715,
+  "wrap_counter_final": 179,
+  "wrap_wraps_inferred": 1,
+  "wrap_circular_error": 0,
+  "wrap_coverage_complete": true,
+  "wrap_gate_open_ns": 55200.0
  }
 }
 ```
