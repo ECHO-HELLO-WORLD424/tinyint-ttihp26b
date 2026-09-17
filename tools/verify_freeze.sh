@@ -15,6 +15,9 @@ RUNS="${TPV_FREEZE_RUNS:-runs/freeze-validation}"
 echo "== analyzer fixtures (gate 1) =="
 python3 tools/ro/test_analyse_ro_count.py
 
+echo "== wire-capacitance generator fixture (gate 2) =="
+python3 tools/ro/test_add_wire_caps.py
+
 echo "== measurement window from the RTL (gate 2) =="
 if command -v iverilog >/dev/null 2>&1; then
   python3 tools/ro/probe_ro_window.py --outdir "$RUNS/window" \

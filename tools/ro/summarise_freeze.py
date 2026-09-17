@@ -181,6 +181,14 @@ def main():
     carry = load_json(os.path.join(R, "carry/carry_result.json"), [])
     control = load_json(os.path.join(R, "control/control_result.json"), [])
     wirecap = load_json(os.path.join(R, "wirecap_sensitivity.json"), {})
+    # The corrected re-run (after the generator unit fix): the only valid
+    # measurement of the lumped wire-capacitance effect.
+    wirecap_fixed = load_json(os.path.join(
+        REPO, "data/safe10/freeze/wirecap_sensitivity_corrected.json"), {})
+    rc_runs = wirecap_fixed.get("runs", [])
+    rc_ok = bool(rc_runs) and all(
+        r.get("count_ok") and str(r.get("status", "")).startswith("ok")
+        for r in rc_runs)
     # Timestep convergence: the 5/10/20/40 ps probe plus the 2 ps probe.
     convergence = load_rows(os.path.join(R, "timestep_probe.json")) + \
         load_rows(os.path.join(R, "timestep_probe_2ps.json")) + \
@@ -242,8 +250,20 @@ def main():
                 ok += 1
         settle_frac = round(ok / len(settled), 4)
 
+    recheck = load_json(os.path.join(REPO, "data/safe10/freeze",
+                                     "analyzer_recheck.json"), {})
+    wirecap_fixture = load_json(os.path.join(
+        REPO, "data/safe10/freeze/wirecap_generation_fixture.json"), {})
     summary = dict(
         purpose="RTL freeze validation (gates 1-3 of docs/rtl-freeze-checklist.md)",
+        analyzer_recheck={k: recheck.get(k) for k in
+                          ("mode", "n_cases", "all_levels_valid",
+                           "invalid_level_cases", "verdict_changes")},
+        wirecap_generation_fixture=dict(
+            n_cases=len(wirecap_fixture.get("cases", [])),
+            passed=wirecap_fixture.get("passed"),
+            failures=wirecap_fixture.get("failures", []))
+        if wirecap_fixture else {},
         window_probe=probe,
         gate1=dict(analyzer_fixtures_passed=gate1_ok,
                    n_fixtures=len(fixtures.get("fixtures", [])),
@@ -254,7 +274,14 @@ def main():
                    acceptance_tolerance_pct=1.0,
                    n_unstable_rate_cases=len(primary_unstable),
                    unstable_cases=[r["tag"] for r in primary_unstable],
-                   verdict="pass" if gate2_ok else "incomplete"),
+                   # The window/count question is answered; the wire-RC
+                   # limitation is bounded by simulation once the corrected
+                   # sensitivity run has counted every case.
+                   rc_sensitivity_run_valid=bool(rc_ok),
+                   verdict=("pass_rc_sensitivity_simulated"
+                            if gate2_ok and rc_ok else
+                            "pass_rc_sensitivity_open" if gate2_ok
+                            else "incomplete")),
         gate3=dict(carry_runs=len(carry), carry_all_count_ok=carry_ok,
                    control_runs=len(control),
                    control_all_count_ok=bool(control) and
@@ -265,21 +292,38 @@ def main():
                        "pass" if matrix and all(r.get("accepted")
                                                 for r in matrix)
                        else "incomplete")),
-        # Interconnect: what the SPEF says the cell-level decks omit, and the
-        # (failed) attempt to inject it.  Both are recorded so the limitation is
-        # quantified rather than merely stated.
+        # Interconnect: what the SPEF says the cell-level decks omit, the
+        # invalid revision-1 injection attempt, and the corrected re-run.
         interconnect=dict(
             measured=load_json(os.path.join(R, "loop_rc.json"), {}),
             injection_attempt=dict(
                 tool="tools/ro/add_wire_caps.py + run_wirecap_sensitivity.py",
-                outcome="injected lumped capacitance prevents oscillation at "
-                        "100%, 25% and 5% of the extracted value; recorded as a "
-                        "failed experiment, not as evidence about the circuit",
-                runs=wirecap.get("runs", []),
-                comparison=wirecap.get("comparison", []))),
+                outcome="revision-1 decks are invalid: add_wire_caps.py wrote "
+                        "the capacitance in pF without a SPICE scale suffix, "
+                        "and an unsuffixed capacitor value is in farads, so "
+                        "every injected capacitor was 10**12 too large and the "
+                        "loop stalled. The generator now emits `p` and is "
+                        "covered by tools/ro/test_add_wire_caps.py",
+                superseded_runs=wirecap.get("runs", []),
+                comparison=wirecap.get("comparison", [])),
+            corrected_run=dict(
+                dataset="data/safe10/freeze/wirecap_sensitivity_corrected.json",
+                tool="tools/ro/add_wire_caps.py (units fixed) + "
+                     "tools/ro/run_wirecap_sensitivity.py --jobs 8",
+                window_ns=wirecap_fixed.get("window_ns"),
+                tstep_ps=wirecap_fixed.get("tstep_ps"),
+                all_runs_counted=bool(rc_ok),
+                comparison=wirecap_fixed.get("comparison", []))),
         convergence=convergence)
     json.dump(summary, open(os.path.join(a.out, "freeze_summary.json"), "w"),
               indent=1)
+
+    # Write the human-readable tables *before* hashing the archive: the
+    # manifest must describe the files as they are left on disk, and hashing
+    # first left `freeze_tables.md` with its previous revision's digest.
+    write_markdown(os.path.join(a.out, "freeze_tables.md"), probe, primary,
+                   matrix, rep, cov, carry, control, convergence, wirecap,
+                   summary)
 
     # ------------------------------------------------------------ manifest --
     manifest = dict(archived={}, tools={})
@@ -292,6 +336,7 @@ def main():
               "run_ro_carry_test.py", "probe_ro_window.py",
               "add_wire_caps.py", "run_wirecap_sensitivity.py",
               "analyse_loop_rc.py", "test_analyse_ro_count.py",
+              "test_add_wire_caps.py", "recheck_archived_counts.py",
               "summarise_freeze.py"):
         p = os.path.join(HERE, t)
         if os.path.exists(p):
@@ -336,9 +381,6 @@ def main():
                 manifest["decks"][f"{sub}/{fn}"] = sha256(os.path.join(d, fn))
     json.dump(manifest, open(os.path.join(a.out, "manifest.json"), "w"),
               indent=1)
-    write_markdown(os.path.join(a.out, "freeze_tables.md"), probe, primary,
-                   matrix, rep, cov, carry, control, convergence, wirecap,
-                   summary)
     print(json.dumps({k: summary[k] for k in ("gate1", "gate2", "gate3")},
                      indent=1))
     print("archived " + a.out)

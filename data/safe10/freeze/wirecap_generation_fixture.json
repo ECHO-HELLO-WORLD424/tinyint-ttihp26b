@@ -1,0 +1,106 @@
+{
+ "tool": "tools/ro/test_add_wire_caps.py",
+ "purpose": "wire-capacitance generator fixture: emitted capacitors must parse back to the requested farads",
+ "loop_sp": "/home/patrick/Data/verilog/tinyint-ttihp26b/runs/wirecap-fixtures/loop_fixture.sp",
+ "spef": "/home/patrick/Data/verilog/tinyint-ttihp26b/runs/wirecap-fixtures/net_fixture.spef",
+ "expected_fF": {
+  "N1": 2.0,
+  "N2": 1.0
+ },
+ "cases": [
+  {
+   "scale": 1.0,
+   "deck": "/home/patrick/Data/verilog/tinyint-ttihp26b/runs/wirecap-fixtures/fixture_wirecap_s1.sp",
+   "exit_code": 0,
+   "capacitors": {
+    "N1": "0.002p",
+    "N2": "0.001p"
+   },
+   "checks": [
+    {
+     "check": "cap_farads:N1",
+     "ok": true,
+     "detail": "deck token '0.002p' -> 2e-15 F, want 2e-15 F (suffix 'p')"
+    },
+    {
+     "check": "explicit_suffix:N1",
+     "ok": true,
+     "detail": "suffix 'p' in token '0.002p'"
+    },
+    {
+     "check": "cap_farads:N2",
+     "ok": true,
+     "detail": "deck token '0.001p' -> 1e-15 F, want 1e-15 F (suffix 'p')"
+    },
+    {
+     "check": "explicit_suffix:N2",
+     "ok": true,
+     "detail": "suffix 'p' in token '0.001p'"
+    },
+    {
+     "check": "json_total_fF",
+     "ok": true,
+     "detail": "total_wire_cap_fF=3.0"
+    },
+    {
+     "check": "json_scale",
+     "ok": true,
+     "detail": "scale=1.0"
+    },
+    {
+     "check": "json_nets",
+     "ok": true,
+     "detail": "nets_with_caps=2"
+    }
+   ]
+  },
+  {
+   "scale": 0.05,
+   "deck": "/home/patrick/Data/verilog/tinyint-ttihp26b/runs/wirecap-fixtures/fixture_wirecap_s0.05.sp",
+   "exit_code": 0,
+   "capacitors": {
+    "N1": "0.0001p",
+    "N2": "5e-05p"
+   },
+   "checks": [
+    {
+     "check": "cap_farads:N1",
+     "ok": true,
+     "detail": "deck token '0.0001p' -> 1e-16 F, want 1.0000000000000001e-16 F (suffix 'p')"
+    },
+    {
+     "check": "explicit_suffix:N1",
+     "ok": true,
+     "detail": "suffix 'p' in token '0.0001p'"
+    },
+    {
+     "check": "cap_farads:N2",
+     "ok": true,
+     "detail": "deck token '5e-05p' -> 5e-17 F, want 5.0000000000000005e-17 F (suffix 'p')"
+    },
+    {
+     "check": "explicit_suffix:N2",
+     "ok": true,
+     "detail": "suffix 'p' in token '5e-05p'"
+    },
+    {
+     "check": "json_total_fF",
+     "ok": true,
+     "detail": "total_wire_cap_fF=3.0"
+    },
+    {
+     "check": "json_scale",
+     "ok": true,
+     "detail": "scale=0.05"
+    },
+    {
+     "check": "json_nets",
+     "ok": true,
+     "detail": "nets_with_caps=2"
+    }
+   ]
+  }
+ ],
+ "passed": true,
+ "failures": []
+}

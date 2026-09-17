@@ -49,6 +49,19 @@ jobs:
             src/tpv_ro_canary.v test/tb_pad_contention.v
           vvp /tmp/tb_pad_contention
 
+      # The RO tool fixtures need no simulator and no PDK: they synthesise
+      # rawfiles (analyzer acceptance logic, including the mid-rail readout
+      # case) and check the wire-capacitance deck generator's units. Both
+      # classes of defect reached the freeze record once because nothing ran
+      # them. Summaries go to /tmp so the archived datasets stay untouched.
+      - name: Check the RO analysis fixtures
+        run: |
+          python3 tools/ro/test_analyse_ro_count.py \
+            --workdir /tmp/analyzer-fixtures --summary /tmp/analyzer_fixtures.json
+          python3 tools/ro/test_add_wire_caps.py \
+            --workdir /tmp/wirecap-fixtures \
+            --summary /tmp/wirecap_generation_fixture.json
+
       - name: upload waveform and test results
         if: success() || failure()
         uses: actions/upload-artifact@v7

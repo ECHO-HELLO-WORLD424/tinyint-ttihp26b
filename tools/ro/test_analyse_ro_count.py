@@ -17,6 +17,7 @@ Fixtures:
   reset_transitions           toggles while reset is asserted, ignored    -> ok
   unstable_period             intervals alternate between two values      -> ok_unstable_rate
   ripple_not_settled          bit 15 still toggling inside the guard     -> unsettled
+  midrail_level               bit 15 quiet but stuck at 0.6 V on 1.2 V   -> invalid_level
   no_oscillation              loop never switches                        -> no_oscillation
   no_gate_vector              `en` not saved                             -> invalid_window
 
@@ -27,6 +28,7 @@ Exit status is 0 only when every fixture behaves as declared.
 """
 
 import argparse
+import bisect
 import json
 import os
 import struct
@@ -46,26 +48,31 @@ EDGE = 2e-12               # signal transition width used for sampling
 
 
 class Sig:
-    """Piecewise-constant logic signal: levels change at declared times."""
+    """Piecewise-constant logic signal: levels change at declared times.
+
+    `times` mirrors the first element of each `tr` entry so that `value()` can
+    binary-search instead of scanning.  The scan made `write_raw` quadratic, and
+    the 33 000-edge fixtures are large enough that this mattered: the suite was
+    abandoned as "unexpectedly slow" during a review before it was run to
+    completion.
+    """
 
     def __init__(self, t0, v0=0.0):
         self.t0 = t0
         self.tr = [(t0, v0)]        # (time, level)
+        self.times = [t0]
 
     def set(self, t, v):
         if self.tr and abs(self.tr[-1][0] - t) < 1e-15:
             self.tr[-1] = (t, v)
+            self.times[-1] = t
         else:
             self.tr.append((t, v))
+            self.times.append(t)
 
     def value(self, t):
-        v = self.tr[0][1]
-        for tt, vv in self.tr:
-            if tt <= t + 1e-18:
-                v = vv
-            else:
-                break
-        return v
+        i = bisect.bisect_right(self.times, t + 1e-18) - 1
+        return self.tr[i][1] if i >= 0 else self.tr[0][1]
 
     def transitions(self):
         return [t for t, _ in self.tr[1:]]
@@ -101,7 +108,8 @@ def write_raw(path, signals, t_end):
 
 def build(name, n_edges=3000, t_rst=50e-9, t_en_rise=100e-9, en=True,
           rst=True, period=PERIOD_S, drop_every=0, bits=16, still_toggling=False,
-          pre_reset_toggles=False, oscillate=True, alt_period=0.0):
+          pre_reset_toggles=False, oscillate=True, alt_period=0.0,
+          midrail_bit=None, midrail_v=0.6):
     """Return (signals, t_end, expected) for one fixture."""
     # Ring rising edges: uniform, or alternating between two periods when a
     # non-stationary (multi-mode) waveform is wanted.
@@ -155,6 +163,11 @@ def build(name, n_edges=3000, t_rst=50e-9, t_en_rise=100e-9, en=True,
     if still_toggling:
         q = sig["v(Q15)"]
         q.set(t_end - 0.2e-9, VDD if q.value(t_end - 1e-9) == 0 else 0.0)
+    if midrail_bit is not None:
+        # Quiet *and* at an invalid level: a counter bit that is stuck at
+        # mid-rail (or undriven) must not be readable as a settled 0/1.  The
+        # 50 % decode threshold alone classifies 0.6 V on a 1.2 V rail as 0.
+        sig[f"v(Q{midrail_bit})"] = Sig(0.0, midrail_v)
     if pre_reset_toggles:
         # Activity while reset is asserted must not be counted.
         for b in (0, 1, 2):
@@ -182,6 +195,8 @@ def run_fixture(workdir, name, expect_status, expect_exit, **kw):
                exit_code=cli.returncode, expected_exit=expect_exit,
                exit_ok=ok_exit, count_ok=res.get("count_ok"),
                settled=res.get("settled"),
+               levels_valid=res.get("levels_valid"),
+               invalid_level_bits=res.get("invalid_level_bits"),
                coverage_complete=res.get("coverage_complete"),
                rate_stable=res.get("rate_stable"),
                counter_final=res.get("counter_final"),
@@ -219,6 +234,7 @@ def main():
         ("unstable_period", "ok_unstable_rate",
          dict(n_edges=33000, alt_period=0.45)),
         ("ripple_not_settled", "unsettled", dict(still_toggling=True)),
+        ("midrail_level", "invalid_level", dict(n_edges=200, midrail_bit=15)),
         ("no_oscillation", "no_oscillation", dict(oscillate=False)),
         ("no_gate_vector", "invalid_window", dict(en=False)),
     ]:

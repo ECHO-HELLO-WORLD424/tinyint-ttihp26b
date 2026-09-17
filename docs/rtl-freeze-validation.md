@@ -1,7 +1,14 @@
 # RTL freeze validation record (gates 1–3)
 
-Status: **complete (2026-09-17)**. Data: `data/safe10/freeze/`
-(`freeze_summary.json`, `freeze_tables.md`, the per-case CSV/JSON files and
+Status: **complete for the window/count gates (2026-09-17)**. The
+wire-capacitance sensitivity experiment recorded below was **invalidated by a
+generator unit bug** in the same review session; the generator is fixed, the
+experiment was re-run, and the corrected measurement (8.3–10.1 % slower ring,
+counter exact) is recorded there. Data:
+`data/safe10/freeze/`
+(`freeze_summary.json`, `freeze_tables.md`, the per-case CSV/JSON files,
+`analyzer_recheck.json`, `wirecap_generation_fixture.json`,
+`wirecap_sensitivity_corrected.json` and
 `manifest.json`); the transient decks, rawfiles and ngspice logs live under
 `runs/freeze-validation/` and are reproducible from the archived decks. Gate 1
 and Gate 4 are complete (see [`rtl-freeze-checklist.md`](rtl-freeze-checklist.md));
@@ -49,7 +56,95 @@ follows is the gate-boundary one: at most one ring edge
 (`edge_ambiguity_edges`, derived per case from the measured `en` transition and
 the ring period). Startup *jitter* on silicon remains a campaign measurement.
 
+**Retained coverage gap: the stop phase is not varied (gate 3).** Shifting the
+host release phase does not shift gate closure relative to the running
+oscillator either. The ring restarts from the same state at the same `en` edge,
+and `en` falls a fixed 253 clock periods later, so all three startups close the
+gate at the *same* point of the ring period; they vary the host phase, not the
+stop phase. The three mid-window control cases (`FORCE_CAN`, `FREEZE`, reset)
+close the gate at other points of the window, but each is still one fixed,
+deterministic phase of its own deck. What is therefore untested is whether the
+loop's stopping transient — in the worst case a marginal-width clock pulse as
+`en` falls — can be captured inconsistently by the ripple stages at an arbitrary
+stop phase, including one that lands on a carry boundary. The ±1-edge
+gate-boundary ambiguity above bounds *which* edges fall inside the window; it
+does not bound runt-pulse capture. A deck whose `en` fall is offset by fractions
+of the measured ring period is the right experiment and is outstanding; the
+RTL-level counter behaviour (including the full `0xFFFF` wrap) stays covered by
+`test/test.py::test_ro_ripple_counter_wrap`.
+
+## Interconnect capacitance: measured, and now simulated (lumped)
+
+The transient decks are cell-level: the Magic spiceextraction carries
+transistor-level cells with cell-internal parasitics but no inter-cell wire RC
+(no RC extraction was run for this tile). Two pieces of evidence bound the
+omission:
+
+1. **The missing capacitance is measured.** `tools/ro/analyse_loop_rc.py` maps
+   every ring instance to its SPEF instance and every `(instance, pin)` pair to
+   its SPEF net, then sums the SPEF capacitance of the nets the ring touches:
+   399.3 fF over 119 nets for `ro_gen` (8.3 % of the design's total wire
+   capacitance) and 548.9 fF over 231 nets for `ro_mat` (11.4 %). At the typical
+   corner that is on the order of the ring's own gate input capacitance, i.e. it
+   is not negligible for the *frequency*.
+2. **The first sensitivity run was invalid; the corrected one bounds the
+   effect.** `tools/ro/add_wire_caps.py` inserts that per-net capacitance as
+   lumped capacitors inside the loop subcircuit, so the same window can be run
+   with and without it. Every revision-1 such deck stalled, at 100 %, 25 % and
+   even 5 % of the extracted capacitance — and that stall was recorded here as a
+   property of the modified subcircuit ("structural, not a magnitude effect").
+   It is not: the generator wrote the capacitance in pF **without a SPICE scale
+   suffix**, and an unsuffixed capacitor value is in farads, so every injected
+   capacitor was **10¹² times** the intended value (a 1 fF net was emitted as
+   `0.001`, i.e. 1 mF). The generator now emits the `p` suffix and
+   `tools/ro/test_add_wire_caps.py` round-trips every emitted capacitor back to
+   farads (`data/safe10/freeze/wirecap_generation_fixture.json`). With that fix
+   the corrected sweep runs normally
+   (`data/safe10/freeze/wirecap_sensitivity_corrected.json`; 400 ns window,
+   5 ps, 8/8 cases accepted, single mode, decoded count equal to the offered
+   edges in every case):
+
+   | corner | canary | no injected C | full extracted C | Δf | f_osc dataset |
+   | --- | --- | ---: | ---: | ---: | ---: |
+   | typical | `ro_gen` | 825.31 MHz | 742.18 MHz | −10.07 % | 822.13 MHz |
+   | typical | `ro_mat` | 108.50 MHz | 99.48 MHz | −8.31 % | 108.50 MHz |
+   | fast | `ro_gen` | 1246.57 MHz | 1124.99 MHz | −9.75 % | 1235.10 MHz |
+   | slow | `ro_mat` | 68.51 MHz | 62.67 MHz | −8.52 % | 68.75 MHz |
+
+   The capacitance-free baselines reproduce the independent f_osc dataset within
+   0.4–0.9 %, and the injected load slows every ring by 8–10 %. The omission is
+   therefore bounded by a simulation, not only by the cell-level label: it is a
+   period effect of ≈ 10 % at the lumped level, and it still leaves the counter
+   decoding exactly. A distributed-RC deck (the SPEF `*CAP`/`*RES` network rather
+   than one lumped capacitor per net) remains open work, and the absolute
+   frequencies in all of these decks remain cell-level transient results.
+
+Why the omission does not invalidate the counting conclusion:
+
+* The claim the deck supports is a **ratio** — the counter's decoded value
+  versus the ring edges the *same deck* offers. Wire capacitance changes the
+  ring's period, not the counter's function.
+* The direction is conservative. The ripple counter needs each carry to
+  propagate within one ring period, so a *faster* ring is the harder case.
+  Omitting load capacitance makes the simulated ring faster — the cell-only
+  SPICE ring runs 1.03–1.14× the SPEF-based broken-loop STA prediction (mean
+  1.083, `data/safe10/ro_predict.csv` vs `data/safe10/spice/spice_ro.csv`), and
+  the corrected injection run measures the same direction directly (8–10 %
+  faster without the extracted lumped capacitance) — so a counter that counts
+  correctly in these decks has at least as much margin in the extracted
+  circuit.
+* The residual frequency offset is part of the SPICE/STA calibration ratio the
+  prediction model already carries, and the canary is used as a *relative*
+  delay proxy fitted per operating point.
+
+The absolute ring frequency from these decks is therefore a **cell-level
+transient result, not post-route RC signoff**, and the same label applies to the
+f_osc dataset it agrees with. The corrected lumped-capacitance run now bounds
+the omission by simulation; a distributed-RC deck (per-net `*CAP`/`*RES`) remains
+open work.
+
 ## Method and provenance
+
 * Extraction: `tools/ro/extract_ro_loop.py --counter` re-run from the archived
   final build's Magic spiceextraction
   (`tt_um_echoworld424_tpv.spice`, sha256 `18a5657c…`, CI run `35034979531`,
@@ -71,51 +166,6 @@ the ring period). Startup *jitter* on silicon remains a campaign measurement.
 * Tolerances: predeclared in
   [`data/safe10/freeze/PREDECLARED-TOLERANCE.md`](../data/safe10/freeze/PREDECLARED-TOLERANCE.md)
   before the sweep results were available.
-
-## Interconnect capacitance: measured, and why it is not simulated
-
-The transient decks are cell-level: the Magic spiceextraction carries
-transistor-level cells with cell-internal parasitics but no inter-cell wire RC
-(no RC extraction was run for this tile). Two independent pieces of evidence
-bound the omission:
-
-1. **The missing capacitance is measured.** `tools/ro/analyse_loop_rc.py` maps
-   every ring instance to its SPEF instance and every `(instance, pin)` pair to
-   its SPEF net, then sums the SPEF capacitance of the nets the ring touches:
-   399.3 fF over 119 nets for `ro_gen` (8.3 % of the design's total wire
-   capacitance) and 548.9 fF over 231 nets for `ro_mat` (11.4 %). At the typical
-   corner that is on the order of the ring's own gate input capacitance, i.e. it
-   is not negligible for the *frequency*.
-2. **A direct sensitivity run was attempted and failed.** In
-   `tools/ro/add_wire_caps.py` the same per-net capacitance is inserted as
-   lumped capacitors inside the loop subcircuit, so the deck could be run with
-   and without it. Every such deck stalls: with the operating-point start the
-   loop settles on its metastable mid-rail solution, and with a `uic` start from
-   the reset state it does not oscillate either — at 100 %, 25 % and even 5 % of
-   the extracted capacitance (≈ 0.17 fF per net), while the identical deck
-   without capacitors oscillates normally. The failure is structural to the
-   modified subcircuit, not a magnitude effect, and it is recorded here rather
-   than papered over.
-
-Why the omission does not invalidate the counting conclusion:
-
-* The claim the deck supports is a **ratio** — the counter's decoded value
-  versus the ring edges the *same deck* offers. Wire capacitance changes the
-  ring's period, not the counter's function.
-* The direction is conservative. The ripple counter needs each carry to
-  propagate within one ring period, so a *faster* ring is the harder case.
-  Omitting load capacitance makes the simulated ring faster (the cell-only
-  SPICE ring runs 1.03–1.14× the SPEF-based broken-loop STA prediction, mean
-  1.083, `data/safe10/ro_predict.csv` vs `data/safe10/spice/spice_ro.csv`), so
-  a counter that counts correctly in these decks has at least as much margin in
-  the extracted circuit.
-* The residual frequency offset is part of the SPICE/STA calibration ratio the
-  prediction model already carries, and the canary is used as a *relative*
-  delay proxy fitted per operating point.
-
-The absolute ring frequency from these decks is therefore a **cell-level
-transient result, not post-route RC signoff**, and the same label applies to the
-f_osc dataset it agrees with. A distributed-RC deck remains open work.
 
 ## Compute budget and deviations
 
@@ -230,12 +280,22 @@ counter-inclusive dataset to better than 0.02 % (for example
 `fast/ro_gen/sel0` 1235.19 MHz vs 1235.10 MHz, `typ/ro_gen/sel2` 364.48 vs
 364.48).
 
+**Readout levels.** `analyse_ro_count.py` now also requires every counter bit to
+sit in a valid logic band at the decode point (≤ 15 % or ≥ 85 % of the rail),
+because the 50 % decode threshold on its own reads a mid-rail node as a logic 0.
+The archived waveforms were re-checked against the corrected tool
+(`tools/ro/recheck_archived_counts.py`, A/B against the pre-fix revision):
+**64/64 archived waveform records have every bit at a rail at the decode point** (levels 0.0 V …
+1.08/1.20/1.32 V) and **no archived verdict changes**
+(`data/safe10/freeze/analyzer_recheck.json`). The requirement is covered by the
+new `midrail_level` fixture, which the pre-fix analyzer accepted.
+
 ## Gate 2 and 3 verdicts
 
 | Gate | Verdict | Basis |
 | --- | --- | --- |
-| 2 — matched-canary window behaviour | **Pass**, with the uncertainty quantified | every primary case accepted; counts repeat exactly across startups; the previously flagged multi-mode configurations are single-valued; timestep uncertainty 0.9–1.2 % at the bulk 10 ps step (2 ps→5 ps→10 ps ladder measured); gate-boundary ambiguity ±1 edge per case; wire RC bounded but not simulated |
-| 3 — carries, stop/readout, controls | **Pass** for stages 0–15 and `0x7FFF→0x8000`; **not claimed** for the full `0xFFFF` wrap | 34 524/34 524 edges counted with per-bit coverage; settling ≪ readout interval; control cases hold/restart correctly; 24-case matrix complete |
+| 2 — matched-canary window behaviour | **Pass**, with the uncertainty quantified and the wire-RC omission bounded by the corrected lumped-capacitance run | every primary case accepted; counts repeat exactly across startups; the previously flagged multi-mode configurations are single-valued; timestep uncertainty 0.9–1.2 % at the bulk 10 ps step (2 ps→5 ps→10 ps ladder measured); gate-boundary ambiguity ±1 edge per case; injected extracted wire capacitance costs 8.3–10.1 % of ring frequency with the count still exact, and the capacitance-free decks reproduce the f_osc dataset within 0.4–0.9 %. **Withdrawn:** the revision-1 injection result — the generator omitted the SPICE scale suffix, so those decks were 10¹² too large. **Still open:** a distributed-RC deck |
+| 3 — carries, stop/readout, controls | **Pass** for stages 0–15 and `0x7FFF→0x8000`; **not claimed** for the full `0xFFFF` wrap, and stop-phase coverage retained as a gap | 34 524/34 524 edges counted with per-bit coverage; settling ≪ readout interval; control cases hold/restart correctly; 24-case matrix complete. The three startups shift the host release phase, not the gate-closure phase relative to the oscillator, so an arbitrary stop phase is untested |
 | 4 — experiment STA | Pass (see the checklist and `docs/experiment-sta-launch-coverage.md`) | 18 launch pins resolved structurally, 96 cases, gap 0.000 ns, control margin positive |
 
 

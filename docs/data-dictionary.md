@@ -199,7 +199,7 @@ the revision-1 record rather than regenerated.
 | --- | --- |
 | `ro_count.csv` / `ro_count.json` | one row per case: measured ring frequency and period, `q0_negedges`, decoded `counter_final`, `ring_edges_in_count_window`, `count_error_edges`, `count_matches_ring_edges`, `count_matches_period_estimate`, `ripple_stage_rates_ok`, the counting window and sampling time, and the per-stage transition counts |
 | `count_vs_fosc.csv` / `.json` | the counter rows joined with `data/safe10/spice/spice_ro.csv`: the two frequencies, their difference, and the counting checks. A frequency difference is reported as a note, not a failure — it means the two decks selected different taps |
-| `analyzer_fixtures.json` | the gate-1 fixture results: nine synthesised known-good/known-bad rawfiles plus four interval-classifier cases, each with the expected and observed status and process exit code |
+| `analyzer_fixtures.json` | the gate-1 fixture results: ten synthesised known-good/known-bad rawfiles (including `midrail_level`, a counter bit quiet at 0.6 V on a 1.2 V rail) plus four interval-classifier cases, each with the expected and observed status and process exit code |
 | `provenance.json` | commit/run/netlist identity, PDK and tool roles, file hashes, and the revision notes |
 | `FOSC-REGEN-STATUS.md` | record of the f_osc regeneration: the driver bug, the window artefact, the ring-only deck defect, and the multi-mode configurations |
 
@@ -236,6 +236,9 @@ analysis JSONs, tables and hashes are archived here). Full method and verdicts:
 | `carry.json` | the extended-gate carry test (fastest ring, crosses 2^15) |
 | `control.json` | FORCE_CAN hold, FREEZE/resume and reset-during-window cases |
 | `convergence.csv` / `.json` | 5/10/20/40 ps and 2 ps timestep comparison at fixed 1 µs windows |
+| `analyzer_recheck.json` | every archived counter waveform re-analysed by `tools/ro/recheck_archived_counts.py`, A/B against the pre-fix analyzer revision: per-case decode-point levels of all 16 bits, validity against the 15 %/85 % band, and before/after verdicts (64/64 valid, 0 verdict changes) |
+| `wirecap_generation_fixture.json` | `tools/ro/test_add_wire_caps.py`: the emitted wire capacitors of a synthetic 2 fF/1 fF loop, parsed with SPICE scale suffixes and compared with the requested farads (the check that catches the missing-`p`-suffix defect) |
+| `wirecap_sensitivity_corrected.json` | the valid wire-capacitance sensitivity run (`tools/ro/run_wirecap_sensitivity.py --capdir .../wirecap-correction --jobs 8`, 400 ns window, 5 ps): each corner with and without the full extracted lumped capacitance, with the per-case counts and the frequency delta. The invalid revision-1 runs stay under `runs/freeze-validation/wirecap_sensitivity.json` |
 | `freeze_tables.md` | the same data as markdown tables, quoted in the validation record |
 | `manifest.json` | sha256 of every archived file and of the analysis tools that produced them |
 

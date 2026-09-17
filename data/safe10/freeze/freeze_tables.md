@@ -175,7 +175,7 @@ _(no data)_
 {
  "gate1": {
   "analyzer_fixtures_passed": true,
-  "n_fixtures": 9,
+  "n_fixtures": 10,
   "failures": []
  },
  "gate2": {
@@ -185,7 +185,8 @@ _(no data)_
   "acceptance_tolerance_pct": 1.0,
   "n_unstable_rate_cases": 0,
   "unstable_cases": [],
-  "verdict": "pass"
+  "rc_sensitivity_run_valid": true,
+  "verdict": "pass_rc_sensitivity_simulated"
  },
  "gate3": {
   "carry_runs": 1,

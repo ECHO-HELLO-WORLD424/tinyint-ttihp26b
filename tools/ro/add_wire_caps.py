@@ -122,7 +122,12 @@ def write_variant(loop_sp, out_sp, per_net, scale=1.0, subckt=None):
                 cap_pf = d["cap_fF"] * 1e-3 * scale
                 if cap_pf <= 0:
                     continue
-                out.append(f"Cw{i} {node} 0 {cap_pf:.9g}")
+                # The number is pF and MUST carry the `p` suffix: an
+                # unsuffixed capacitor value is read as farads, so omitting it
+                # inflates every injected capacitor by 10**12 (the revision-1
+                # sensitivity decks stalled because of exactly that, not
+                # because of the circuit).  See test_add_wire_caps.py.
+                out.append(f"Cw{i} {node} 0 {cap_pf:.9g}p")
                 added += 1
         out.append(line)
     with open(out_sp, "w") as fh:

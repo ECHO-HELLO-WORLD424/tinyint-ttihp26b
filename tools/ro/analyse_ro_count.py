@@ -13,8 +13,8 @@ can answer, without assuming the counter is correct:
     edge of the loop node after reset release and inside the gate-open
     interval, including the edges during the loop's stop transient, because
     those are edges the hardware clocks too;
-  * **what the counter recorded** - all 16 bits, required present and settled,
-    decoded after the ripple has stopped;
+  * **what the counter recorded** - all 16 bits, required present, quiet and at
+    a valid logic level at the decode point, decoded after the ripple stopped;
   * **whether every stage was actually exercised** - per-bit expected and
     observed toggles, first/last post-reset transition time and an explicit
     `exercised` flag, so an upper stage that never toggled is reported as
@@ -33,6 +33,8 @@ Status vocabulary (a single machine-readable `status`, plus the booleans
   ok_partial_coverage_unstable_rate      both qualifications
   mismatch                               decoded count disagrees with the edges
   unsettled                              a counter bit was still moving at decode time
+  invalid_level                          a counter bit is not at a valid logic level
+                                         at the decode point (e.g. stuck mid-rail)
   missing_bits                           fewer than 16 counter bits were saved
   invalid_window                         the control waveforms give no usable window
   no_oscillation / counter_never_toggled / no_counter_bits_saved
@@ -94,6 +96,20 @@ def all_transitions(times, volts, vdd):
 
 def bit_state(v, vdd):
     return 1 if v > 0.5 * vdd else 0
+
+
+# A counter bit may only be decoded if it sits in a valid logic band at the
+# decode point.  `bit_state`'s 50 % threshold on its own classifies a mid-rail
+# node (0.6 V on a 1.2 V rail) as a legitimate logic 0, so "quiet" alone is not
+# enough: a stuck or undriven bit would be read as a settled zero.
+LEVEL_LOW_FRACTION = 0.15
+LEVEL_HIGH_FRACTION = 0.85
+
+
+def level_valid(v, vdd, lo_fraction=LEVEL_LOW_FRACTION,
+                hi_fraction=LEVEL_HIGH_FRACTION):
+    """True when `v` is a valid logic low or high for the `vdd` rail."""
+    return v <= lo_fraction * vdd or v >= hi_fraction * vdd
 
 
 def settle_time(times, volts, vdd):
@@ -187,6 +203,8 @@ def analyse(raw, vdd=1.2, loop_node=None, en_node="sense_en",
                          "`en` control net (window deck sense branch)")
         out["count_ok"] = False
         out["settled"] = False
+        out["invalid_level_bits"] = []
+        out["levels_valid"] = False
         out["coverage_complete"] = False
         out["rate_stable"] = False
         return out
@@ -214,6 +232,8 @@ def analyse(raw, vdd=1.2, loop_node=None, en_node="sense_en",
             out["status"] = "no_oscillation"
             out["count_ok"] = False
             out["settled"] = False
+            out["invalid_level_bits"] = []
+            out["levels_valid"] = False
             out["coverage_complete"] = False
             out["rate_stable"] = False
             return out
@@ -241,6 +261,8 @@ def analyse(raw, vdd=1.2, loop_node=None, en_node="sense_en",
         out["detail"] = "fewer than three ring edges after the window opened"
         out["count_ok"] = False
         out["settled"] = False
+        out["invalid_level_bits"] = []
+        out["levels_valid"] = False
         out["coverage_complete"] = False
         out["rate_stable"] = False
         return out
@@ -304,6 +326,8 @@ def analyse(raw, vdd=1.2, loop_node=None, en_node="sense_en",
         out["detail"] = f"saved {sorted(bits)}; all {N_BITS} bits are required"
         out["count_ok"] = False
         out["settled"] = False
+        out["invalid_level_bits"] = []
+        out["levels_valid"] = False
         out["coverage_complete"] = False
         return out
 
@@ -322,6 +346,7 @@ def analyse(raw, vdd=1.2, loop_node=None, en_node="sense_en",
         if last is not None and (last_any is None or last > last_any):
             last_any = last
         lvl = value_at(times, vs, t_decode)
+        level_ok = level_valid(lvl, vdd)
         per_bit[b] = dict(
             toggles=len(trans),
             negedges=len(neg), riseedges=len(pos),
@@ -329,6 +354,7 @@ def analyse(raw, vdd=1.2, loop_node=None, en_node="sense_en",
             last_transition_ns=None if last is None else last * 1e9,
             level=bit_state(lvl, vdd),
             level_v=round(lvl, 4),
+            level_valid=level_ok,
             settled=bool(last is None or last <= t_decode),
             exercised=bool(trans))
     out["per_bit"] = per_bit
@@ -345,11 +371,16 @@ def analyse(raw, vdd=1.2, loop_node=None, en_node="sense_en",
     out["decode_time_ns"] = t_decode * 1e9
     out["unsettled_bits"] = [b for b in sorted(bits)
                              if not per_bit[b]["settled"]]
+    out["invalid_level_bits"] = [b for b in sorted(bits)
+                                 if not per_bit[b]["level_valid"]]
+    out["levels_valid"] = not out["invalid_level_bits"]
     out["unexercised_bits"] = [b for b in sorted(bits)
                                if not per_bit[b]["exercised"]]
-    # `settled` is about motion at the decode point only; a stage that never
-    # toggled at all is a coverage finding, reported separately.
-    out["settled"] = not out["unsettled_bits"]
+    # `settled` is about what the readout could sample at the decode point:
+    # the bit must have stopped moving *and* be at a valid logic level.  A
+    # stage that never toggled at all is a coverage finding, reported
+    # separately in `unexercised_bits`.
+    out["settled"] = (not out["unsettled_bits"]) and out["levels_valid"]
     final = decode(times, cols, bits, vdd, t_decode)
     out["counter_final"] = final
     out["counter_final_hex"] = hex(final)
@@ -398,11 +429,16 @@ def analyse(raw, vdd=1.2, loop_node=None, en_node="sense_en",
     out["f_count_from_counter_mhz"] = (
         final / ((offered[-1] - offered[0]) * 1e-6))
 
-    # A decode taken while the ripple is still moving is invalid, so
-    # "unsettled" takes priority over the count comparison: reporting a
-    # mismatch there would blame the counter for an analysis-window error.
+    # A decode taken while the ripple is still moving, or from a node that is
+    # not at a valid logic level, is invalid, so both take priority over the
+    # count comparison: reporting a mismatch there would blame the counter for
+    # an analysis-window error.
     if out["unsettled_bits"]:
         out["status"] = "unsettled"
+    elif out["invalid_level_bits"]:
+        out["status"] = "invalid_level"
+        out["detail"] = ("bits not at a valid logic level at the decode point: "
+                         + ",".join(str(b) for b in out["invalid_level_bits"]))
     elif not out["count_ok"]:
         out["status"] = "mismatch"
     elif out["coverage_complete"] and out["rate_stable"]:
@@ -421,6 +457,8 @@ def accepted(result, strict=False):
     if not result.get("count_ok"):
         return False
     if result.get("unsettled_bits"):
+        return False
+    if result.get("invalid_level_bits"):
         return False
     if strict and not (result.get("coverage_complete") and
                        result.get("rate_stable")):

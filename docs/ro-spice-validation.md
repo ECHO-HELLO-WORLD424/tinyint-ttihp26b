@@ -213,7 +213,11 @@ drivers work with the packaged ngspice or the devcontainer's source build.
 - **No wire RC.** The extracted netlist used here is Magic's cell-level
   spiceextraction: transistor-level cells with cell-internal parasitics, but
   **no interconnect RC**. The STA prediction includes the SPEF wire
-  parasitics. The two numbers are therefore not expected to agree exactly, and
+  parasitics. The size of that omission is now measured for the freeze window
+  decks: injecting the extracted lumped capacitance costs 8.3–10.1 % of ring
+  frequency with the counter still decoding exactly
+  (`data/safe10/freeze/wirecap_sensitivity_corrected.json`); a distributed-RC
+  deck remains open work. The two numbers are therefore not expected to agree exactly, and
   a SPICE result *faster* than STA is the expected direction. The residual
   disagreement is not a pure wire-delay measure: it also contains the
   difference between a static levelized delay estimate and a real switching
