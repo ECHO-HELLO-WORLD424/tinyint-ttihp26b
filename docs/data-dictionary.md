@@ -14,6 +14,20 @@ full-cycle baseline evidence. V2 retains their common fields and adds:
 | `run_id` beginning `local-` | Local build identifier; not a GitHub Actions run |
 | `git_commit` | Physical build's source commit; not necessarily the analysis commit |
 | `sat_win*` | Model predicts a count beyond 65535; hardware wraps and has no saturation flag |
+| `startpoint_role` | Structural role of the R2R launch register (`lfsr0`..`lfsr15`, `idx0`, `idx1`), recovered from the operand cone in `tools/sta/experiment_sta.tcl`; net names are only a cross-check |
+| `sensitizing_prev_vector` | Operands applied during the frame *before* the recorded launch edge (`prev` of the recorded transition); empty when there is no runtime path |
+| `sensitizing_op_index` | Index of the recorded operation in the applied-operand sequence (`tools/common.py::pattern_vectors`), 1-based because a transition is required |
+| `global_startpoint_class` | Source class of the unrestricted worst path to `result_reg`: `runtime_state` (one of the 18 launch pins), `static_configuration` (`cfg`/`can_sel`), or `control` |
+
+In v2, `sensitizing_vector` is the **current** operand triple of the recorded
+transition (the longest carry chain to `endpoint_bit` among operations whose
+operands change from the previous frame), and `sensitizing_chain_stages` is the
+chain that vector exercises; the archived v1 table instead reports a single
+static vector per row. The launch set and the coverage cross-check are archived
+in `experiment_sta_launch_pins.json` (launch pins, roles, assertions enforced
+in the Tcl flow, unrestricted-path classification, build hashes) and re-checked
+by `tools/sta/verify_launch_coverage.py`. See
+[experiment-sta-launch-coverage.md](experiment-sta-launch-coverage.md).
 
 For v2, `predicted_fmax_mhz = 1000 / (clk_period_ns − slack_ns/capture_duty)`.
 Canonical period/high-time units are ns; frequency MHz; voltage V; temperature °C.
@@ -173,14 +187,24 @@ Producers `tools/ro/extract_ro_loop.py --counter`,
 `docs/ro-counter-spice-validation.md`; the deck defects found while building it
 and the f_osc regeneration record: `FOSC-REGEN-STATUS.md`.
 
+**Scope note (2026-09-17).** This directory is the *free-running* deck's
+revision-1 dataset: `en` is tied high, the ring never stops, and the counter is
+read while it is still rippling. It shows that the ripple counter counts; it
+does not show that the count belongs to the chip's measurement window. The
+window deck and its dataset are in `data/safe10/freeze/`
+(see `docs/rtl-freeze-validation.md`), and `ro_count.csv` here is retained as
+the revision-1 record rather than regenerated.
+
 | File | Contents |
 | --- | --- |
 | `ro_count.csv` / `ro_count.json` | one row per case: measured ring frequency and period, `q0_negedges`, decoded `counter_final`, `ring_edges_in_count_window`, `count_error_edges`, `count_matches_ring_edges`, `count_matches_period_estimate`, `ripple_stage_rates_ok`, the counting window and sampling time, and the per-stage transition counts |
 | `count_vs_fosc.csv` / `.json` | the counter rows joined with `data/safe10/spice/spice_ro.csv`: the two frequencies, their difference, and the counting checks. A frequency difference is reported as a note, not a failure — it means the two decks selected different taps |
+| `analyzer_fixtures.json` | the gate-1 fixture results: nine synthesised known-good/known-bad rawfiles plus four interval-classifier cases, each with the expected and observed status and process exit code |
 | `provenance.json` | commit/run/netlist identity, PDK and tool roles, file hashes, and the revision notes |
 | `FOSC-REGEN-STATUS.md` | record of the f_osc regeneration: the driver bug, the window artefact, the ring-only deck defect, and the multi-mode configurations |
 
-Key columns of `ro_count.csv`:
+Key columns of `ro_count.csv` (revision 1; the window dataset uses the analysis
+vocabulary documented in `docs/rtl-freeze-validation.md`):
 
 | Field | Unit | Meaning |
 | --- | --- | --- |
@@ -192,6 +216,29 @@ Key columns of `ro_count.csv`:
 | `count_error_edges` | edges | `counter_final - ring_edges_in_count_window` |
 | `count_matches_ring_edges`, `count_matches_period_estimate`, `ripple_stage_rates_ok` | - | the three independent checks |
 | `count_window_ns`, `sample_time_ns` | ns | the counting window and when the counter was read |
+
+## `data/safe10/freeze/` (RTL freeze validation: gates 1–3)
+
+Producer `tools/ro/summarise_freeze.py` from the runs under
+`runs/freeze-validation/` (decks, rawfiles and ngspice logs stay there; the
+analysis JSONs, tables and hashes are archived here). Full method and verdicts:
+`docs/rtl-freeze-validation.md`; the acceptance rules were predeclared in
+`PREDECLARED-TOLERANCE.md` before the results were available.
+
+| File | Contents |
+| --- | --- |
+| `PREDECLARED-TOLERANCE.md` | the repeatability/convergence/coverage criteria, fixed before the sweep results |
+| `freeze_summary.json` | per-gate verdicts, the RTL window probe, unstable-rate case list and the wire-capacitance comparison |
+| `primary_windows.csv` / `.json` | every primary window run: controls, counts, rate, CV, coverage and acceptance |
+| `matrix_windows.csv` / `.json` | the 24-case (corner × canary × `can_sel`) counter matrix at 50 MHz |
+| `repeatability.csv` / `.json` | count spread across startup phases per configuration, against the 1 % criterion |
+| `coverage.csv` / `.json` | per-case ring-edge count, highest exercised ripple stage, unexercised bits |
+| `carry.json` | the extended-gate carry test (fastest ring, crosses 2^15) |
+| `control.json` | FORCE_CAN hold, FREEZE/resume and reset-during-window cases |
+| `convergence.csv` / `.json` | 5/10/20/40 ps and 2 ps timestep comparison at fixed 1 µs windows |
+| `freeze_tables.md` | the same data as markdown tables, quoted in the validation record |
+| `manifest.json` | sha256 of every archived file and of the analysis tools that produced them |
+
 
 ## `data/sdfsim.csv` (one row per SDF-sim probe point)
 

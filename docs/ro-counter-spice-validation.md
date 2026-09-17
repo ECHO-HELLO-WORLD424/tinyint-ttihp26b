@@ -1,10 +1,28 @@
 # Counter-inclusive extracted RO transient (SPICE) validation
 
-Status: **complete** (2026-09-16, dataset revision 1). This is the test that the
-f_osc dataset in [`docs/ro-spice-validation.md`](ro-spice-validation.md) cannot
-perform: it simulates the canary **with its ripple edge counter running**, so the
-counter's toggle feedback and the whole 16-stage ripple chain are exercised
-instead of being pinned in reset.
+Status: **complete for what this deck tests, superseded for window behaviour**
+(2026-09-17). This is the test that the f_osc dataset in
+[`docs/ro-spice-validation.md`](ro-spice-validation.md) cannot perform: it
+simulates the canary **with its ripple edge counter running**, so the counter's
+toggle feedback and the whole 16-stage ripple chain are exercised instead of
+being pinned in reset.
+
+What this dataset does and does not establish, in the vocabulary the freeze
+review requires:
+
+| Claim | Established here | Established elsewhere |
+| --- | --- | --- |
+| The loop oscillates at the extracted-netlist rate | yes (22/22 cases) | `docs/ro-spice-validation.md` (f_osc, revision 3) |
+| The counter's decoded value equals the ring edges offered to it | yes, within one edge, for the free-running deck | `docs/rtl-freeze-validation.md` re-establishes it for the real measurement window |
+| Stage *b* toggles at its binary-carry rate | yes for every stage that toggled (up to bit 12 at these counts) | `docs/rtl-freeze-validation.md` adds the extended carry run that reaches bit 15 |
+| A stable, single-valued frequency prediction exists | **no** — the deck ran 18–74 edges and the analyzer then called any interval set with ≤ 1 histogram cluster `single_mode` | `docs/rtl-freeze-validation.md` (per-case `rate_stable`, CV and mode counts) |
+| The stopped count is what the readout returns | **no** — the ring was never gated off, so the counter was still rippling at the decode point | `docs/rtl-freeze-validation.md` (window deck: gate close, settle, readout interval) |
+
+The free-running deck remains in the repository
+(`run_ro_count_case.run` / `sweep_ro_count.py --deck free`) for reproducing this
+dataset; the window deck (`run_ro_count_case.run_window`) is the one the freeze
+decision uses.
+
 
 ## Why this test exists
 
@@ -121,17 +139,22 @@ loop) and is a useful consistency check on both datasets.
 | slow 1.08 V / 125 °C | ro_mat | 2 | 218.9 | 91.2 | +140.0 % | 50 | 49 | +1 | ok |
 | slow 1.08 V / 125 °C | ro_mat | 3 | 188.0 | 68.8 | +173 % | 74 | 74 | 0 | ok |
 
-### f_osc dataset regeneration (blocked)
+### f_osc dataset regeneration (resolved 2026-09-16)
 
-Regenerating the f_osc table against the current build surfaced a problem that is
-recorded in `data/safe10/count/FOSC-REGEN-STATUS.md` and **not** yet resolved: the
-ring-only deck and this counter-inclusive deck disagree by up to 2.5x for the
-`can_sel=2` tap selections, with byte-identical subcircuit wiring and identical
-select-pin values. The loop waveform itself is not single-period at those
-settings (rising-edge intervals of 1.2-6.8 ns in one run), so a mean-interval
-frequency depends on the analysis window. `data/safe10/spice/spice_ro.csv` is
-therefore left at revision 2 and this dataset is the authoritative f_osc source
-for the cases it covers.
+Regenerating the f_osc table against the current build surfaced a disagreement
+between the ring-only deck and this counter-inclusive deck of up to 2.5x for the
+`can_sel=2` tap selections. The causes were found and the resolution is recorded
+in `data/safe10/count/FOSC-REGEN-STATUS.md` and
+[`docs/ro-spice-validation.md`](ro-spice-validation.md): a driver bug that
+silently saved a non-existent loop node for half the cases, a window artefact
+from runs sized to a handful of ring periods, and a ring-only extraction defect
+for `can_sel=2`. `data/safe10/spice/spice_ro.csv` is now **revision 3**,
+measured with the counter-inclusive deck (which is monotonic in `can_sel` in
+every corner/canary group) and archived against the current build; the ring-only
+sweep refuses to run without `--force-ring-only`. The four multi-mode matched-RO
+configurations are recorded as multi-mode rather than averaged into a single
+frequency, and `analyse_ro_intervals.py` now reports `unclassified` instead of
+`single_mode` when no interval cluster is found.
 
 ## Findings that outlive the acceptance gate
 

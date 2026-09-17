@@ -29,8 +29,13 @@ A timing-prediction test vehicle for the IHP SG13G2 open PDK. It contains:
   for 19 cycles; the deliberately delayed DUT is captured much earlier.
 - **Canaries**: two ring-oscillator delay proxies - a generic inverter-line RO and a
   structure-matched RO (looping through delay-bank + full-adder segments like the DUT) -
-  each with a 16-bit ripple edge counter over a configurable window (2^8..2^14 cycles),
-  providing continuous delay telemetry rather than a binary flag.
+  each with a 16-bit ripple edge counter over a configurable window (2^8..2^14 cycles).
+  The window is **one-shot per reset**: `win_done` is cleared only by `rst_n`, so the
+  ring stops when the window closes and the counter holds its value until the next
+  reset. Take one canary sample per reset rather than treating the count as continuous
+  telemetry. The effective gate-open interval is `(window cycles - 3)` external clock
+  periods - the three boot cycles before the configuration commits do not count - i.e.
+  25.3 us at 10 MHz and 5.06 us at 50 MHz for the 2^8 window.
 - **Measurement**: one timed operation per 19-cycle frame, 16-bit error and op counters
   (both saturating), first-error DUT byte capture, serial byte readout with an
   auto-incrementing pointer, a freeze input, and FORCE_ERR/FORCE_CAN DFT bits that make
@@ -86,7 +91,11 @@ check, and the exclusion policy are in
    ripple settling, then read the 16 status bytes: `uio[7:0]`
    is the data byte selected by `uo[3:0]` (auto-incrementing pointer). Byte map:
    0-1 = DUT error count (saturating), 2-3/4-5 = generic/matched RO edge counts
-   (16-bit, wrap mod 65536 -- telemetry, not saturating), 6-7 = op count (saturating),
+   (16-bit, wrap mod 65536 -- telemetry, not saturating), 6-7 = operation count
+   (saturating; it counts *launches*, so completed comparisons are
+   `max(ops_cnt - 1, 0)` and using the raw count as the denominator biases every
+   error rate low; once saturated, the true count is `>= 65535` and no longer
+   recoverable from this byte),
    8 = segment-tap echo `{seg3, seg2, seg1, seg0}`; 9 = status flags
    `{1, mat_ro_dead, gen_ro_dead, err_seen, can_sel[1:0], win_sel[1:0]}`
    (`can_sel` is bits 3:2, `win_sel` is bits 1:0, and bit 7 is 1); 10 = low

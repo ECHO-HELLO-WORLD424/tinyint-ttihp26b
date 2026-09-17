@@ -41,6 +41,14 @@ clock-cycle based. For ordinary measurement use the 10–50 MHz range and check
 telemetry for overflow risk. Boundary values below 10 MHz require a prospectively
 recorded extension and separately validated canary windows.
 
+The canary window is **one-shot per reset**: `win_done` clears only on `rst_n`, so
+the ring runs for `(window cycles − 3)` external clock periods after reset release
+(the three boot cycles before the configuration commits are not counted) and then
+stops for the remainder of the run. With `win_sel=0` that is 253 periods —
+25.3 µs at 10 MHz, 5.06 µs at 50 MHz. The canary sample is therefore taken in the
+first 26 µs of a run that may last seconds; record it as a single sample per
+configuration, not as continuous telemetry, and reset between measurement points.
+
 ## FREEZE interface contract (`ui[7]`)
 
 `FREEZE` is sampled directly by the clock enables of `frame_cnt`, `ops_cnt`,
