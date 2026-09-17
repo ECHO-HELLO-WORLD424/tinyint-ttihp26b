@@ -1,0 +1,10 @@
+corner,canary,can_sel,win_sel,tclk_ns,n_startups,counts,count_min,count_max,count_spread,count_spread_pct,f_mean_mhz,f_spread_pct,statuses
+nom_fast_1p32V_m40C,ro_gen,3,0,20.0,3,2190;2190;2190,2190,2190,0,0.0,432.658,0.0,ok_partial_coverage
+nom_fast_1p32V_m40C,ro_mat,3,0,20.0,3,820;820;820,820,820,0,0.0,161.879,0.0,ok_partial_coverage
+nom_slow_1p08V_125C,ro_gen,3,0,20.0,3,925;925;925,925,925,0,0.0,182.725,0.0,ok_partial_coverage
+nom_slow_1p08V_125C,ro_mat,3,0,20.0,3,346;346;346,346,346,0,0.0,68.373,0.0,ok_partial_coverage
+nom_slow_1p08V_125C,ro_mat,3,0,100.0,1,1730,1730,1730,0,0.0,68.373,0.0,ok_partial_coverage
+nom_typ_1p20V_25C,ro_gen,3,0,20.0,3,1461;1461;1461,1461,1461,0,0.0,288.569,0.0,ok_partial_coverage
+nom_typ_1p20V_25C,ro_gen,3,0,100.0,1,7301,7301,7301,0,0.0,288.569,0.0,ok_partial_coverage
+nom_typ_1p20V_25C,ro_mat,3,0,20.0,3,547;547;547,547,547,0,0.0,107.938,0.0,ok_partial_coverage
+nom_typ_1p20V_25C,ro_mat,3,0,100.0,1,2731,2731,2731,0,0.0,107.938,0.0,ok_partial_coverage
