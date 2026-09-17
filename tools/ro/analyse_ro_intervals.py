@@ -90,6 +90,24 @@ def modes(intervals, bin_pct=2.0, min_share=0.15, min_count=6):
     return sorted(out, key=lambda m: -m["share"])
 
 
+def classify(intervals, min_intervals=4, bin_pct=2.0, min_share=0.15,
+             min_count=6):
+    """Interval-distribution verdict.
+
+    Zero detected clusters means the evidence is insufficient to call the
+    period single-valued - it is *not* the same result as "one mode found".
+    Callers must treat `unclassified` as missing evidence, not as a pass.
+    """
+    if len(intervals) < min_intervals:
+        return "too_few_edges"
+    md = modes(intervals, bin_pct, min_share, min_count)
+    if not md:
+        return "unclassified"
+    if len(md) == 1:
+        return "single_mode"
+    return f"multi_mode({len(md)})"
+
+
 def analyse(path, vdd=1.2, node=None, skip=4):
     names, cols = raw_io.read_raw(path)
     i = pick_node(names, cols, vdd, node)
@@ -117,8 +135,11 @@ def analyse(path, vdd=1.2, node=None, skip=4):
     md = modes(iv)
     out["n_modes"] = len(md)
     out["modes"] = md[:6]
-    out["status"] = ("single_mode" if len(md) <= 1
-                     else f"multi_mode({len(md)})")
+    out["status"] = classify(iv)
+    # `n_modes == 0` with status `unclassified` means "no evidence", never a
+    # single-mode period; `single_mode` requires one detected cluster.
+    out["unclassified"] = out["status"] in ("unclassified", "too_few_edges")
+    out["single_valued"] = out["status"] == "single_mode"
     return out
 
 

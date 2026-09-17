@@ -11,11 +11,19 @@ ngspice lower-cases vector names in the rawfile, so name matching is
 case-insensitive.
 """
 
+import array
 import struct
 import sys
 
 
 def read_raw(path):
+    """Read an ngspice binary rawfile.
+
+    Returns `(varnames, cols)` where each column is a compact `array('d')`.
+    The arrays matter: a 25 us window at a 5-10 ps step is tens of millions of
+    samples, and materialising them as Python floats would cost gigabytes per
+    concurrent analysis (several analyses run at once at the end of a sweep).
+    """
     with open(path, "rb") as fh:
         data = fh.read()
     idx = data.find(b"Binary:\n")
@@ -39,8 +47,12 @@ def read_raw(path):
     if nvars is None or npoints is None:
         raise ValueError("missing No. Variables/Points")
     n = nvars * npoints
-    vals = struct.unpack("<%dd" % n, body[:8 * n])
+    vals = array.array("d")
+    vals.frombytes(body[:8 * n])
+    if sys.byteorder != "little":          # rawfiles are little-endian doubles
+        vals.byteswap()
     cols = [vals[i::nvars] for i in range(nvars)]
+    del vals
     return varnames, cols
 
 

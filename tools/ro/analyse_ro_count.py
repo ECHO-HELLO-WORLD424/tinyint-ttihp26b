@@ -1,27 +1,55 @@
 #!/usr/bin/env python3
-"""Check that the counter-inclusive transient actually counted the ring edges.
+"""Check a counter-inclusive transient against the measurement window it ran in.
 
-Input is one rawfile produced by `run_ro_count_case.py`.  The deck saves the
-loop node, every counter bit (Q0..Q15) and the control pins, so this script can
-answer, without any assumption about the counter's correctness:
+Input is one rawfile produced by `run_ro_count_case.py` (either the
+free-running deck or the `--window` deck).  The deck saves the loop node, every
+counter bit (Q0..Q15) and, in window mode, the `en` and `rst_n` control nets
+through zero-volt sense branches (`sense_en`, `sense_rst_n`), so this script
+can answer, without assuming the counter is correct:
 
-  * the ring frequency from the loop-node crossings;
-  * the counter's final state, decoded as a binary integer;
-  * the number of counter transitions (each stage's negedge is one ripple step,
-    so bit 0's negedges are the increments that reached the system);
-  * whether the decoded count matches the edge count implied by the measured
-    ring period over the observed window.
+  * **where the measurement window is** - from the control waveforms, not from
+    the counter's own first and last transitions;
+  * **how many ring edges the counter was offered** - every qualified rising
+    edge of the loop node after reset release and inside the gate-open
+    interval, including the edges during the loop's stop transient, because
+    those are edges the hardware clocks too;
+  * **what the counter recorded** - all 16 bits, required present and settled,
+    decoded after the ripple has stopped;
+  * **whether every stage was actually exercised** - per-bit expected and
+    observed toggles, first/last post-reset transition time and an explicit
+    `exercised` flag, so an upper stage that never toggled is reported as
+    untested instead of passing a permissive rate check;
+  * **whether a frequency prediction is available** - the interval
+    distribution (coefficient of variation and detected modes) is reported
+    separately from the count, because "counts edges correctly" and "has a
+    stable frequency prediction" are different claims.
 
-A counter that misses ripple steps (a stage that fails to toggle at speed, or
-one that toggles twice) shows up as a decoded count that disagrees with the ring
-frequency, and the per-bit transition counts localise which stage failed.
+Status vocabulary (a single machine-readable `status`, plus the booleans
+`count_ok`, `settled`, `coverage_complete`, `rate_stable`):
+
+  ok                                     counting, coverage and rate all good
+  ok_partial_coverage                    counts correctly; some stage never toggled
+  ok_unstable_rate                       counts correctly; period is not single-valued
+  ok_partial_coverage_unstable_rate      both qualifications
+  mismatch                               decoded count disagrees with the edges
+  unsettled                              a counter bit was still moving at decode time
+  missing_bits                           fewer than 16 counter bits were saved
+  invalid_window                         the control waveforms give no usable window
+  no_oscillation / counter_never_toggled / no_counter_bits_saved
+
+Exit status: 0 when the run is accepted, 2 otherwise.  `--strict` (used by the
+sweeps) additionally requires complete coverage and a stable rate for exit 0;
+without it, `ok_partial_coverage` / `ok_unstable_rate` still exit 0 but are
+never reported as plain `ok`.
 
 Usage:
-  analyse_ro_count.py <rawfile> --vdd 1.2 [--reset-release-ns 2]
-                      [--json out.json]
+  analyse_ro_count.py <rawfile> --vdd 1.2 [--loop-node 'v(x1.n)']
+                      [--en-node sense_en] [--rst-node sense_rst_n]
+                      [--json out.json] [--strict] [--cv-max 0.05]
 """
 
 import argparse
+import bisect
 import json
 import os
 import sys
@@ -30,10 +58,16 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 
 import analyse_spice_raw as raw_io  # noqa: E402
+import analyse_ro_intervals as intervals_mod  # noqa: E402
+
+N_BITS = 16
+COUNT_MODULUS = 1 << N_BITS
 
 
 def find(names, want):
     """Index of the first saved vector whose (lower-cased) name matches."""
+    if want is None:
+        return None
     want = want.lower()
     for i, n in enumerate(names):
         if n.lower() == want:
@@ -44,45 +78,125 @@ def find(names, want):
     return None
 
 
-def negedges(times, volts, vdd, skip=0):
-    """Falling threshold crossings at 50 % VDD with 30/70 % hysteresis."""
-    lo, hi = 0.3 * vdd, 0.7 * vdd
-    return raw_io.crossings(times, volts, lo, hi, rise=False)[skip:]
-
-
 def rise_edges(times, volts, vdd):
     lo, hi = 0.3 * vdd, 0.7 * vdd
     return raw_io.crossings(times, volts, lo, hi, rise=True)
+
+
+def negedges(times, volts, vdd):
+    lo, hi = 0.3 * vdd, 0.7 * vdd
+    return raw_io.crossings(times, volts, lo, hi, rise=False)
+
+
+def all_transitions(times, volts, vdd):
+    return sorted(rise_edges(times, volts, vdd) + negedges(times, volts, vdd))
 
 
 def bit_state(v, vdd):
     return 1 if v > 0.5 * vdd else 0
 
 
-def decode(times, bits, vdd, t):
+def settle_time(times, volts, vdd):
+    """10-90 % transition duration of a logic net (0 if it never switches).
+
+    Only sample pairs that span the full 10-90 % band are measured, so the
+    duration is the edge itself and never the width of a pulse.
+    """
+    lo, hi = 0.1 * vdd, 0.9 * vdd
+    durs = []
+    for i in range(1, len(volts)):
+        a, b = volts[i - 1], volts[i]
+        dt = times[i] - times[i - 1]
+        if dt <= 0:
+            continue
+        if a < lo and b > hi:
+            t_lo = times[i - 1] + (lo - a) * dt / (b - a)
+            t_hi = times[i - 1] + (hi - a) * dt / (b - a)
+            durs.append(t_hi - t_lo)
+        elif a > hi and b < lo:
+            t_hi = times[i - 1] + (hi - a) * dt / (b - a)
+            t_lo = times[i - 1] + (lo - a) * dt / (b - a)
+            durs.append(t_lo - t_hi)
+    return (sum(durs) / len(durs)) if durs else 0.0
+
+
+def decode(times, cols, bits, vdd, t):
     """Counter value at time `t` from the saved bit waveforms."""
+    i = max(0, bisect.bisect_right(times, t) - 1)
     val = 0
-    for b, (ts, vs) in sorted(bits.items()):
-        # last sample at or before t
-        i = 0
-        for j, x in enumerate(ts):
-            if x > t:
-                break
-            i = j
-        if bit_state(vs[i], vdd):
+    for b, idx in sorted(bits.items()):
+        if bit_state(cols[idx][i], vdd):
             val |= 1 << b
     return val
 
 
-def analyse(raw, vdd=1.2, reset_release_ns=2.0, edge_skip=4,
-            loop_node=None):
+def value_at(times, volts, t):
+    return volts[max(0, bisect.bisect_right(times, t) - 1)]
+
+
+def analyse(raw, vdd=1.2, loop_node=None, en_node="sense_en",
+            rst_node="sense_rst_n", decode_guard_ns=1.0, cv_max=0.05,
+            tol_edges=1, dump_edges=False):
     names, cols = raw_io.read_raw(raw)
     times = cols[0]
     t_end = times[-1]
-    out = dict(raw=os.path.basename(raw), vdd=vdd, t_end_ns=t_end * 1e9,
-               n_vars=len(names))
-    # The loop node is named by the caller when it is known (the extraction
-    # reports it); otherwise it is the fastest-switching node in the rawfile.
+    t_start = times[0]
+    out = dict(raw=os.path.basename(raw), vdd=vdd, n_vars=len(names),
+               t_start_ns=t_start * 1e9, t_end_ns=t_end * 1e9)
+
+    # ---------------------------------------------------------------- window --
+    i_en = find(names, en_node)
+    i_rst = find(names, rst_node)
+    out["en_vector"] = names[i_en] if i_en is not None else None
+    out["rst_vector"] = names[i_rst] if i_rst is not None else None
+    t_en_rise = t_en_fall = t_rst_rise = None
+    en_edge_ns = rst_edge_ns = None
+    if i_en is not None:
+        r = rise_edges(times, cols[i_en], vdd)
+        f = negedges(times, cols[i_en], vdd)
+        t_en_rise = r[0] if r else None
+        t_en_fall = f[-1] if f else None
+        en_edge_ns = settle_time(times, cols[i_en], vdd) * 1e9
+    n_rst_releases = 0
+    if i_rst is not None:
+        r = rise_edges(times, cols[i_rst], vdd)
+        # The counter's reset is asynchronous: a reset asserted *during* the
+        # window clears the count and counting restarts at the last release, so
+        # the counting window opens at the last release, not the first.
+        n_rst_releases = len(r)
+        t_rst_rise = r[-1] if r else None
+        rst_edge_ns = settle_time(times, cols[i_rst], vdd) * 1e9
+    out["n_reset_releases"] = n_rst_releases
+    out["t_en_rise_ns"] = None if t_en_rise is None else t_en_rise * 1e9
+    out["t_en_fall_ns"] = None if t_en_fall is None else t_en_fall * 1e9
+    out["t_rst_release_ns"] = None if t_rst_rise is None else t_rst_rise * 1e9
+    out["en_transition_ns"] = en_edge_ns
+    out["rst_transition_ns"] = rst_edge_ns
+    if t_en_rise is not None and t_en_fall is None:
+        # The gate is still open at the end of the run: that is the legacy
+        # free-running deck's contract, and the window is [rise, end of run].
+        t_en_fall = t_end
+        out["gate_closed_within_run"] = False
+        out["window_mode"] = "open_to_end"
+    else:
+        out["gate_closed_within_run"] = True
+        out["window_mode"] = "closed"
+    if t_en_rise is None or t_en_fall is None:
+        out["status"] = "invalid_window"
+        out["detail"] = ("no usable gate waveform: the rawfile must save the "
+                         "`en` control net (window deck sense branch)")
+        out["count_ok"] = False
+        out["settled"] = False
+        out["coverage_complete"] = False
+        out["rate_stable"] = False
+        return out
+    # Both the gate and the counter's reset must have released before the first
+    # edge the counter can record.
+    t_open = max([x for x in (t_en_rise, t_rst_rise) if x is not None])
+    out["t_count_start_ns"] = t_open * 1e9
+    out["gate_open_ns"] = (t_en_fall - t_en_rise) * 1e9
+
+    # ------------------------------------------------------------ ring edges --
     i_loop = find(names, loop_node) if loop_node else None
     if i_loop is None:
         i_loop = find(names, "_clk")
@@ -90,126 +204,256 @@ def analyse(raw, vdd=1.2, reset_release_ns=2.0, edge_skip=4,
         best, best_sw = None, 0.0
         for i in range(1, len(names)):
             n = names[i].lower()
-            if n.startswith("v(ctl") or n in ("v(sup_vdd)", "v(sup_vss)"):
+            if n.startswith("v(ctl") or n.startswith("v(sense_") or \
+                    n in ("v(sup_vdd)", "v(sup_vss)"):
                 continue
             sw = max(cols[i]) - min(cols[i])
             if sw > best_sw:
                 best, best_sw = i, sw
         if best is None or best_sw < 0.5 * vdd:
-            raise SystemExit(f"no switching node in {raw}")
+            out["status"] = "no_oscillation"
+            out["count_ok"] = False
+            out["settled"] = False
+            out["coverage_complete"] = False
+            out["rate_stable"] = False
+            return out
         i_loop = best
-    loop_name = names[i_loop]
     loop = cols[i_loop]
+    out["loop_node"] = names[i_loop]
     rc = rise_edges(times, loop, vdd)
-    out["loop_node"] = loop_name
-    out["n_rise"] = len(rc)
-    if len(rc) < edge_skip + 3:
+    out["n_rise_total"] = len(rc)
+    if dump_edges:
+        # Compact, archivable form of the waveform evidence: the edge times the
+        # counter was offered, at 1 ps resolution.  Together with the per-bit
+        # transition times below, this is what the count is re-derived from.
+        out["loop_rising_edges_ns"] = [round(x * 1e9, 3) for x in rc]
+    # Every rising edge the counter is offered: after the window opens and up
+    # to the end of the run (the loop's stop transient still clocks the
+    # counter, so stopping the count at the gate edge would undercount).
+    offered = [x for x in rc if x > t_open + 1e-15]
+    out["n_rise_offered"] = len(offered)
+    # Edges that happened before the counter could record them (gate still
+    # closed, or reset still asserted): reported so a run that starts mid-ring
+    # cannot silently look like a clean window.
+    out["pre_window_edges"] = len([x for x in rc if x <= t_open + 1e-15])
+    if len(offered) < 3:
         out["status"] = "no_oscillation"
+        out["detail"] = "fewer than three ring edges after the window opened"
+        out["count_ok"] = False
+        out["settled"] = False
+        out["coverage_complete"] = False
+        out["rate_stable"] = False
         return out
-    use = rc[edge_skip:]
-    t_first, t_last = use[0], use[-1]
-    periods = [b - a for a, b in zip(use, use[1:])]
-    ordered = sorted(periods)
+    iv = [b - a for a, b in zip(offered, offered[1:])]
+    ordered = sorted(iv)
     med = ordered[len(ordered) // 2]
-    kept = [p for p in periods if 0.5 * med <= p <= 1.5 * med]
-    mean_p = sum(kept) / len(kept)
-    out["period_ns"] = mean_p * 1e9
-    out["f_osc_mhz"] = 1e-6 / mean_p
-    n_edges = len(use) - 1          # full ring periods inside the window
-    out["edge_window_ns"] = (t_last - t_first) * 1e9
-    out["n_window_periods"] = n_edges
-    # counter bits
+    out["period_median_ns"] = med * 1e9
+    out["f_count_mhz"] = (len(offered) - 1) / (offered[-1] - offered[0]) * 1e-6
+    out["count_elapsed_ns"] = (offered[-1] - offered[0]) * 1e9
+    # Boundary uncertainty: the gate edge itself is a threshold crossing with a
+    # finite transition, so the edge count at the boundary is ambiguous by the
+    # number of ring periods that fit in that transition, at least one edge.
+    edge_amb = 1
+    if en_edge_ns and med:
+        edge_amb = max(1, int(en_edge_ns * 1e-9 / med) + 1)
+    out["edge_ambiguity_edges"] = edge_amb
+    out["tol_edges"] = max(tol_edges, edge_amb)
+
+    # Startup vs steady state: the first two ring periods after the gate opens
+    # are startup; the rest is steady state.
+    t_steady = offered[0] + 2 * med
+    steady = [x for x in offered if x >= t_steady]
+    out["steady_state_edges"] = len(steady)
+    out["startup_window_edges"] = len(offered) - len(steady)
+    if len(steady) >= 4:
+        s_iv = [b - a for a, b in zip(steady, steady[1:])]
+        mean = sum(s_iv) / len(s_iv)
+        var = sum((x - mean) ** 2 for x in s_iv) / len(s_iv)
+        out["steady_period_ns"] = mean * 1e9
+        out["steady_f_mhz"] = 1e-6 / mean
+        out["steady_std_over_mean"] = (var ** 0.5) / mean
+        modes = intervals_mod.modes(s_iv)
+        out["steady_n_modes"] = len(modes)
+        out["steady_modes"] = modes[:6]
+        # Zero detected clusters is missing evidence, not a single mode.
+        out["rate_stable"] = bool(modes) and len(modes) == 1 and \
+            out["steady_std_over_mean"] <= cv_max
+        out["rate_detail"] = ("unclassified_insufficient_evidence"
+                              if not modes else
+                              "multi_mode" if len(modes) > 1 else
+                              "cv_above_limit"
+                              if out["steady_std_over_mean"] > cv_max else "ok")
+    else:
+        out["steady_period_ns"] = None
+        out["steady_f_mhz"] = None
+        out["steady_std_over_mean"] = None
+        out["steady_n_modes"] = None
+        out["rate_stable"] = False
+        out["rate_detail"] = "too_few_steady_edges"
+
+    # ---------------------------------------------------------------- counter --
     bits = {}
     for i, n in enumerate(names):
         low = n.lower().strip()
-        for b in range(16):
-            # ngspice names a saved subcircuit node v(x1.q0), but a port is
-            # saved under its own bare name v(q0); accept both.
-            if low in (f"v(q{b})", f"v(x1.q{b})"):
-                bits[b] = (times, cols[i])
-    if not bits:
-        out["status"] = "no_counter_bits_saved"
-        return out
+        for b in range(N_BITS):
+            if low in (f"v(q{b})", f"v(x1.q{b})", f"v(sense_q{b})"):
+                bits[b] = i
     out["n_bits_saved"] = len(bits)
-    # The deck runs the ring for a fixed simulated time and never stops it, so
-    # the counter keeps rippling to the end of the run: "all bits quiet" is NOT
-    # the right check.  The counter is instead read the way the chip reads it,
-    # after the clock stops: decode every bit just after bit 0's last falling
-    # edge, which is a moment the ripple has settled.
-    quiet_from = t_end - 0.05 * (t_end - times[0])
-    per_bit = {}
-    for b, (ts, vs) in sorted(bits.items()):
-        neg = negedges(ts, vs, vdd)
-        pos = rise_edges(ts, vs, vdd)
-        last = max([x for x in neg + pos], default=None)
-        per_bit[b] = dict(negedges=len(neg), riseedges=len(pos),
-                          last_transition_ns=None if last is None
-                          else last * 1e9)
-    out["per_bit"] = per_bit
-
-    # Counting window: bit 0 is clocked by the ring itself, so its first
-    # transition ends the startup and its last transition is the last count.
-    q0_neg = [x for x in negedges(*bits[0], vdd=vdd) if x > 0]
-    if not q0_neg:
-        out["status"] = "counter_never_toggled"
+    if len(bits) < N_BITS:
+        out["status"] = "missing_bits"
+        out["detail"] = f"saved {sorted(bits)}; all {N_BITS} bits are required"
+        out["count_ok"] = False
+        out["settled"] = False
+        out["coverage_complete"] = False
         return out
-    t_count0, t_count1 = q0_neg[0], q0_neg[-1]
-    # Sample a little after bit 0's last edge: later stages ripple after it
-    # (bit 15's propagation is bounded by the ripple chain, ~100 ps here).
-    t_sample = min(t_count1 + 0.5e-9, t_end)
-    final = decode(times, bits, vdd, t_sample)
-    window_edges = len([x for x in rc if t_count0 <= x <= t_count1]) - 1
+
+    # Settle: the ripple must be quiet before the decode point.  The decode
+    # point is the end of the run minus a guard, i.e. the earliest moment the
+    # protocol's readout could sample.
+    t_decode = t_end - decode_guard_ns * 1e-9
+    per_bit = {}
+    last_any = None
+    for b in sorted(bits):
+        ts, vs = times, cols[bits[b]]
+        neg = [x for x in negedges(ts, vs, vdd) if x > t_open + 1e-15]
+        pos = [x for x in rise_edges(ts, vs, vdd) if x > t_open + 1e-15]
+        trans = sorted(neg + pos)
+        last = trans[-1] if trans else None
+        if last is not None and (last_any is None or last > last_any):
+            last_any = last
+        lvl = value_at(times, vs, t_decode)
+        per_bit[b] = dict(
+            toggles=len(trans),
+            negedges=len(neg), riseedges=len(pos),
+            first_transition_ns=None if not trans else trans[0] * 1e9,
+            last_transition_ns=None if last is None else last * 1e9,
+            level=bit_state(lvl, vdd),
+            level_v=round(lvl, 4),
+            settled=bool(last is None or last <= t_decode),
+            exercised=bool(trans))
+    out["per_bit"] = per_bit
+    if dump_edges:
+        # Archived waveform evidence: every counter bit transition, 1 ps
+        # resolution, so the decoded count and the ripple rates can be
+        # re-derived without the (large) rawfile.
+        out["bit_transition_times_ns"] = {
+            str(b): [round(x * 1e9, 3) for x in
+                     sorted(negedges(times, cols[bits[b]], vdd) +
+                            rise_edges(times, cols[bits[b]], vdd))]
+            for b in sorted(bits)}
+    out["last_bit_transition_ns"] = None if last_any is None else last_any * 1e9
+    out["decode_time_ns"] = t_decode * 1e9
+    out["unsettled_bits"] = [b for b in sorted(bits)
+                             if not per_bit[b]["settled"]]
+    out["unexercised_bits"] = [b for b in sorted(bits)
+                               if not per_bit[b]["exercised"]]
+    # `settled` is about motion at the decode point only; a stage that never
+    # toggled at all is a coverage finding, reported separately.
+    out["settled"] = not out["unsettled_bits"]
+    final = decode(times, cols, bits, vdd, t_decode)
     out["counter_final"] = final
     out["counter_final_hex"] = hex(final)
-    out["sample_time_ns"] = t_sample * 1e9
-    out["count_window_ns"] = (t_count1 - t_count0) * 1e9
-    out["q0_negedges"] = len(q0_neg)
-    out["ring_edges_in_count_window"] = window_edges
-    # A 16-bit ripple counter wraps at 65536; the dataset records `sat_win*`
-    # overflow flags for that, and this deck runs for far fewer edges.
-    out["counter_mod_65536"] = final % 65536
-    out["count_error_edges"] = final - window_edges
-    # Bit 0's edges are the ring's own edges, so a counter that tracks the ring
-    # lands within one edge of the independently measured edge count.  The
-    # tolerance is one edge because the window is bounded by two bit-0 edges.
-    out["count_matches_ring_edges"] = abs(final - window_edges) <= 1
-    out["count_ratio"] = (final / window_edges) if window_edges else None
-    out["expected_periods_in_window"] = int((t_count1 - t_count0) / mean_p)
-    out["count_matches_period_estimate"] = abs(
-        final - out["expected_periods_in_window"]) <= 2
-    # The stages must be a binary ripple of bit 0: stage b toggles once per
-    # 2**b bit-0 periods.  A missed or doubled ripple in any stage breaks this.
-    ripple_ok = True
+    out["counter_final_settle_guard_ns"] = decode_guard_ns
+
+    # -------------------------------------------------------------- coverage --
+    # Stage b toggles once per 2**b ring edges; the expected count comes from
+    # the independently observed edge count, not from the counter itself.
+    n_edges = len(offered)
+    cov = {}
     for b in sorted(bits):
-        if b == 0:
-            continue
-        expected = len(q0_neg) / (2.0 ** b)
-        got = per_bit[b]["negedges"]
-        if abs(got - expected) > 1.0:
-            ripple_ok = False
-    out["ripple_stage_rates_ok"] = ripple_ok
-    out["status"] = ("ok" if final > 0 and out["count_matches_ring_edges"]
-                     and ripple_ok else "mismatch")
+        exp = n_edges // (2 ** b)
+        got = per_bit[b]["toggles"]
+        cov[b] = dict(expected=exp, observed=got, exercised=per_bit[b]["exercised"],
+                      rate_ok=abs(got - exp) <= out["tol_edges"] + 1,
+                      last_transition_ns=per_bit[b]["last_transition_ns"])
+    out["per_bit_coverage"] = cov
+    # A stage only counts as covered when it was actually exercised *and* ran at
+    # its binary-carry rate: zero activity at an upper stage is untested, not a
+    # pass.
+    out["coverage_complete"] = all(c["rate_ok"] and c["exercised"]
+                                   for c in cov.values())
+    out["coverage_detail"] = (
+        "all stages exercised and at rate" if out["coverage_complete"] else
+        "unexercised:" + ",".join(str(b) for b in out["unexercised_bits"])
+        if out["unexercised_bits"] else
+        "rate_error:" + ",".join(str(b) for b, c in cov.items()
+                                 if not c["rate_ok"]))
+
+    # ------------------------------------------------------------- verdicts --
+    out["ring_edges_in_window"] = n_edges
+    out["counter_mod_65536"] = final % COUNT_MODULUS
+    out["count_error_edges"] = final - n_edges
+    out["count_ok"] = abs(final - n_edges) <= out["tol_edges"]
+    # The period-estimate comparison is retained as a second, independent view,
+    # but it can only be evaluated when a single period exists.
+    if out.get("steady_f_mhz"):
+        exp_periods = int((offered[-1] - offered[0]) /
+                          (out["steady_period_ns"] * 1e-9))
+        out["expected_periods_in_window"] = exp_periods
+        out["count_matches_period_estimate"] = \
+            abs(final - exp_periods) <= out["tol_edges"]
+    else:
+        out["expected_periods_in_window"] = None
+        out["count_matches_period_estimate"] = None
+    out["f_count_from_counter_mhz"] = (
+        final / ((offered[-1] - offered[0]) * 1e-6))
+
+    # A decode taken while the ripple is still moving is invalid, so
+    # "unsettled" takes priority over the count comparison: reporting a
+    # mismatch there would blame the counter for an analysis-window error.
+    if out["unsettled_bits"]:
+        out["status"] = "unsettled"
+    elif not out["count_ok"]:
+        out["status"] = "mismatch"
+    elif out["coverage_complete"] and out["rate_stable"]:
+        out["status"] = "ok"
+    elif out["coverage_complete"]:
+        out["status"] = "ok_unstable_rate"
+    elif out["rate_stable"]:
+        out["status"] = "ok_partial_coverage"
+    else:
+        out["status"] = "ok_partial_coverage_unstable_rate"
     return out
+
+
+def accepted(result, strict=False):
+    """Acceptance rule shared by this tool and the sweeps."""
+    if not result.get("count_ok"):
+        return False
+    if result.get("unsettled_bits"):
+        return False
+    if strict and not (result.get("coverage_complete") and
+                       result.get("rate_stable")):
+        return False
+    return True
 
 
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("raw")
     ap.add_argument("--vdd", type=float, default=1.2)
-    ap.add_argument("--reset-release-ns", type=float, default=2.0)
-    ap.add_argument("--edge-skip", type=int, default=4)
     ap.add_argument("--loop-node", default=None,
                     help="rawfile vector of the ring loop node, e.g. "
                          "'v(x1._1347_\\/clk)'")
+    ap.add_argument("--en-node", default="sense_en")
+    ap.add_argument("--rst-node", default="sense_rst_n")
+    ap.add_argument("--decode-guard-ns", type=float, default=1.0)
+    ap.add_argument("--cv-max", type=float, default=0.05,
+                    help="largest steady-state interval CV still called stable")
+    ap.add_argument("--strict", action="store_true",
+                    help="exit 0 only for status 'ok'")
+    ap.add_argument("--dump-edges", action="store_true",
+                    help="also write the edge/transition time lists")
     ap.add_argument("--json", default=None)
     a = ap.parse_args()
-    r = analyse(a.raw, a.vdd, a.reset_release_ns, a.edge_skip, a.loop_node)
+    r = analyse(a.raw, a.vdd, a.loop_node, a.en_node, a.rst_node,
+                a.decode_guard_ns, a.cv_max, dump_edges=a.dump_edges)
     print(json.dumps(r, indent=1))
     if a.json:
         with open(a.json, "w") as fh:
             json.dump(r, fh, indent=1)
+    return 0 if accepted(r, a.strict) else 2
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())
