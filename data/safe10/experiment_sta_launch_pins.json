@@ -1,0 +1,251 @@
+{
+ "description": "Runtime pattern-state launch pins for the experiment-specific case-analyzed STA, resolved structurally by tools/sta/experiment_sta.tcl (DUT full-adder operand fan-in cone minus the case-analyzed static-configuration registers), plus the restricted-vs-unrestricted coverage cross-check and the sensitizing-transition check for the reported critical paths.",
+ "provenance": {
+  "run_id": "35034979531",
+  "git_commit": "0a7cd5edd8cea7a45085898f84db403c93b25af0",
+  "librelane_image": "ghcr.io/librelane/librelane:3.0.5",
+  "pdk_rev": "c4b8b4e5e7a05f375cca3815d51b3a37721fbf5c",
+  "netlist": "artifacts/run-35034979531/nl/tt_um_echoworld424_tpv.nl.v",
+  "netlist_sha256": "e889762e1fffa169edb4342cc126660965f239c851552ebfc2e57f8d7e11c177",
+  "spef": "artifacts/run-35034979531/spef/nom/tt_um_echoworld424_tpv.nom.spef",
+  "spef_sha256": "6675178aedae05319564d33ea05debf40a491f925f7683aa2bd6f1e9eee8384d",
+  "sta_script": "tools/sta/experiment_sta.tcl",
+  "sta_script_sha256": "d0e318f807aec4e3bde036f729fd5a30c4068ac70009eb46b61652b9ae9acf5e",
+  "corners": [
+   "nom_fast_1p32V_m40C",
+   "nom_typ_1p20V_25C",
+   "nom_slow_1p08V_125C"
+  ]
+ },
+ "expected_launch_pins": 18,
+ "resolved_launch_pins": 18,
+ "synthesis_named_q_nets": 10,
+ "synthesis_renamed_q_nets": 8,
+ "static_config_registers_in_operand_cone": 2,
+ "operand_seed_nets": 32,
+ "assertions": [
+  "32 DUT full-adder operand nets (16 bits x a/b)",
+  "18 launch pins = 16 LFSR + 2 index flops of src/tpv_pattern_gen.v",
+  "launch pin list unique, every pin a sequential-cell output",
+  "structural roles: single 16-node shift chain (head fed by feedback taps lfsr10/12/13/15 = x^16+x^14+x^13+x^11+1) plus a 2-bit counter (idx0 has no state predecessor, idx1 depends only on idx0)",
+  "every surviving u_pat.lfsr[N]/u_pat.idx[N] net name agrees with the structurally assigned role",
+  "17 result_reg capture endpoints (unchanged)"
+ ],
+ "sensitizing_transition_check": {
+  "method": "operand transition (prev -> cur) at the frame-boundary launch edge, re-derived from tools/common.py's RTL decode model and checked against the launch register's operand fan-out",
+  "launch_edge": "rising clk edge at frame_cnt==FRAME_LAST with load=1; pattern registers advance, capture_pending is set",
+  "capture_edge": "falling clk edge immediately after that rising edge (clock HIGH time = measurement aperture)",
+  "n_ops_searched": 64,
+  "checked_rows": 72,
+  "sensitized_rows": 72,
+  "unsensitized_rows": [],
+  "per_startpoint_role": {
+   "lfsr13": {
+    "rows": 24,
+    "launch_operand_bits": [
+     "a[0]",
+     "a[14]",
+     "b[7]",
+     "b[9]"
+    ],
+    "max_carry_chain_stages": 12,
+    "endpoints": {
+     "result_reg[16]": 24
+    },
+    "launched_bits_that_change": {
+     "a[0]": 24,
+     "a[14]": 24,
+     "b[7]": 24,
+     "b[9]": 24
+    }
+   },
+   "idx0": {
+    "rows": 48,
+    "launch_operand_bits": [
+     "b[10]",
+     "b[11]",
+     "b[12]",
+     "b[13]",
+     "b[14]",
+     "b[15]",
+     "b[1]",
+     "b[2]",
+     "b[3]",
+     "b[4]",
+     "b[5]",
+     "b[6]",
+     "b[7]",
+     "b[8]",
+     "b[9]",
+     "cin"
+    ],
+    "max_carry_chain_stages": 17,
+    "endpoints": {
+     "result_reg[16]": 24,
+     "result_reg[0]": 24
+    },
+    "launched_bits_that_change": {
+     "b[15]": 24,
+     "cin": 24,
+     "a[11]": 24,
+     "a[15]": 24,
+     "a[3]": 24,
+     "a[7]": 24,
+     "b[0]": 24,
+     "b[12]": 24,
+     "b[4]": 24,
+     "b[8]": 24
+    }
+   }
+  }
+ },
+ "unrestricted_capture_path_classes": {
+  "runtime_state": {
+   "cases": 72,
+   "startpoints": {
+    "_1380_(_0042_)": 24,
+    "_1383_(u_pat.idx[0])": 48
+   }
+  },
+  "control": {
+   "cases": 24,
+   "startpoints": {
+    "_1334_(capture_pending)": 24
+   }
+  }
+ },
+ "launch_pins": [
+  {
+   "pin": "_1367_/Q",
+   "role": "lfsr0",
+   "q_net": "_0036_",
+   "state_predecessors": 4,
+   "instance": "_1367_"
+  },
+  {
+   "pin": "_1368_/Q",
+   "role": "lfsr1",
+   "q_net": "u_pat.lfsr[1]",
+   "state_predecessors": 1,
+   "instance": "_1368_"
+  },
+  {
+   "pin": "_1369_/Q",
+   "role": "lfsr2",
+   "q_net": "u_pat.lfsr[2]",
+   "state_predecessors": 1,
+   "instance": "_1369_"
+  },
+  {
+   "pin": "_1370_/Q",
+   "role": "lfsr3",
+   "q_net": "u_pat.lfsr[3]",
+   "state_predecessors": 1,
+   "instance": "_1370_"
+  },
+  {
+   "pin": "_1371_/Q",
+   "role": "lfsr4",
+   "q_net": "u_pat.lfsr[4]",
+   "state_predecessors": 1,
+   "instance": "_1371_"
+  },
+  {
+   "pin": "_1372_/Q",
+   "role": "lfsr5",
+   "q_net": "_0037_",
+   "state_predecessors": 1,
+   "instance": "_1372_"
+  },
+  {
+   "pin": "_1373_/Q",
+   "role": "lfsr6",
+   "q_net": "_0038_",
+   "state_predecessors": 1,
+   "instance": "_1373_"
+  },
+  {
+   "pin": "_1374_/Q",
+   "role": "lfsr7",
+   "q_net": "_0039_",
+   "state_predecessors": 1,
+   "instance": "_1374_"
+  },
+  {
+   "pin": "_1375_/Q",
+   "role": "lfsr8",
+   "q_net": "u_pat.lfsr[8]",
+   "state_predecessors": 1,
+   "instance": "_1375_"
+  },
+  {
+   "pin": "_1376_/Q",
+   "role": "lfsr9",
+   "q_net": "u_pat.lfsr[9]",
+   "state_predecessors": 1,
+   "instance": "_1376_"
+  },
+  {
+   "pin": "_1377_/Q",
+   "role": "lfsr10",
+   "q_net": "_0040_",
+   "state_predecessors": 1,
+   "instance": "_1377_"
+  },
+  {
+   "pin": "_1378_/Q",
+   "role": "lfsr11",
+   "q_net": "_0041_",
+   "state_predecessors": 1,
+   "instance": "_1378_"
+  },
+  {
+   "pin": "_1379_/Q",
+   "role": "lfsr12",
+   "q_net": "u_pat.lfsr[12]",
+   "state_predecessors": 1,
+   "instance": "_1379_"
+  },
+  {
+   "pin": "_1380_/Q",
+   "role": "lfsr13",
+   "q_net": "_0042_",
+   "state_predecessors": 1,
+   "instance": "_1380_"
+  },
+  {
+   "pin": "_1381_/Q",
+   "role": "lfsr14",
+   "q_net": "u_pat.lfsr[14]",
+   "state_predecessors": 1,
+   "instance": "_1381_"
+  },
+  {
+   "pin": "_1382_/Q",
+   "role": "lfsr15",
+   "q_net": "_0043_",
+   "state_predecessors": 1,
+   "instance": "_1382_"
+  },
+  {
+   "pin": "_1383_/Q",
+   "role": "idx0",
+   "q_net": "u_pat.idx[0]",
+   "state_predecessors": 0,
+   "instance": "_1383_"
+  },
+  {
+   "pin": "_1384_/Q",
+   "role": "idx1",
+   "q_net": "u_pat.idx[1]",
+   "state_predecessors": 1,
+   "instance": "_1384_"
+  }
+ ],
+ "per_corner_counts": {
+  "nom_fast_1p32V_m40C": 18,
+  "nom_typ_1p20V_25C": 18,
+  "nom_slow_1p08V_125C": 18
+ },
+ "global_worse_than_r2r_cases": []
+}

@@ -133,6 +133,15 @@ SEG_CONFIGS = [
 PATTERNS = [0, 1, 2, 3]  # 0=PRBS 1=WORST 2=ALT 3=HOLD
 PATTERN_NAMES = ["prbs", "worst", "alt", "hold"]
 
+# Static configuration state: the registers the experiment-STA case loop drives
+# to constants (cfg[15:0]; Yosys preserves cfg[10]/cfg[11] as can_sel[1:0]).
+# They are registers, but not runtime state: they are constant for the whole
+# measurement, so they can never launch a runtime-sensitizable path.
+STATIC_CONFIG_NETS = (
+    [f"cfg[{b}]" for b in range(16) if b not in (10, 11)]
+    + ["can_sel[0]", "can_sel[1]"]
+)
+
 # Canary window sizes (win_sel -> number of clk cycles in the window).
 # win_cnt counts 0..thresh and freezes win_done at the thresh+1-th enabled edge,
 # so the effective window is thresh+1 cycles.
@@ -189,6 +198,52 @@ def pattern_vectors(sel, n_ops=8):
             idx = (idx + 1) & 3
     return ops
 
+def pattern_states(sel, n_ops=8):
+    """The pattern-generator register state during each applied operation.
+
+    Entry k is (lfsr_reg, idx) as the RTL holds it while operation k's operands
+    are being captured, i.e. the state loaded at the frame-boundary launch edge
+    that opened that operation. Register state for op k is A_{k+1} and its
+    operands are decode(A_{k+1}); the preceding launch edge moved A_k -> A_{k+1}.
+    """
+    lfsr = lfsr_next(0xACE1)
+    idx = 1 if sel in (1, 2) else 0
+    states = []
+    for _ in range(n_ops):
+        states.append((lfsr, idx))
+        lfsr = lfsr_next(lfsr)
+        if sel in (1, 2):
+            idx = (idx + 1) & 3
+    return states
+
+def operand_bit_influence(sel, lfsr_reg, idx):
+    """Which operand bits a launch register bit can move in this op.
+
+    Returns {launch_bit_name: sorted [operand_bit_name, ...]} where launch bit
+    names are `lfsr[j]` / `idx[j]` and operand bit names are `a[k]`, `b[k]`,
+    `cin`. Computed by flipping one register bit at a time and re-decoding, so
+    it is exact for the RTL decode (including the PRBS feedback taps and the
+    idx-selected WORST/ALT constants).
+    """
+    base = decode_operands(sel, lfsr_reg, idx)
+    names = ["a[%d]" % i for i in range(16)] + \
+            ["b[%d]" % i for i in range(16)] + ["cin"]
+
+    def diff(other):
+        vals = list(other[0:2]) + [other[2]]
+        bits = [(vals[0] >> i) & 1 for i in range(16)] + \
+               [(vals[1] >> i) & 1 for i in range(16)] + [vals[2]]
+        base_bits = [(base[0] >> i) & 1 for i in range(16)] + \
+                    [(base[1] >> i) & 1 for i in range(16)] + [base[2]]
+        return sorted(n for n, x, y in zip(names, bits, base_bits) if x != y)
+
+    out = {}
+    for j in range(16):
+        out[f"lfsr[{j}]"] = diff(decode_operands(sel, lfsr_reg ^ (1 << j), idx))
+    for j in range(2):
+        out[f"idx[{j}]"] = diff(decode_operands(sel, lfsr_reg, idx ^ (1 << j)))
+    return out
+
 # --- Carry-chain sensitization ------------------------------------------------
 
 def carry_source_bit(a, b, cin, k):
@@ -225,6 +280,42 @@ def sensitizing_vector(sel, endpoint_bit, n_ops=64):
         if L > best_len:
             best, best_len = (a, b, cin), L
     return best, best_len
+
+def sensitizing_transition(sel, endpoint_bit, n_ops=64):
+    """Longest carry chain to `endpoint_bit` together with the operand
+    transition that exercises it.
+
+    A single long-carry vector is not sufficient evidence: the DUT operand
+    vector applied during the capture aperture is the combinational decode of
+    the pattern state, so a vector change at the launch (frame-boundary rising)
+    edge is what drives the carry chain. Operands are stable for the whole
+    frame; the frame-boundary rising edge both loads the new pattern state and
+    sets `capture_pending`, and the one-shot capture is the immediately
+    following falling edge (clock HIGH time = the measurement aperture).
+
+    Returns dict(prev, cur, chain_stages, op_index, changed_bits) where
+      prev/cur      : (a, b, cin) applied one operation earlier / at this op
+      op_index      : index of `cur` in the applied-operand sequence (>=1)
+      changed_bits  : list of "a[k]"/"b[k]"/"cin" that differ between them
+    Only operations whose operand vector actually changes are considered.
+    """
+    ops = pattern_vectors(sel, n_ops)
+    best = None
+    for k in range(1, len(ops)):
+        prev, cur = ops[k - 1], ops[k]
+        if prev == cur:
+            continue
+        L = carry_chain_length(cur[0], cur[1], cur[2], endpoint_bit)
+        if best is None or L > best["chain_stages"]:
+            changed = [f"a[{i}]" for i in range(16)
+                       if ((prev[0] >> i) & 1) != ((cur[0] >> i) & 1)]
+            changed += [f"b[{i}]" for i in range(16)
+                        if ((prev[1] >> i) & 1) != ((cur[1] >> i) & 1)]
+            if prev[2] != cur[2]:
+                changed.append("cin")
+            best = {"prev": prev, "cur": cur, "chain_stages": L,
+                    "op_index": k, "changed_bits": changed}
+    return best
 
 # --- STA report parsing -------------------------------------------------------
 

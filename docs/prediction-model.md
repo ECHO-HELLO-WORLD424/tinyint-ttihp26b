@@ -40,7 +40,11 @@ part of the uncertainty; a board-pin measurement is not an internal die probe.
 Do not silently calibrate away an unmeasured duty-cycle error.
 
 STA case-analyzes static configuration and reports runtime pattern-state paths
-to all 17 capture flops. The global signoff path is not substituted for these
+to all 17 capture flops, launched from all 18 pattern-generator state registers
+(16 LFSR bits + 2 index flops), resolved structurally from the DUT operand cone
+rather than by net name — see
+[experiment-sta-launch-coverage.md](experiment-sta-launch-coverage.md). The
+global signoff path is not substituted for these
 paths. `control_slack_ns` reports the worst other register endpoint for each
 case; it must remain positive throughout the claimed operating envelope.
 `hold` has no runtime path; its prediction remains empty rather than zero.
