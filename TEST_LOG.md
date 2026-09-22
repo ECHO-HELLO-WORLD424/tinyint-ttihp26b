@@ -954,3 +954,109 @@ whitespace errors, no unfinished result entries, valid release-script syntax,
 valid Python, independent DRC enabled in the merged config, zero values for all
 required physical violation metrics, and every required submission view
 present and nonempty.
+
+## Cycle-peak post-layout power
+
+### P05 — Per-window activity extraction, VCD slicing, and OpenSTA peak sweep
+
+```sh
+docker exec charming_golick bash -lc \
+  'source /ttsetup/venv/bin/activate && \
+   cd /workspaces/tinyint-ttihp26b && \
+   PDK_ROOT=/home/vscode/ttsetup/pdk/ciel/ihp-sg13g2/versions/c4b8b4e5e7a05f375cca3815d51b3a37721fbf5c \
+   sh synthesis/run_peak_power.sh'
+```
+
+Purpose: extend the whole-trace average flow (P04) with a cycle-peak measurement.
+`synthesis/peak_activity.py` bins every net transition of each gate-level mode
+VCD into 20 ns windows, ranks windows by the nominal-SPEF capacitance-weighted
+switching proxy, and emits a self-contained VCD slice for the top 32 windows.
+`synthesis/peak_power.tcl` reports each slice through the routed netlist and
+nominal SPEF using the same OpenSTA engine, and `synthesis/analyze_peak.py`
+aggregates the per-mode average, peak, and peak/average ratio. The bundled
+OpenSTA only supports `read_vcd [-scope]`, so the time window is applied by
+slicing the VCD.
+
+Result: PASS. Every one of the 128 measured windows (32 per mode) annotated all
+3,218 pins with zero unannotated pins. All four architecture modes peak in the
+same cycle (window 647, 12.94-12.96 us). Nominal cycle-average peak power was
+565.94 uW conventional, 592.52 uW dynamic-8, 610.31 uW dynamic-12, and
+621.79 uW dynamic-16, against whole-trace averages of 386.90, 380.92, 382.82,
+and 388.01 uW (peak/average 1.46-1.60). Slicing was verified deterministic
+(byte-identical slices and identical power at top-1, top-32, and top-128), and a
+top-128 sweep of dynamic-16 found no higher peak than the 32 highest-activity
+windows. Unlike the whole-trace average, the peak does not favor the dynamic
+modes: the extra switching is combinational and grows with the active boundary.
+
+### P06 — Peak-flow regression and documentation check
+
+```sh
+docker exec charming_golick bash -lc \
+  'source /ttsetup/venv/bin/activate && \
+   cd /workspaces/tinyint-ttihp26b && \
+   python -m py_compile synthesis/peak_activity.py synthesis/analyze_peak.py && \
+   sh -n synthesis/run_peak_power.sh && \
+   test -s test/sim_build/peak/peak_summary.csv'
+```
+
+Purpose: confirm the new Python tools compile, the release orchestrator has valid
+shell syntax, and the peak summary was produced.
+
+Result: PASS. Both Python modules compiled, `sh -n` accepted the driver, and
+`peak_summary.csv` contains the four-mode peak table.
+
+## Maximum operating frequency (Fmax)
+
+### F01 — Slow-corner sweep smoke test
+
+```sh
+cd ~/tinyint-ttihp26b && source ~/venvs/openlane/bin/activate && \
+LIBRELANE_IMAGE=ghcr.io/librelane/librelane:3.0.8 \
+PDK_ROOT=/home/obooky/.ciel \
+CORNERS=nom_slow_1p08V_125C CLK_STOP=12 \
+  sh synthesis/run_fmax_sweep.sh
+```
+
+Purpose: validate the new OpenSTA period-sweep flow on one corner and confirm the
+20 ns point reproduces the released timing metrics. `synthesis/fmax_sweep.tcl`
+reads the routed netlist, nominal SPEF, and final SDC once, then redefines
+`create_clock clk` at each candidate period and re-applies the released
+transition, uncertainty, and propagated-clock settings. `run_fmax_sweep.sh`
+brackets the setup pass/fail crossing with a coarse scan and refines it by binary
+search. Two defects were fixed before this run: `PDK_ROOT` must be the directory
+containing `ihp-sg13g2` (the first attempt doubled that path component in the
+liberty path), and standalone OpenSTA 2.7.0 has no `update_timing` command, so the
+explicit call was removed and the automatic re-analysis on slack query is relied
+on.
+
+Result: PASS. Slow-corner setup slack at 20 ns was +6.8725 ns and hold slack was
++0.6367 ns, identical to `runs/wokwi/final` metrics. The sweep reported Fmax =
+76.19 MHz (period_fail = 13.125 ns).
+
+### F02 — Three-corner Fmax sweep
+
+```sh
+cd ~/tinyint-ttihp26b && source ~/venvs/openlane/bin/activate && \
+LIBRELANE_IMAGE=ghcr.io/librelane/librelane:3.0.8 \
+PDK_ROOT=/home/obooky/.ciel \
+  sh synthesis/run_fmax_sweep.sh
+```
+
+Purpose: measure the hardened design's maximum setup frequency across all three
+PVT corners, sweeping the period from 20 ns down to 5 ns (coarse 1 ns, binary to
+0.01 ns).
+
+Result: PASS. Every 20 ns point reproduced the released metrics exactly.
+
+| corner | setup @20 ns | hold @20 ns | period_fail | Fmax |
+|--------|-------------:|------------:|------------:|-----:|
+| nom_slow_1p08V_125C | +6.8725 ns | +0.6367 ns | 13.125 ns | 76.19 MHz |
+| nom_typ_1p20V_25C | +10.1574 ns | +0.2984 ns | 9.836 ns | 101.67 MHz |
+| nom_fast_1p32V_m40C | +11.1362 ns | +0.1110 ns | 8.859 ns | 112.87 MHz |
+
+Overall setup Fmax = 76.19 MHz, limited by the slow corner. Worst slack fell by
+exactly 1 ns per 1 ns of period reduction at every corner, confirming a fixed
+critical path; at the slow failing period the path had a data arrival of
+13.0308 ns against a required 13.0283 ns (-0.0025 ns). Summary in
+`test/sim_build/fmax/fmax_summary.csv`; full logs and worst paths under
+`test/sim_build/fmax/<corner>/`.
